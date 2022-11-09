@@ -1,0 +1,50 @@
+@media (max-width: 540px) {
+    .counters {
+        flex-direction: column;
+    } 
+
+}
+
+@media (max-width: 768px) {
+    
+    section {
+        padding: 30px 0;
+    }
+    .slider-content {
+        max-width: 90%;
+        h1 {
+            font-size: 3rem!important;
+            line-height: 3.2rem!important;
+        }
+        span {
+            line-height: 3.2rem;
+        }
+    }
+    .trabajar {
+        padding-left: 0px;
+    }
+    .trabajar-content {
+        padding: 0 30px;
+        .with-us {
+            grid-template-columns: 1fr;
+        }
+    }
+    .portafolio {
+        flex-direction: column;
+        .portafolio-item {
+            max-width: 100%;
+        }
+    }
+    .contacto {
+        padding: 30px 0;
+    }
+    .footer {
+        margin-bottom: 50px;
+    }
+}
+@media (min-width: 992px) {
+    .sticky-nav {
+        display: none;
+    }
+
+}

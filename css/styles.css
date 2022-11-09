@@ -1,0 +1,483 @@
+.btn-main {
+  background-color: transparent;
+  color: #e5105b;
+  border: 1px solid #e5105b;
+  transition: all 0.7s;
+  padding: 5px 20px;
+}
+.btn-main:hover {
+  box-shadow: 4px 4px #e5105b;
+  transform: translateX(5px);
+}
+
+.btn-sec {
+  background-color: transparent;
+  color: #fff;
+  border: 1px solid #fff;
+  transition: all 0.7s;
+  padding: 5px 20px;
+}
+.btn-sec:hover {
+  box-shadow: 4px 4px #fff;
+  transform: translateX(5px);
+}
+
+.nav {
+  width: 100vw;
+  height: 100px;
+  display: flex;
+  position: absolute;
+  align-items: center;
+  justify-content: space-around;
+  background-color: rgba(0, 0, 0, 0.4392156863);
+  z-index: 100;
+}
+
+.logo {
+  padding: 5px;
+}
+.logo img {
+  height: 80px;
+}
+
+.menu {
+  height: 100px;
+}
+.menu .main-menu {
+  display: flex;
+  gap: 20px;
+  height: 100px;
+  justify-content: space-around;
+  align-items: center;
+}
+.menu .main-menu li {
+  color: #fff;
+  line-height: 1rem;
+  cursor: pointer;
+}
+.menu .main-menu li:hover {
+  color: #e5105b;
+  text-decoration: underline;
+  text-decoration-style: #e5105b;
+}
+.menu .main-menu li:active {
+  text-decoration: underline;
+}
+
+.section-title {
+  max-width: 80%;
+  text-align: center;
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+  margin: 0 auto;
+  justify-content: center;
+  padding-bottom: 30px;
+}
+.section-title span {
+  font-size: 1.3rem;
+  color: #e5105b;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+.section-title h1 {
+  color: #4e4e4e;
+  font-size: 2rem;
+  font-weight: 400;
+}
+
+.counters {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  padding-top: 30px;
+}
+.counters div {
+  text-align: center;
+}
+.counters div h3 {
+  color: #e5105b;
+}
+.counters div span {
+  color: #4e4e4e;
+}
+
+.with-us {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: 30px;
+}
+.with-us div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+  justify-content: baseline;
+  text-align: center;
+}
+.with-us div i {
+  color: #e5105b;
+  font-size: 1.5rem;
+  text-align: center;
+}
+.with-us div h4 {
+  color: #4e4e4e;
+  font-size: 1.2rem;
+}
+.with-us div p {
+  color: #4e4e4e;
+  font-size: 0.2;
+}
+
+.services-items {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+}
+.services-items i {
+  font-size: 2rem;
+  color: #e5105b;
+}
+.services-items h2 {
+  font-size: 1.3rem;
+  color: #4e4e4e;
+  font-weight: 600;
+  margin: 10px 0;
+}
+
+.portafolio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+.portafolio .portafolio-item {
+  display: flex;
+  flex-direction: column;
+  max-width: 30%;
+  margin-bottom: 30px;
+  cursor: pointer;
+}
+.portafolio .portafolio-item img:hover {
+  opacity: 0.7;
+}
+.portafolio .portafolio-item div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  width: 80%;
+  margin-top: -40px;
+  padding: 30px 0;
+  transition: all 0.5s;
+  z-index: 20;
+  text-align: center;
+}
+.portafolio .portafolio-item div h3 {
+  font-size: 1.3rem;
+  color: #4e4e4e;
+}
+.portafolio .portafolio-item div h3:hover {
+  color: #e5105b;
+}
+.portafolio .portafolio-item div span {
+  color: #e5105b;
+}
+
+html {
+  min-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #e5105b;
+}
+
+p {
+  color: #878787;
+}
+
+section {
+  padding: 70px 0;
+}
+
+.slider {
+  height: 100vh;
+  background-image: url(../assets/img/mr-design-agencia-de-marketing-digital-desarrollo-de-paginas-web-en-medellin.jpeg);
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  top: -100px;
+  box-shadow: inset 0px -10px 19px -6px rgba(0, 0, 0, 0.75);
+  padding: 0;
+}
+.slider .container {
+  height: 100%;
+}
+.slider .container .row {
+  height: 100%;
+}
+.slider .container .row .slider-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 600px;
+  text-align: center;
+  margin: auto;
+}
+.slider .container .row .slider-content span {
+  color: #e5105b;
+  font-size: 3rem;
+  font-weight: 100;
+}
+.slider .container .row .slider-content h1 {
+  color: #fff;
+  font-size: 5rem;
+  text-transform: uppercase;
+  line-height: 5.3rem;
+}
+.slider .container .row .slider-img {
+  height: auto;
+  opacity: 1;
+  overflow: hidden;
+}
+.slider .container .row .slider-img img {
+  margin: auto;
+  max-width: 80%;
+  transition: all 0.8s;
+  transform-origin: 50% 50%;
+  transform: translate(20%, 40%);
+  z-index: 1;
+}
+
+.cta-slider {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  margin-top: 1rem;
+}
+
+.quienes-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.quienes-left h2 {
+  color: #878787;
+  font-size: 1.5rem;
+}
+
+.quienes-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.quienes-right ul {
+  list-style: none;
+}
+.quienes-right i {
+  color: #e5105b;
+  padding-right: 5px;
+  font-size: 1.5rem;
+}
+.quienes-right div {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.trabajar {
+  background-color: #f3f3f3;
+  padding-left: 50px;
+  padding: 0 0;
+}
+
+.trabajar-title {
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: #e5105b;
+  text-align: center;
+}
+
+.trabajar-content {
+  padding: 70px 50px;
+}
+
+.trabajar-img {
+  background-image: url(../assets/img/marketing-digital-agency-trabajar.jpg);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.cta {
+  padding: 100px 0;
+  background-image: linear-gradient(to right, #b8cbb8 0%, #b8cbb8 0%, #b465da 0%, #f54b86 33%, #f02d71 66%, #e5105b 100%);
+  text-align: center;
+}
+.cta div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.cta div span {
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: #fff;
+}
+.cta div h4 {
+  font-size: 3rem;
+  font-weight: 400;
+  color: #fff;
+}
+
+.contact {
+  padding: 0 0;
+}
+
+.contacto {
+  padding: 100px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.contacto h2 {
+  font-size: 1.3rem;
+}
+.contacto i {
+  font-size: 1.6rem;
+  color: #e5105b;
+  margin-bottom: 15px;
+}
+.contacto p {
+  font-size: 1.3rem;
+  line-height: 1.4rem;
+  color: #000;
+}
+.contacto span {
+  font-size: 1rem;
+  color: #878787;
+}
+
+.contacto-img {
+  background-image: url(../assets/img/mr-design-agencia-de-marketing-digital-desarrollo-de-paginas-web-contacto.jpeg);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.footer {
+  padding: 30px 0;
+  background-color: #000;
+  color: #fff;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+.footer img {
+  height: 30px;
+}
+
+.sticky-nav {
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #000;
+  padding: 5px 3rem;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.sticky-nav .logo img {
+  height: 50px;
+}
+.sticky-nav .menu {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  color: #fff;
+  justify-content: center;
+  gap: 5rem;
+  height: 50px;
+}
+.sticky-nav .menu i {
+  font-size: 1.3rem;
+}
+
+.services {
+  box-shadow: 0px 8px 16px -9px rgba(0, 0, 0, 0.1);
+}
+
+.portfolio {
+  box-shadow: inset 0px -8px 16px -9px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 540px) {
+  .counters {
+    flex-direction: column;
+  }
+}
+@media (max-width: 768px) {
+  section {
+    padding: 30px 0;
+  }
+  .slider-content {
+    max-width: 90%;
+  }
+  .slider-content h1 {
+    font-size: 3rem !important;
+    line-height: 3.2rem !important;
+  }
+  .slider-content span {
+    line-height: 3.2rem;
+  }
+  .trabajar {
+    padding-left: 0px;
+  }
+  .trabajar-content {
+    padding: 0 30px;
+  }
+  .trabajar-content .with-us {
+    grid-template-columns: 1fr;
+  }
+  .portafolio {
+    flex-direction: column;
+  }
+  .portafolio .portafolio-item {
+    max-width: 100%;
+  }
+  .contacto {
+    padding: 30px 0;
+  }
+  .footer {
+    margin-bottom: 50px;
+  }
+}
+@media (min-width: 992px) {
+  .sticky-nav {
+    display: none;
+  }
+}
+
+/*# sourceMappingURL=styles.css.map */
