@@ -1,3 +1,123 @@
+.menu {
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+.menu ul {
+  position: relative;
+  display: -webkit-flex;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-flex-wrap: wrap;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.menu ul .item {
+  position: relative;
+  margin: 0 1em;
+}
+.menu ul .item .link {
+  font-size: 1.05em;
+  font-weight: bold;
+  display: block;
+  padding: 1em;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -khtml-user-select: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+.menu ul .item .link:hover, .menu ul .item .link:focus {
+  outline: none;
+}
+.menu ul .item a {
+  position: relative;
+  min-width: 105px;
+  text-align: center;
+  color: #fff;
+  -webkit-transition: color 0.3s;
+  transition: color 0.3s;
+  text-decoration: none;
+}
+.menu ul .item a:hover {
+  color: #e5105b;
+}
+.menu ul .item a:focus {
+  color: #e5105b;
+}
+.menu ul .item a::after, .menu ul .item a::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 10px;
+  height: 2px;
+  opacity: 0;
+  background: #e5105b;
+}
+.menu ul .item a::before, .menu ul .item a::after {
+  -webkit-transform: translate3d(0, 10px, 0);
+  transform: translate3d(0, 10px, 0);
+  -webkit-transition: -webkit-transform 0.3s, opacity 0.3s;
+  transition: transform 0.3s, opacity 0.3s;
+}
+.menu ul .item a::before {
+  left: 0;
+  -webkit-transform-origin: 0% 0%;
+  transform-origin: 0% 0%;
+}
+.menu ul .item a::after {
+  right: 0;
+  -webkit-transform-origin: 100% 0%;
+  transform-origin: 100% 0%;
+}
+.menu ul .item::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 10px;
+  height: 2px;
+  opacity: 0;
+  background: #e5105b;
+  left: 0;
+  width: 100%;
+}
+.menu ul .item::before {
+  left: 0;
+  width: 100%;
+  -webkit-transform: translate3d(0, 10px, 0);
+  transform: translate3d(0, 10px, 0);
+  -webkit-transition: -webkit-transform 0.3s, opacity 0.3s;
+  transition: transform 0.3s, opacity 0.3s;
+}
+.menu ul .current a {
+  color: #e5105b;
+}
+.menu ul .current a::before {
+  opacity: 1;
+}
+.menu ul .current a::before {
+  -webkit-transform: rotate3d(0, 0, 1, -90deg);
+  transform: rotate3d(0, 0, 1, -90deg);
+}
+.menu ul .current a::after {
+  opacity: 1;
+  -webkit-transform: rotate3d(0, 0, 1, 90deg);
+  transform: rotate3d(0, 0, 1, 90deg);
+}
+.menu ul .current::before {
+  opacity: 1;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-transition: -webkit-transform 0.3s, opacity 0.1s;
+  transition: transform 0.3s, opacity 0.1s;
+}
+
 .btn-main {
   background-color: transparent;
   color: #e5105b;
@@ -25,8 +145,7 @@
 .nav {
   width: 100vw;
   height: 100px;
-  display: flex;
-  position: absolute;
+  position: fixed;
   align-items: center;
   justify-content: space-around;
   background-color: rgba(0, 0, 0, 0.4392156863);
@@ -134,10 +253,8 @@
 }
 
 .services-items {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
   text-align: left;
+  align-items: center;
 }
 .services-items i {
   font-size: 2rem;
@@ -149,49 +266,109 @@
   font-weight: 600;
   margin: 10px 0;
 }
+.services-items div .service-title i {
+  font-size: 2rem;
+  color: #e5105b;
+}
+.services-items div .service-title h2 {
+  font-size: 1.3rem;
+  color: #4e4e4e;
+  font-weight: 600;
+  margin: 10px 0;
+}
+.services-items div .title span {
+  color: #f3f3f3;
+  font-size: 5rem;
+  line-height: 5rem;
+  text-align: right;
+}
 
 .portafolio {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto;
 }
 .portafolio .portafolio-item {
+  padding: 15px;
+}
+.portafolio .portafolio-item .portafolio-item-inner {
   display: flex;
   flex-direction: column;
-  max-width: 30%;
   margin-bottom: 30px;
   cursor: pointer;
 }
-.portafolio .portafolio-item img:hover {
+.portafolio .portafolio-item .portafolio-item-inner img {
+  width: 100%;
+  z-index: 10;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+}
+.portafolio .portafolio-item .portafolio-item-inner img:hover {
   opacity: 0.7;
 }
-.portafolio .portafolio-item div {
+.portafolio .portafolio-item .portafolio-item-inner div {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin: auto;
-  width: 100%;
   height: 100%;
   background-color: #fff;
   width: 80%;
   margin-top: -40px;
   padding: 30px 0;
-  transition: all 0.5s;
   z-index: 20;
   text-align: center;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
 }
-.portafolio .portafolio-item div h3 {
+.portafolio .portafolio-item .portafolio-item-inner div h3 {
   font-size: 1.3rem;
   color: #4e4e4e;
+  transition: all 0.5s;
 }
-.portafolio .portafolio-item div h3:hover {
+.portafolio .portafolio-item .portafolio-item-inner div h3:hover {
   color: #e5105b;
 }
-.portafolio .portafolio-item div span {
+.portafolio .portafolio-item .portafolio-item-inner div span {
   color: #e5105b;
+}
+.portafolio .portafolio-item.show {
+  animation: fadeIn 1s ease-in;
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.portafolio .portafolio-item.hide {
+  display: none;
+}
+
+.portafolio-filter {
+  padding: 0 15px;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.portafolio-filter .filter-item {
+  color: #000000;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  display: inline-block;
+  margin: 0 10px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  line-height: 1.2;
+  transition: all 0.3s ease;
+}
+.portafolio-filter .filter-item:hover {
+  color: #e5105b;
+  border-color: #e5105b;
+}
+.portafolio-filter .filter-item.active {
+  color: #e5105b;
+  border-color: #e5105b;
 }
 
 html {
@@ -462,6 +639,7 @@ section {
     grid-template-columns: 1fr;
   }
   .portafolio {
+    display: flex;
     flex-direction: column;
   }
   .portafolio .portafolio-item {

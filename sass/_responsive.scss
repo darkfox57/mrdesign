@@ -30,6 +30,7 @@
         }
     }
     .portafolio {
+        display: flex;
         flex-direction: column;
         .portafolio-item {
             max-width: 100%;
@@ -46,5 +47,5 @@
     .sticky-nav {
         display: none;
     }
-
 }
+
