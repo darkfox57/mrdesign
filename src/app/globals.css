@@ -1,1 +1,124 @@
 @import "tailwindcss";
+
+/*
+ * Design tokens. brand-500 is the MR Design magenta from the previous site.
+ * brand-500 is 4.2:1 on paper: use it for large text, the signature and accents only.
+ * Use brand-600 (5.5:1 on paper, 6.1:1 under white text) for body-size text, links and buttons.
+ */
+@theme {
+  --color-brand-50: #fde8f0;
+  --color-brand-500: #e5105b;
+  --color-brand-600: #c20e4e;
+  --color-brand-700: #9c0b3f;
+
+  --color-ink: #1e1a2e;
+  --color-ink-raised: #2a2540;
+  --color-ink-line: #3d3757;
+  --color-on-ink: #f1eef8;
+  --color-on-ink-muted: #b9b3c9;
+
+  --color-paper: #f6f4fa;
+  --color-surface: #ffffff;
+  --color-graphite: #4a4658;
+  --color-line: #dcd7e6;
+  /* Form field borders: 3.4:1 on paper, above the 3:1 WCAG minimum for UI boundaries. */
+  --color-field: #8a84a0;
+
+  --color-success: #0f7a4a;
+  --color-danger: #b91c1c;
+
+  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-control: 0.625rem;
+  --radius-card: 1.25rem;
+
+  --container-site: 76rem;
+  --container-prose: 40rem;
+}
+
+/* Fluid type scale; display sizes lean on the optical-size and width axes of Bricolage Grotesque. */
+@utility text-display {
+  font-size: clamp(2.75rem, 1.6rem + 4.2vw, 5.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+  font-variation-settings: "opsz" 96;
+  font-stretch: 85%;
+  text-wrap: balance;
+
+  @media (width >= 64rem) {
+    font-stretch: 92%;
+  }
+}
+
+@utility text-headline {
+  font-size: clamp(2rem, 1.3rem + 2.6vw, 3.25rem);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  font-weight: 650;
+  font-variation-settings: "opsz" 72;
+  font-stretch: 90%;
+  text-wrap: balance;
+}
+
+@utility text-title {
+  font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.625rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+@utility text-lead {
+  font-size: clamp(1.125rem, 1rem + 0.45vw, 1.3125rem);
+  line-height: 1.55;
+}
+
+@utility site-container {
+  width: 100%;
+  max-width: var(--container-site);
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+
+  @media (width >= 48rem) {
+    padding-inline: 2rem;
+  }
+}
+
+/* The signature logo is a mask, so it takes any color token through background-color. */
+@utility signature {
+  background-color: currentColor;
+  mask: url("/brand/logo-signature.png") no-repeat left center / contain;
+  aspect-ratio: 196 / 141;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-brand-600);
+    outline-offset: 3px;
+    border-radius: var(--radius-control);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "Metadata": {
+    "title": "MR Design: desarrollo web, apps y tiendas en línea",
+    "description": "Desarrollo independiente de sitios web, aplicaciones, plugins y tiendas en WordPress, Shopify y PrestaShop. Desde Bogotá para clientes en cualquier país."
+  },
+  "Nav": {
+    "label": "Navegación principal",
+    "skip": "Saltar al contenido",
+    "home": "MR Design, inicio",
+    "services": "Servicios",
+    "portfolio": "Portafolio",
+    "blog": "Blog",
+    "contact": "Cuéntame tu proyecto",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú"
+  },
+  "Language": {
+    "label": "Idioma",
+    "current": "idioma actual"
+  },
+  "Footer": {
+    "tagline": "Desarrollo web hecho a mano, de la idea al lanzamiento.",
+    "navigation": "Sitio",
+    "contact": "Contacto",
+    "legal": "Legal",
+    "privacy": "Política de privacidad",
+    "terms": "Términos y condiciones",
+    "rights": "Todos los derechos reservados."
+  },
+  "NotFound": {
+    "title": "Esta página no existe",
+    "body": "Puede que el enlace esté roto o que la página haya cambiado de dirección.",
+    "home": "Ir al inicio"
+  }
+}

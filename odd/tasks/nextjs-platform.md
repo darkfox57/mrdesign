@@ -28,8 +28,8 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | ID | Specs | Task | Route | Status | Commit |
 | --- | --- | --- | --- | --- | --- |
 | T1 | S2, S8 | Scaffold Next 16.4.6 + TS + Tailwind 4 + ESLint + Vitest + Playwright + Prisma/Postgres Docker + env example | inline | done | 98bbfe8 |
-| T2 | S7, S8 | CLAUDE.md, AGENTS.md, docs (admin rules), project skills, skill registry | inline | done | (T2 commit) |
-| T3 | S6, S8 | Design tokens, fonts, atoms/molecules, Logo, header/footer, i18n setup | inline | pending | |
+| T2 | S7, S8 | CLAUDE.md, AGENTS.md, docs (admin rules), project skills, skill registry | inline | done | 6249156 |
+| T3 | S6, S8 | Design tokens, fonts, atoms/molecules, Logo, header/footer, i18n setup | inline | done | (T3 commit) |
 | T4 | S2, S3, S6 | Public pages: home, services/[service], portfolio, contact form + action, legal, SEO; migrate assets; remove legacy static files | inline | pending | |
 | T5 | S4 | Auth (better-auth), proxy guard, requireSession, login/recover/reset, dashboard shell, users | inline | pending | |
 | T6 | S4 | Admin modules: inbox, media (R2), API keys | inline | pending | |
@@ -44,3 +44,11 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 - L3 (2026-11-23, user decision): locales "Español + inglés" → es default unprefixed, en under `/en`.
 - L4 (2026-11-23): T1 done. Installed next 16.4.6, next-intl 4.16, Tailwind 4.3.5, vitest 5.1, Playwright 1.65 (downloaded chromium-headless-shell 1255). npm `latest` for prisma is 8.0.0-rc.35, so prisma is pinned to stable 7.10.1. ESLint 10 breaks the peer ranges of the eslint-config-next plugins, so ESLint stays on 9.39. `npm audit` reports 3 high findings in `effect`, which the prisma CLI uses for config parsing (dev tooling; same in datilab-web; the only fix offered downgrades to prisma 6), so they are accepted. Evidence: RED `is-local-database.test.ts` failed with the module missing; GREEN 2/2; lint clean; typecheck clean; e2e smoke 2/2 (mobile and desktop).
 - L5 (2026-11-23): T2 done. Wrote CLAUDE.md, AGENTS.md (with the Next agent block), docs/admin.md, and the project skills admin-module, landing-blocks and public-page. `gentle-ai skill-registry refresh` indexed them as project scope (19 skills). `.atl/` stays gitignored as local tooling, as in datilab-web. Next: T3.
+- L6 (2026-11-23): T3 done. Design plan from the ui-standards and frontend-design skills:
+  - Signature as the memorable element: the logo PNG was cleaned into an alpha mask (`public/brand/logo-signature.png`) so the `signature` utility takes any color token.
+  - Palette: brand magenta #E5105B (kept from the old site) and #C20E4E for text and buttons, ink #1E1A2E, paper #F6F4FA, graphite #4A4658, line #DCD7E6.
+  - Type: Bricolage Grotesque (opsz and wdth axes) via next/font.
+  - Measured contrast: graphite on paper 8.4:1, brand-600 on paper 5.5:1, white on brand-600 6.1:1.
+  - Built: next-intl (es unprefixed, en /en, localized pathnames), proxy, messages parity test (RED: catalogs missing; GREEN 5/5), atoms Logo, ButtonLink, JsonLd; molecules LanguageSwitcher, MobileMenu; organisms SiteHeader, SiteFooter; localized 404.
+  - Evidence: e2e smoke 8/8 (es and en, 404, no horizontal scroll, on mobile and desktop); screenshots inspected at 360 and 1280.
+  - The logo source is a 200x145 raster; a vector logo from the user would sharpen large sizes.

@@ -1,0 +1,35 @@
+{
+  "Metadata": {
+    "title": "MR Design: web, app and online store development",
+    "description": "Independent development of websites, apps, plugins and online stores on WordPress, Shopify and PrestaShop. Based in Bogotá, working with clients anywhere."
+  },
+  "Nav": {
+    "label": "Main navigation",
+    "skip": "Skip to content",
+    "home": "MR Design, home",
+    "services": "Services",
+    "portfolio": "Portfolio",
+    "blog": "Blog",
+    "contact": "Tell me about your project",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "Language": {
+    "label": "Language",
+    "current": "current language"
+  },
+  "Footer": {
+    "tagline": "Handmade web development, from idea to launch.",
+    "navigation": "Site",
+    "contact": "Contact",
+    "legal": "Legal",
+    "privacy": "Privacy policy",
+    "terms": "Terms and conditions",
+    "rights": "All rights reserved."
+  },
+  "NotFound": {
+    "title": "This page does not exist",
+    "body": "The link may be broken, or the page may have moved.",
+    "home": "Go to the home page"
+  }
+}
