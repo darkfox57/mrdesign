@@ -9,6 +9,7 @@ export default defineConfig({
   // Several Chromium processes at once stall static file requests on Windows; one worker keeps runs reliable.
   workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : 1,
   outputDir: "./test-results",
+  globalSetup: "./e2e/global-setup.ts",
   use: { baseURL: BASE_URL },
   projects: [
     { name: "mobile", use: { ...devices["Pixel 7"], viewport: { width: 360, height: 780 } } },
@@ -24,6 +25,8 @@ export default defineConfig({
     env: {
       DATABASE_URL: E2E_DATABASE_URL,
       SITE_URL: BASE_URL,
+      BETTER_AUTH_URL: BASE_URL,
+      BETTER_AUTH_SECRET: "e2e-only-secret-not-used-anywhere-else-0123456789",
       // Tests never send real email, even if .env has a Brevo key.
       BREVO_API_KEY: "",
     },

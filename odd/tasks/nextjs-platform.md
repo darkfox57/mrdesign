@@ -33,8 +33,8 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T1 | S2, S8 | Scaffold Next 16.4.6 + TS + Tailwind 4 + ESLint + Vitest + Playwright + Prisma/Postgres Docker + env example | inline | done | 98bbfe8 |
 | T2 | S7, S8 | CLAUDE.md, AGENTS.md, docs (admin rules), project skills, skill registry | inline | done | 6249156 |
 | T3 | S6, S8 | Design tokens, fonts, atoms/molecules, Logo, header/footer, i18n setup | inline | done | 7599b42 |
-| T4 | S2, S3, S6 | Public pages: home, services/[service], portfolio, contact form + action, legal, SEO; migrate assets; remove legacy static files | inline (writer delegation denied by permission classifier) | done | (T4 commit) |
-| T5 | S4 | Auth (better-auth), proxy guard, requireSession, login/recover/reset, dashboard shell, users | inline | pending | |
+| T4 | S2, S3, S6 | Public pages: home, services/[service], portfolio, contact form + action, legal, SEO; migrate assets; remove legacy static files | inline (writer delegation denied by permission classifier) | done | 9d5cd99 |
+| T5 | S4 | Auth (better-auth), proxy guard, requireSession, login/recover/reset, dashboard shell, users | inline | done | (T5 commit) |
 | T6 | S4 | Admin modules: inbox, media (R2), API keys | inline | pending | |
 | T7 | S4, S6 | Blog: model, Tiptap editor, public blog routes | inline | pending | |
 | T8 | S5 | Landing builder (Puck): model, blocks, editor, draft/publish, public route | inline | pending | |
@@ -67,3 +67,14 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - GREEN: vitest 27/27, lint clean, typecheck clean, e2e 56/56 (mobile and desktop).
     - Screenshots inspected: home at 1280 and 360, Shopify service at 1280, en contact at 360. Below-the-fold portfolio images are lazy and the optimizer answers 200.
   - Pending: the nav and footer "Blog" link returns 404 until T7. Next: T5.
+- L8 (2026-11-23): T5 done.
+  - Ported from datilab-web with `cp` (byte-exact), then rebranded:
+    - `src/lib/auth/*`: better-auth 1.7.27, roles admin and editor, login rate limit, reset email.
+    - `src/lib/admin/users.ts`, `src/app/admin/{layout,actions,password-actions,login,recuperar,restablecer}`.
+    - `(dashboard)/{layout,page,usuarios}`, `api/auth/[...all]`, AdminSidebar, `scripts/create-admin.ts`.
+    - Admin e2e specs (auth, users, password reset) and `e2e/global-setup.ts`.
+  - The proxy adds the optimistic admin cookie check (matcher written with editor tools). Migration `auth` adds the user, session, account and verification tables. New script `npm run admin:create`.
+  - The sidebar shows only Inicio and Usuarios; each module adds its entry when it ships. The dashboard home counts contact messages.
+  - The auto-mode classifier denied writing a generated BETTER_AUTH_SECRET into the local `.env`. The user must set it, or `next start` fails with BetterAuthError. e2e injects its own test secret.
+  - Evidence: vitest 53/53, typecheck and lint clean, e2e 79 passed and 23 skipped (admin flows run on desktop only, by design); `/admin` answers 307 to `/admin/login?next=%2Fadmin`.
+  - Next: T6, the inbox, media (R2) and API keys.

@@ -15,11 +15,13 @@
     "typecheck": "next typegen && tsc --noEmit",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy"
+    "db:deploy": "prisma migrate deploy",
+    "admin:create": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
+    "better-auth": "^1.7.27",
     "clsx": "^2.1.1",
     "lucide-react": "^1.78.0",
     "next": "^16.4.6",
