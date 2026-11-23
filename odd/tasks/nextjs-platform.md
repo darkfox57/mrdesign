@@ -34,7 +34,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T2 | S7, S8 | CLAUDE.md, AGENTS.md, docs (admin rules), project skills, skill registry | inline | done | 6249156 |
 | T3 | S6, S8 | Design tokens, fonts, atoms/molecules, Logo, header/footer, i18n setup | inline | done | 7599b42 |
 | T4 | S2, S3, S6 | Public pages: home, services/[service], portfolio, contact form + action, legal, SEO; migrate assets; remove legacy static files | inline (writer delegation denied by permission classifier) | done | 9d5cd99 |
-| T5 | S4 | Auth (better-auth), proxy guard, requireSession, login/recover/reset, dashboard shell, users | inline | done | (T5 commit) |
+| T5 | S4 | Auth (better-auth), proxy guard, requireSession, login/recover/reset, dashboard shell, users | inline | done | e956888 |
 | T6 | S4 | Admin modules: inbox, media (R2), API keys | inline | pending | |
 | T7 | S4, S6 | Blog: model, Tiptap editor, public blog routes | inline | pending | |
 | T8 | S5 | Landing builder (Puck): model, blocks, editor, draft/publish, public route | inline | pending | |
@@ -78,3 +78,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - The auto-mode classifier denied writing a generated BETTER_AUTH_SECRET into the local `.env`. The user must set it, or `next start` fails with BetterAuthError. e2e injects its own test secret.
   - Evidence: vitest 53/53, typecheck and lint clean, e2e 79 passed and 23 skipped (admin flows run on desktop only, by design); `/admin` answers 307 to `/admin/login?next=%2Fadmin`.
   - Next: T6, the inbox, media (R2) and API keys.
+- L9 (2026-11-23): Native review (RDD).
+  - The whole-branch candidate (152 files, ~19.5k lines) stopped with `lens_context_budget_exceeded`: nothing was created. Scope was reduced to the T5 commit (base 9d5cd99, 43 files, 2543 lines), assessed high risk (auth migration, process spawn in e2e global-setup).
+  - The user granted consent. Lenses: risk and reliability. Result: approved, acknowledged, authority burned (lineage review-fe42f92270753a86). T1-T4 were not reviewed.
+  - 18 non-blocking advisory findings, follow-ups for later:
+    - Sessions and roles: the 60s session cookie cache lets a banned or demoted user keep access for up to a minute (R1-001, R3-002). The dashboard home shows inbox counts to editors (R1-004).
+    - Login rate limit: locked keys are never evicted (R1-002, R3-003). The per-IP limit trusts X-Forwarded-For when no proxy is in front (R1-003). The retry estimate uses the earlier unlock time (R3-004). The e2e specs share the per-IP limiter (R3-006).
+    - Proxy and password reset: the 307 admin redirect replays POSTs (R3-001). Password reset requests swallow failures (R3-005).
