@@ -44,12 +44,11 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 
-# local agent tooling
-/.atl/
+# the env example is committed
 !.env.example
 
 # prisma generated client
 /src/generated/
 
-# local data exports (legacy blog), never committed
-/.data/
+# Local AI runtime state
+.atl/

@@ -56,6 +56,9 @@ odd/tasks/               ODD feature logbooks
 - Test-first when a deterministic test exists: observe RED, then GREEN.
 - Conventional commits, no AI attribution. Stage files by name, never `git add -A`.
 - Run vitest from the `E:/Work/...` path. Under Git Bash, `/e/Work/...` finds no test files.
+- Under Git Bash, prefix Playwright `-g "/route"` filters with `MSYS_NO_PATHCONV=1`, or the path is rewritten.
+- Never write backslash escapes through a shell heredoc: they lose a backslash (a proxy matcher broke this way). Write such files with the editor tools, and build unicode escapes like `\u003c` from char codes, since tooling can collapse them.
+- e2e always builds a fresh server (`reuseExistingServer: false`): on Windows a previous server can outlive the run and serve a stale build.
 
 ## Skills
 

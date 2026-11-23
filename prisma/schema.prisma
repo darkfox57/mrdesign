@@ -14,3 +14,21 @@ enum Locale {
   es
   en
 }
+
+model ContactSubmission {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  company     String?
+  // A service id from src/content/services.ts, or "other".
+  projectType String
+  message     String
+  consent     Boolean
+  locale      Locale
+  // Set when someone marks the message as read in the dashboard inbox; null means unread.
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([createdAt])
+}

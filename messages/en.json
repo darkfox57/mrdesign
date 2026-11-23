@@ -31,5 +31,135 @@
     "title": "This page does not exist",
     "body": "The link may be broken, or the page may have moved.",
     "home": "Go to the home page"
+  },
+  "Home": {
+    "metaTitle": "Web, app and online store development",
+    "title": "I build the website, app or store your business needs",
+    "lead": "I'm an independent developer. You work directly with me, no middlemen, from the first idea until your project is live and working.",
+    "pickerTitle": "What is your project built on?",
+    "pickerLead": "Pick the platform and I'll show you how I can help.",
+    "pickerCustom": "Something custom",
+    "servicesTitle": "What I build",
+    "servicesLead": "New projects, improvements to what you already have, and rescues for sites that stopped working.",
+    "servicesAll": "See all services",
+    "whyTitle": "Why work with me",
+    "why": [
+      {
+        "title": "You talk to the person who codes",
+        "text": "No account managers, no broken telephone: you tell me what you need and I build it."
+      },
+      {
+        "title": "Clear price and scope",
+        "text": "Before we start, you know what gets delivered, what it costs and when it's ready."
+      },
+      {
+        "title": "The code is yours",
+        "text": "You get the code, the credentials and the documentation. You're never locked in."
+      },
+      {
+        "title": "Still here after launch",
+        "text": "Support, updates and improvements whenever you need them."
+      }
+    ],
+    "portfolioTitle": "Projects",
+    "portfolioLead": "Some of the brands I've worked with.",
+    "portfolioAll": "See the portfolio",
+    "processTitle": "How I work",
+    "process": [
+      {
+        "title": "Conversation",
+        "text": "You tell me about your business and your goals. I tell you honestly what's worth building and what isn't."
+      },
+      {
+        "title": "Proposal",
+        "text": "You get the scope, price and schedule in writing, before you pay anything."
+      },
+      {
+        "title": "Design",
+        "text": "You review a clickable prototype and we adjust it together before any code."
+      },
+      {
+        "title": "Development",
+        "text": "I build in stages and show you progress you can try."
+      },
+      {
+        "title": "Launch",
+        "text": "I publish the project, set up the domain, analytics and backups, and show you how to manage it."
+      },
+      {
+        "title": "Support",
+        "text": "I keep your project updated and secure, and improve it as your business changes."
+      }
+    ],
+    "ctaTitle": "Have an idea? Let's talk",
+    "ctaText": "Tell me what you need and I'll reply within one business day with the next steps.",
+    "ctaButton": "Tell me about your project"
+  },
+  "Services": {
+    "metaTitle": "Development services",
+    "metaDescription": "Custom websites, apps, plugins and online stores on WordPress, Shopify and PrestaShop.",
+    "title": "Services",
+    "lead": "Pick what you need. If it's not on the list, ask me: I probably do it too.",
+    "more": "See details for {name}",
+    "deliverablesTitle": "What you get",
+    "otherTitle": "Other services",
+    "ctaTitle": "Shall we talk about your project?",
+    "ctaText": "I reply within one business day.",
+    "ctaButton": "Tell me about your project",
+    "breadcrumb": "Services"
+  },
+  "Portfolio": {
+    "metaTitle": "Portfolio",
+    "metaDescription": "Websites and online stores built by MR Design.",
+    "title": "Portfolio",
+    "lead": "Websites and online stores for fashion, sports, eyewear and consumer brands.",
+    "tags": {
+      "web": "Website",
+      "ecommerce": "Online store"
+    }
+  },
+  "Legal": {
+    "updated": "Last updated: {date}"
+  },
+  "Contact": {
+    "metaTitle": "Contact",
+    "metaDescription": "Tell me about your website, app, plugin or online store project and I'll reply within one business day.",
+    "title": "Tell me about your project",
+    "lead": "Write what you want to build or what needs fixing. I'll reply within one business day.",
+    "directTitle": "You can also reach me directly",
+    "whatsapp": "Message me on WhatsApp",
+    "location": "{city}, Colombia",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "company": "Company",
+      "phone": "Phone",
+      "projectType": "What do you need?",
+      "projectTypePlaceholder": "Choose an option",
+      "projectTypeOther": "Something else",
+      "message": "Tell me about your project",
+      "optional": "optional",
+      "consentBefore": "I accept the",
+      "consentLink": "privacy policy",
+      "consentAfter": "."
+    },
+    "submit": "Send message",
+    "sending": "Sending…",
+    "success": {
+      "title": "I got your message",
+      "text": "I'll email you within one business day."
+    },
+    "errors": {
+      "name": "Enter your name.",
+      "email": "Enter a valid email.",
+      "company": "The company name is too long: 160 characters maximum.",
+      "phone": "Enter a valid phone number, with the country code if it's from another country.",
+      "projectType": "Choose what you need.",
+      "message": "Tell me a bit more: at least 10 characters.",
+      "messageTooLong": "The message is too long: 2000 characters maximum.",
+      "consent": "Accept the privacy policy so I can reply.",
+      "rateLimited": "Several messages came from your connection. Try again in a while.",
+      "generic": "The message could not be sent. Try again or email me."
+    }
   }
 }

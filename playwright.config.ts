@@ -18,8 +18,14 @@ export default defineConfig({
     command: `npm run build && npm run start -- -p ${PORT}`,
     timeout: 300_000,
     port: PORT,
-    reuseExistingServer: !process.env.CI,
+    // On Windows the server can outlive the run; reusing it would test a stale build.
+    reuseExistingServer: false,
     // Process env wins over .env: the e2e server never touches a shared database.
-    env: { DATABASE_URL: E2E_DATABASE_URL, SITE_URL: BASE_URL },
+    env: {
+      DATABASE_URL: E2E_DATABASE_URL,
+      SITE_URL: BASE_URL,
+      // Tests never send real email, even if .env has a Brevo key.
+      BREVO_API_KEY: "",
+    },
   },
 });

@@ -15,7 +15,9 @@ export async function SiteHeader() {
   const t = await getTranslations("Nav");
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur">
+    // Solid background on purpose: backdrop-filter would make the header the containing block of the
+    // fixed mobile menu panel, collapsing it to the header's height.
+    <header className="sticky top-0 z-40 border-b border-line bg-paper">
       <a
         href="#contenido"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:rounded-control focus:bg-ink focus:px-4 focus:py-2 focus:text-white"
