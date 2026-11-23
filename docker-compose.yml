@@ -1,0 +1,15 @@
+# Local database for development and tests. Port 5434 avoids clashing with other local projects.
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: mrdesign
+      POSTGRES_PASSWORD: mrdesign
+      POSTGRES_DB: mrdesign
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+
+volumes:
+  pgdata:

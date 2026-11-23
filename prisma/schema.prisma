@@ -1,0 +1,16 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Translatable content uses one row per locale. Rows that are versions of the
+// same content share a translationKey, which drives hreflang and the language switcher.
+
+enum Locale {
+  es
+  en
+}
