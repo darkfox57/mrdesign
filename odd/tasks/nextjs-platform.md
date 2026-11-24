@@ -35,8 +35,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T3 | S6, S8 | Design tokens, fonts, atoms/molecules, Logo, header/footer, i18n setup | inline | done | 7599b42 |
 | T4 | S2, S3, S6 | Public pages: home, services/[service], portfolio, contact form + action, legal, SEO; migrate assets; remove legacy static files | inline (writer delegation denied by permission classifier) | done | 9d5cd99 |
 | T5 | S4 | Auth (better-auth), proxy guard, requireSession, login/recover/reset, dashboard shell, users | inline | done | e956888 |
-| T6 | S4 | Admin modules: inbox, media (R2), API keys | inline | pending | |
-| T7 | S4, S6 | Blog: model, Tiptap editor, public blog routes | inline | pending | |
+| T6a | S4 | Admin inbox (mensajes): list, detail, read/unread, delete, reply by email; dashboard counts admin-only (review R1-004) | delegated (parallel unit, writer trigger a) | done | (T6a commit) |
+| T6b | S4 | Admin media library on R2: presigned upload, sha256 dedupe, alt text, admin-only delete | delegated (parallel unit, writer trigger a) | done | 948b6a8 |
+| T7 | S4, S6 | Blog: model, Tiptap editor, public blog routes, API keys and blog ingest API (moved from T6: keys only exist to publish posts) | inline | pending | |
+| T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | inline | pending | |
 | T8 | S5 | Landing builder (Puck): model, blocks, editor, draft/publish, public route | inline | pending | |
 | T9 | S8 | Dockerfile, standalone build, deploy doc, full e2e pass | inline | pending | |
 
@@ -85,3 +87,18 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - Sessions and roles: the 60s session cookie cache lets a banned or demoted user keep access for up to a minute (R1-001, R3-002). The dashboard home shows inbox counts to editors (R1-004).
     - Login rate limit: locked keys are never evicted (R1-002, R3-003). The per-IP limit trusts X-Forwarded-For when no proxy is in front (R1-003). The retry estimate uses the earlier unlock time (R3-004). The e2e specs share the per-IP limiter (R3-006).
     - Proxy and password reset: the 307 admin redirect replays POSTs (R3-001). Password reset requests swallow failures (R3-005).
+- L10 (2026-11-23, user verbatim): "dejalo asi y sigue con t6, y si habilito la delegacion de subagentes". T1-T4 stay unreviewed. T6 is split into two parallel delegated units with disjoint edit surfaces:
+  - T6a inbox: also fixes review R1-004.
+  - T6b media: owns prisma/schema.prisma, playwright.config.ts, next.config.ts and .env.example.
+  - The parent owns AdminSidebar.tsx and git, installed @aws-sdk/client-s3 and s3-request-presigner 3.1176, and runs the e2e seam check, because parallel writers cannot share port 3100 or the .next build dir.
+  - API keys move to T7, because they only authorize the blog ingest API. Review advisories go to T10.
+  - Process corrections adopted from now on: commits of about 400 lines, `gentle-ai review assess` after each commit, a Risk line per change, test-first in the UI too.
+- L11 (2026-11-23): T6 done; both writers stayed inside their declared surfaces.
+  - T6a: inbox at /admin/mensajes with list, detail, read and unread, delete, reply mailto, project type and site language. The dashboard home shows inbox counts only to admins (fixes R1-004).
+  - T6b: R2 media library at /admin/imagenes. Alt text is now required on save, delete refuses when R2 is not configured, and `remote-pattern.ts` derives next/image hosts from R2_PUBLIC_URL. Migration `media_files`.
+  - The parent seam check found three issues:
+    1. The dashboard greeting duplicated the admin name, breaking a strict locator. The spec is now scoped to the banner.
+    2. Both writers added `loading.tsx`, so the guard redirect and notFound answered 200 instead of 307 or 404. Removing them fixed it, and the rule is now in docs/admin.md (rule 8) and the admin-module skill.
+    3. The project type label shared a text node with the locale. It is now wrapped in its own block.
+  - Evidence: vitest 93/93 (integration tests against the local DB), lint and typecheck clean, e2e 93 passed with 0 failed (admin flows on desktop only). Screenshots at 360 (Pixel 7 at DPR 2.625 gives 945px images, no overflow) and 1280 for the dashboard, inbox and media pages.
+  - T6b is 1167 authored lines, above the 400-line heuristic: it is one ported unit with code, tests and e2e together, so it was not split.

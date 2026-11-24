@@ -20,6 +20,7 @@ Load before creating or changing anything under `src/app/admin/`, `src/lib/admin
 - Sanitize stored HTML with `sanitizePostHtml`.
 - Keep the UI Spanish, built with the site tokens; add no component library.
 - Gate admin-only modules both in `AdminSidebar` and on the server with `requireSession(["admin"])`.
+- Never add `loading.tsx` under `src/app/admin/`: streaming sends status 200 before the guard can redirect or `notFound()` can answer 404.
 
 ## Decision Gates
 

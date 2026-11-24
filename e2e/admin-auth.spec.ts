@@ -40,8 +40,10 @@ test("logs in, shows the dashboard and logs out", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByRole("heading", { name: "Inicio" })).toBeVisible();
-  await expect(page.getByText(E2E_ADMIN.name)).toBeVisible();
-  await expect(page.getByText("Administrador")).toBeVisible();
+  // The header shows who is signed in (the dashboard greeting may repeat the name).
+  const header = page.getByRole("banner");
+  await expect(header.getByText(E2E_ADMIN.name)).toBeVisible();
+  await expect(header.getByText("Administrador")).toBeVisible();
   const cookies = await page.context().cookies();
   const session = cookies.find((c) => c.name.includes("session_token"));
   expect(session?.httpOnly).toBe(true);

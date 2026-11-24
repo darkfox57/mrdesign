@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, Users, type LucideIcon } from "lucide-react";
+import { House, Image, Mail, Users, type LucideIcon } from "lucide-react";
 import type { Role } from "@/lib/auth/permissions";
 
 type NavItem = { href: string; label: string; icon: LucideIcon; roles?: Role[]; showsUnread?: boolean };
@@ -11,6 +11,8 @@ type NavItem = { href: string; label: string; icon: LucideIcon; roles?: Role[]; 
 const items: NavItem[] = [
   { href: "/admin", label: "Inicio", icon: House },
   // Each dashboard module adds its entry here when it ships (see odd/tasks/nextjs-platform.md).
+  { href: "/admin/imagenes", label: "Imágenes", icon: Image },
+  { href: "/admin/mensajes", label: "Mensajes", icon: Mail, roles: ["admin"], showsUnread: true },
   { href: "/admin/usuarios", label: "Usuarios", icon: Users, roles: ["admin"] },
 ];
 
