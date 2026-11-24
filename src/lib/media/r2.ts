@@ -28,9 +28,21 @@ function config() {
   if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicUrl) {
     throw new R2NotConfiguredError("R2 is not configured: set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET and R2_PUBLIC_URL.");
   }
-  // R2_ENDPOINT only exists for the e2e tests, which point it at a local fake (e2e/fake-r2.mjs).
-  const endpoint = process.env.R2_ENDPOINT || `https://${accountId}.r2.cloudflarestorage.com`;
-  return { endpoint, accessKeyId, secretAccessKey, bucket, publicUrl };
+  return { endpoint: r2Endpoint(accountId, process.env.R2_ENDPOINT), accessKeyId, secretAccessKey, bucket, publicUrl };
+}
+
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+// R2_ENDPOINT only exists for the e2e tests, which point it at a local fake (e2e/fake-r2.mjs).
+// Only a loopback address is accepted: any other value would send signed requests, and the
+// browser's uploads, to that host. NODE_ENV cannot gate it, because the e2e server is a production build.
+function r2Endpoint(accountId: string, override: string | undefined) {
+  const real = `https://${accountId}.r2.cloudflarestorage.com`;
+  if (!override) return real;
+  const url = URL.parse(override);
+  if (url && (url.protocol === "http:" || url.protocol === "https:") && LOOPBACK_HOSTS.has(url.hostname)) return url.origin;
+  console.warn("Ignoring R2_ENDPOINT: only a loopback address is allowed (test-only). Using the Cloudflare R2 endpoint.");
+  return real;
 }
 
 let cached: { client: S3Client; bucket: string; publicUrl: string } | null = null;

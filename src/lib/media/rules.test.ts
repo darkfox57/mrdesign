@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_IMAGE_BYTES, altTextSchema, deleteMediaSchema, hexToBase64, mediaKey, publicMediaUrl, uploadRequestSchema } from "./rules";
+import { MAX_IMAGE_BYTES, altTextSchema, canEditMediaAlt, deleteMediaSchema, hexToBase64, mediaKey, publicMediaUrl, uploadRequestSchema } from "./rules";
 
 const sha256 = "a".repeat(64);
 
@@ -71,5 +71,17 @@ describe("publicMediaUrl", () => {
   it("joins the public base and the key with one slash", () => {
     expect(publicMediaUrl("https://img.example.com", "media/x.png")).toBe("https://img.example.com/media/x.png");
     expect(publicMediaUrl("https://img.example.com/", "media/x.png")).toBe("https://img.example.com/media/x.png");
+  });
+});
+
+describe("canEditMediaAlt", () => {
+  it("lets admins edit any image and editors only the images they uploaded", () => {
+    const admin = { id: "a1", role: "admin" as const };
+    const editor = { id: "e1", role: "editor" as const };
+    expect(canEditMediaAlt(admin, "e1")).toBe(true);
+    expect(canEditMediaAlt(admin, null)).toBe(true);
+    expect(canEditMediaAlt(editor, "e1")).toBe(true);
+    expect(canEditMediaAlt(editor, "a1")).toBe(false);
+    expect(canEditMediaAlt(editor, null)).toBe(false);
   });
 });

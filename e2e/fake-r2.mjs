@@ -13,6 +13,8 @@ const cors = {
   "access-control-allow-headers": "content-type, x-amz-checksum-sha256",
 };
 
+// Loopback only: the bucket has no authentication and answers any origin, so it must not be
+// reachable from the network while the suite runs.
 createServer((req, res) => {
   const key = decodeURIComponent(new URL(req.url, "http://localhost").pathname);
 
@@ -55,4 +57,4 @@ createServer((req, res) => {
   };
   if (req.method === "HEAD") res.writeHead(200, headers).end();
   else res.writeHead(200, headers).end(object.body);
-}).listen(port, () => console.log(`fake R2 listening on ${port}`));
+}).listen(port, "127.0.0.1", () => console.log(`fake R2 listening on 127.0.0.1:${port}`));

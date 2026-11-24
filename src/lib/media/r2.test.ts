@@ -51,6 +51,30 @@ describe("presignUpload", () => {
     }
   });
 
+  it("accepts an R2_ENDPOINT override only for a loopback address, even in production", async () => {
+    const hostFor = async (override: string) => {
+      vi.resetModules();
+      stubR2Env();
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("R2_ENDPOINT", override);
+      const { presignUpload } = await import("./r2");
+      const { url } = await presignUpload({ key: "media/x.png", contentType: "image/png", size: 1, sha256 });
+      const signed = new URL(url);
+      return `${signed.protocol}//${signed.host}`;
+    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    // The e2e server runs a production build against the local fake bucket.
+    expect(await hostFor("http://localhost:3199")).toBe("http://localhost:3199");
+    expect(await hostFor("http://127.0.0.1:3199")).toBe("http://127.0.0.1:3199");
+    expect(warn).not.toHaveBeenCalled();
+    for (const override of ["https://evil.example.com", "http://localhost.evil.example.com", "http://10.0.0.5:9000", "ftp://localhost", "nope"]) {
+      expect(await hostFor(override), override).toBe("https://test-account.r2.cloudflarestorage.com");
+    }
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("R2_ENDPOINT"));
+    warn.mockRestore();
+  });
+
   it("fails with a clear message when R2 is not configured", async () => {
     vi.stubEnv("R2_ACCOUNT_ID", "");
     const { presignUpload } = await import("./r2");

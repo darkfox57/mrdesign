@@ -42,7 +42,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T7a | S4 | Admin blog: list, Tiptap editor, media picker, translations, publish; register post covers in media usage checks | delegated (parallel unit) | done | 51d243b |
 | T7b | S6 | Public blog: index, post page, category page, SEO and JSON-LD, sitemap entries, e2e seed | delegated (parallel unit) | done | 83e5d4c |
 | T7c | S4 | API keys admin and blog ingest API (/api/blog) | delegated (parallel unit) | done | 8d6ef99 |
-| T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | inline | pending | |
+| T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | delegated (context backstop) | done | (T11 commit) |
 | T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | inline | pending | |
 | T13 | S5 | Landing follow-ups from verifier L20: count nested blocks toward the 100-block limit (reference counts top level only), path-normalize image prefix (shared with T12), zod for translationOf and params.id, catch P2025 in setLandingPublication, explicit content:write permission (shared with T12 R1); optimistic concurrency (updatedAt check) for save and publish; handle rejected editor actions in VisualEditor; one hasDraft definition; per-spec landing rows instead of shared seeded rows and whole-table fingerprints; assert each hostile payload in landings-security; explicit message when the translate params are invalid | inline | pending | |
 | T14 | S4 | Limiter design decision from verifier L25: A1 lock flooding (~2000 addresses evict a target's lock; choose: evict-expired-only + refuse new locks, or fail closed, or shared store) and A2 reset residual under partial write faults | inline | pending (needs a design decision) | |
@@ -220,3 +220,17 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - risk and readability were captured.
     - resilience and reliability failed three times with "safeguards flagged this message". That is a model-safety rejection in the reviewer transport, deterministic for this content, not a code or Gentle AI defect.
     - Left open, not retried further. T10 is covered by the independent verifier and the e2e suite.
+- L26 (2026-11-24): T11 done (one delegated writer).
+  - Fixes:
+    - Delete is now object-first, then row: an R2 failure keeps the row and maps to a typed error with a Spanish message. Deleting a missing id answers "La imagen ya no existe".
+    - Alt text: admins edit any image; editors only images they uploaded (`uploadedById` already existed, so no migration). The rule is enforced inside the update.
+    - `R2_ENDPOINT` override accepted only for localhost (NODE_ENV cannot gate it, because e2e runs next start). The fake R2 binds to 127.0.0.1.
+    - Error boundaries use the framework `ErrorInfo` type. The `retry` prop is confirmed stable by the Next 16.3 docs, so finding R4/R3-005 had a wrong premise. The inbox boundary now logs.
+    - Media page is clamped. The upload has a 120s timeout. The unread badge e2e is deterministic.
+  - Skipped:
+    - R1-usage-checks-empty: already resolved by T7 and T8.
+    - The HeadObject checksum note: already documented.
+    - R3-008: outside the writer's surface.
+  - Evidence:
+    - Writer RED: 10 failing tests, then GREEN.
+    - Parent spot check: vitest 246/246, lint 0, typecheck 0, e2e 200 passed with 0 failed. The writer's one worker crash in blog-security did not reproduce.

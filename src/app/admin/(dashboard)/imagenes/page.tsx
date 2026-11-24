@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSession } from "@/lib/auth/session";
 import { listMedia } from "@/lib/media/library";
 import { isR2Configured } from "@/lib/media/r2";
+import { canEditMediaAlt } from "@/lib/media/rules";
 import { AltTextForm, DeleteMediaForm } from "./MediaCardForms";
 import { MediaUploader } from "./MediaUploader";
 
@@ -16,10 +17,10 @@ const formatSize = (bytes: number) => (bytes < 1024 * 1024 ? `${sizeFormat.forma
 
 export default async function MediaLibraryPage({ searchParams }: PageProps<"/admin/imagenes">) {
   // The page checks the session itself: the layout's check does not stop it from rendering.
-  const { role } = await requireSession();
+  const { user, role } = await requireSession();
   const raw = (await searchParams).page;
-  const page = pageSchema.parse(Array.isArray(raw) ? raw[0] : raw);
-  const { items, total, pages } = await listMedia({ page, pageSize: PAGE_SIZE });
+  // listMedia clamps the page: one past the last shows the last.
+  const { items, total, pages, page } = await listMedia({ page: pageSchema.parse(Array.isArray(raw) ? raw[0] : raw), pageSize: PAGE_SIZE });
   const configured = isR2Configured();
 
   return (
@@ -70,7 +71,14 @@ export default async function MediaLibraryPage({ searchParams }: PageProps<"/adm
                 <p className="text-graphite">{formatSize(media.size)}</p>
                 {media.alt ? null : <p className="mt-1 font-medium text-danger">Falta el texto alternativo.</p>}
               </div>
-              <AltTextForm mediaId={media.id} name={media.originalName} alt={media.alt} />
+              {canEditMediaAlt({ id: user.id, role }, media.uploadedById) ? (
+                <AltTextForm mediaId={media.id} name={media.originalName} alt={media.alt} />
+              ) : (
+                <p className="text-sm text-graphite">
+                  {media.alt ? `Texto alternativo: ${media.alt}` : null}
+                  <span className="block text-xs">Solo quien la subió o un administrador puede cambiar el texto alternativo.</span>
+                </p>
+              )}
               {role === "admin" && configured ? <DeleteMediaForm mediaId={media.id} name={media.originalName} /> : null}
             </li>
           ))}

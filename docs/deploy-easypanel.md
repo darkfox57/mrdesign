@@ -39,6 +39,7 @@ The per-account limit does not use the address, so an account still locks after 
 | `CONTACT_SENDER_EMAIL` | Optional. Verified Brevo sender (default `noreply@mrdesign.agency`). |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Cloudflare R2 bucket for the media library. The token needs *Object Read & Write* on that bucket only. Without them the site works and the library shows a "not configured" notice. |
 | `R2_PUBLIC_URL` | Same value as the build argument. |
+| `R2_ENDPOINT` | Do not set it. It is test-only (the e2e fake bucket); only a loopback address is accepted, and any other value is ignored with a warning in the logs. |
 
 ### Bucket CORS
 

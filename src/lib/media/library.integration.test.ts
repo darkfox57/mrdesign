@@ -20,9 +20,10 @@ vi.mock("./r2", () => ({
 
 const { db } = await import("../db");
 const { isLocalDatabase } = await import("../is-local-database");
-const { MediaInUseError, UploadVerificationError, deleteMedia, listMedia, registerUpload, requestUpload } = await import("./library");
+const { MediaInUseError, MediaNotFoundError, MediaStorageError, UploadVerificationError, deleteMedia, listMedia, registerUpload, requestUpload, updateMediaAlt } =
+  await import("./library");
 const { hexToBase64, mediaKey } = await import("./rules");
-const { R2NotConfiguredError, isR2Configured } = await import("./r2");
+const { R2NotConfiguredError, deleteObject, isR2Configured } = await import("./r2");
 
 const runAgainstDatabase = isLocalDatabase(process.env.DATABASE_URL);
 const title = runAgainstDatabase ? "media library" : "media library (skipped: DATABASE_URL is not the local docker database)";
@@ -41,10 +42,10 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     await db.mediaFile.deleteMany({ where: { sha256: { startsWith: run } } });
   });
 
-  async function registerImage(n: number) {
+  async function registerImage(n: number, uploadedById = "user-1") {
     const sha256 = hash(n);
     bucket.set(mediaKey(sha256, "image/png"), { size: 10, contentType: "image/png", checksumSha256: hexToBase64(sha256) });
-    return registerUpload({ sha256, contentType: "image/png", name: `usage-${n}.png` }, "user-1");
+    return registerUpload({ sha256, contentType: "image/png", name: `usage-${n}.png` }, uploadedById);
   }
 
   const createPost = (name: string, data: { coverImageUrl?: string; content?: string }) =>
@@ -201,20 +202,60 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     expect(deleted).toEqual([]);
   });
 
-  it("does nothing when the image no longer exists", async () => {
-    await expect(deleteMedia("missing-media-id")).resolves.toBeUndefined();
+  it("reports an image that no longer exists instead of a silent success", async () => {
+    await expect(deleteMedia("missing-media-id")).rejects.toBeInstanceOf(MediaNotFoundError);
     expect(deleted).toEqual([]);
   });
 
-  it("lists the newest images first, with the page count", async () => {
-    for (const n of [7, 8]) {
-      const sha256 = hash(n);
-      bucket.set(mediaKey(sha256, "image/png"), { size: 10, contentType: "image/png", checksumSha256: hexToBase64(sha256) });
-      await registerUpload({ sha256, contentType: "image/png", name: `list-${n}.png` }, "user-1");
+  it("keeps the row when R2 fails to delete the object", async () => {
+    const media = await registerImage(14);
+    vi.mocked(deleteObject).mockRejectedValueOnce(new Error("503 Service Unavailable"));
+
+    await expect(deleteMedia(media.id)).rejects.toBeInstanceOf(MediaStorageError);
+    expect(await db.mediaFile.findUnique({ where: { id: media.id }, select: { alt: true, originalName: true } })).toEqual({
+      alt: "",
+      originalName: "usage-14.png",
+    });
+  });
+
+  it("lets admins change any image's alt text and editors only the images they uploaded", async () => {
+    const own = await registerImage(15, "editor-1");
+    const others = await registerImage(16, "admin-1");
+    const editor = { id: "editor-1", role: "editor" as const };
+    const admin = { id: "admin-1", role: "admin" as const };
+    const altOf = async (id: string) => (await db.mediaFile.findUnique({ where: { id }, select: { alt: true } }))?.alt;
+
+    expect(await updateMediaAlt(own.id, "Foto propia", editor)).toBe("updated");
+    expect(await altOf(own.id)).toBe("Foto propia");
+
+    expect(await updateMediaAlt(others.id, "Cambio ajeno", editor)).toBe("forbidden");
+    expect(await altOf(others.id)).toBe("");
+
+    expect(await updateMediaAlt(own.id, "Revisado por admin", admin)).toBe("updated");
+    expect(await updateMediaAlt(others.id, "Texto del admin", admin)).toBe("updated");
+    expect(await altOf(own.id)).toBe("Revisado por admin");
+    expect(await altOf(others.id)).toBe("Texto del admin");
+
+    expect(await updateMediaAlt("missing-media-id", "Nada", admin)).toBe("missing");
+  });
+
+  it("lists the newest images first, with the page count, and clamps a page past the last one", async () => {
+    // Explicit, far-future dates: the newest-first order does not depend on two inserts landing in different milliseconds.
+    const names: string[] = [];
+    for (const [offset, n] of [7, 8, 17].entries()) {
+      const media = await registerImage(n);
+      await db.mediaFile.update({ where: { id: media.id }, data: { createdAt: new Date(Date.UTC(2999, 0, 1, 0, 0, offset)) } });
+      names.push(media.originalName);
     }
-    const { items, total, pages } = await listMedia({ page: 1, pageSize: 1 });
-    expect(items).toHaveLength(1);
-    expect(items[0]?.originalName).toBe("list-8.png");
-    expect(pages).toBe(total);
+
+    const first = await listMedia({ page: 1, pageSize: 2 });
+    expect(first.items.map((item) => item.originalName)).toEqual([names[2], names[1]]);
+    expect(first.page).toBe(1);
+    expect(first.pages).toBe(Math.ceil(first.total / 2));
+    expect(first.pages).toBeGreaterThanOrEqual(2);
+
+    const past = await listMedia({ page: 1_000_000_000, pageSize: 2 });
+    expect(past.page).toBe(past.pages);
+    expect(past.items.length).toBeGreaterThan(0);
   });
 });

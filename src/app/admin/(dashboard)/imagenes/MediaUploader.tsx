@@ -7,27 +7,42 @@ import { registerMediaUpload, requestMediaUpload } from "./actions";
 
 type Line = { id: string; name: string; text: string; failed: boolean };
 
+// Long enough for a 5 MB image on a slow connection; a stalled PUT is cancelled instead of blocking the batch.
+// The signed URL lasts 300 seconds anyway.
+const UPLOAD_TIMEOUT_MS = 120_000;
+
 async function sha256Hex(file: File) {
   const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 // Uploads go straight from the browser to R2 with a URL the server signed for this exact file.
-async function uploadOne(file: File): Promise<{ text: string; failed: boolean }> {
+async function uploadOne(file: File, timeoutMs: number): Promise<{ text: string; failed: boolean }> {
   const sha256 = await sha256Hex(file);
   const request = { sha256, size: file.size, contentType: file.type, name: file.name };
   const ticket = await requestMediaUpload(request);
   if (ticket.status === "error") return { text: ticket.error, failed: true };
   if (ticket.status === "existing") return { text: "Ya estaba en la biblioteca.", failed: false };
 
-  const response = await fetch(ticket.url, { method: "PUT", headers: ticket.headers, body: file }).catch(() => null);
-  if (!response?.ok) return { text: "No se pudo subir a R2. Prueba de nuevo.", failed: true };
+  let response: Response;
+  try {
+    response = await fetch(ticket.url, { method: "PUT", headers: ticket.headers, body: file, signal: AbortSignal.timeout(timeoutMs) });
+  } catch (error) {
+    // AbortSignal.timeout rejects with a DOMException named TimeoutError.
+    const timedOut = (error as { name?: unknown } | null)?.name === "TimeoutError";
+    return {
+      text: timedOut ? "La subida tardó demasiado y se canceló. Revisa tu conexión y prueba de nuevo." : "No se pudo subir a R2. Prueba de nuevo.",
+      failed: true,
+    };
+  }
+  if (!response.ok) return { text: "No se pudo subir a R2. Prueba de nuevo.", failed: true };
 
   const result = await registerMediaUpload({ sha256, contentType: file.type, name: file.name });
   return "error" in result ? { text: result.error, failed: true } : { text: "Subida.", failed: false };
 }
 
-export function MediaUploader() {
+// `uploadTimeoutMs` exists for the tests; the page keeps the default.
+export function MediaUploader({ uploadTimeoutMs = UPLOAD_TIMEOUT_MS }: { uploadTimeoutMs?: number }) {
   const router = useRouter();
   const [lines, setLines] = useState<Line[]>([]);
   const [busy, setBusy] = useState(false);
@@ -40,7 +55,7 @@ export function MediaUploader() {
     const batch = files.map((file, index) => ({ id: `${Date.now()}-${index}`, name: file.name, text: "Subiendo…", failed: false }));
     setLines(batch);
     for (const [index, file] of files.entries()) {
-      const outcome = await uploadOne(file).catch(() => ({ text: "No se pudo subir. Prueba de nuevo.", failed: true }));
+      const outcome = await uploadOne(file, uploadTimeoutMs).catch(() => ({ text: "No se pudo subir. Prueba de nuevo.", failed: true }));
       setLines((current) => current.map((line) => (line.id === batch[index].id ? { ...line, ...outcome } : line)));
     }
     setBusy(false);

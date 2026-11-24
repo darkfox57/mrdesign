@@ -82,10 +82,14 @@ test("saves the alternative text and lets an admin delete an unused image", asyn
   await expect(card(page, name)).toHaveCount(0);
 });
 
-test("an editor can upload but cannot delete images", async ({ page, browser }) => {
+test("an editor can upload but cannot delete images, and edits the alt text of their own images only", async ({ page, browser }) => {
   const email = `media-editor-${Date.now()}@mrdesign.test`;
   const password = "media-editor-password-1";
+  const adminImage = `admin-${Date.now()}.png`;
   await logIn(page);
+  await page.goto("/admin/imagenes");
+  await upload(page, { name: adminImage, mimeType: "image/png", buffer: uniquePng("admin") });
+  await expect(card(page, adminImage)).toBeVisible();
   await page.goto("/admin/usuarios");
   const form = page.getByRole("form", { name: "Nuevo usuario" });
   await form.getByLabel("Nombre").fill("Editor Imágenes");
@@ -103,6 +107,13 @@ test("an editor can upload but cannot delete images", async ({ page, browser }) 
   await upload(editor, { name, mimeType: "image/png", buffer: uniquePng("editor") });
   await expect(card(editor, name)).toBeVisible();
   await expect(card(editor, name).getByRole("button", { name: /Eliminar/ })).toHaveCount(0);
+
+  await card(editor, name).getByLabel(`Texto alternativo de ${name}`).fill("Captura subida por el editor");
+  await card(editor, name).getByRole("button", { name: `Guardar texto de ${name}`, exact: true }).click();
+  await expect(card(editor, name).getByRole("status")).toHaveText("Guardado.");
+  // An image the admin uploaded: the editor sees why the alt text cannot be changed.
+  await expect(card(editor, adminImage).getByRole("button", { name: /Guardar texto/ })).toHaveCount(0);
+  await expect(card(editor, adminImage)).toContainText("Solo quien la subió o un administrador puede cambiar el texto alternativo.");
   await context.close();
 });
 

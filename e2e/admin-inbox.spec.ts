@@ -90,15 +90,27 @@ test("names the other project type and the Spanish site", async ({ page }) => {
   );
 });
 
-// Needs the "Mensajes" sidebar entry with showsUnread (the parent adds it to AdminSidebar).
+// Other specs add and delete messages in the same database, so the test never compares the badge
+// with a global count: it reads the badge, changes only its own messages and checks the difference.
 test("the sidebar shows how many messages are unread", async ({ page }) => {
-  await insertMessage(`Conteo ${Date.now()}`);
+  const first = await insertMessage(`Conteo ${Date.now()}`);
   await logIn(page);
   const link = sidebar(page).getByRole("link", { name: /^Mensajes \(\d+ sin leer\)$/ });
   await expect(link).toBeVisible();
-  // The badge is the same count the database has right now.
-  const [{ n }] = await sql('select count(*)::int as n from "ContactSubmission" where "readAt" is null');
-  await expect(link).toHaveAccessibleName(`Mensajes (${n} sin leer)`);
+  const badge = async () => Number((await link.getAttribute("aria-label"))?.match(/\((\d+) sin leer\)/)?.[1]);
+  const before = await badge();
+  expect(before).toBeGreaterThanOrEqual(1);
+
+  const second = await insertMessage(`Conteo ${Date.now()}`);
+  await page.reload();
+  await expect(link).toHaveAccessibleName(`Mensajes (${before + 1} sin leer)`);
+
+  await sql('update "ContactSubmission" set "readAt" = now() where id = any($1)', [[first.id, second.id]]);
+  await page.reload();
+  // Reading both messages leaves one fewer than at the start; with no other unread message the badge disappears.
+  const expected = before - 1;
+  if (expected > 0) await expect(link).toHaveAccessibleName(`Mensajes (${expected} sin leer)`);
+  else await expect(sidebar(page).getByRole("link", { name: "Mensajes", exact: true })).toBeVisible();
 });
 
 test("an admin deletes a message for good", async ({ page }) => {

@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "../db";
 import { R2NotConfiguredError, deleteObject, headObject, isR2Configured, mediaPublicUrl, presignUpload } from "./r2";
-import { MAX_IMAGE_BYTES, hexToBase64, mediaKey, type ImageContentType } from "./rules";
+import { MAX_IMAGE_BYTES, canEditMediaAlt, hexToBase64, mediaKey, type ImageContentType, type MediaActor } from "./rules";
 
 export type UploadRequest = { sha256: string; size: number; contentType: ImageContentType; name: string };
 
@@ -48,12 +48,29 @@ export async function registerUpload(
   });
 }
 
+// A page past the last one shows the last one, so an edited address never reaches the database as a huge offset.
 export async function listMedia({ page, pageSize }: { page: number; pageSize: number }) {
-  const [items, total] = await Promise.all([
-    db.mediaFile.findMany({ orderBy: [{ createdAt: "desc" }, { id: "asc" }], skip: (page - 1) * pageSize, take: pageSize, select: mediaSelect }),
-    db.mediaFile.count(),
-  ]);
-  return { items, total, pages: Math.max(1, Math.ceil(total / pageSize)) };
+  const total = await db.mediaFile.count();
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const current = Math.min(Math.max(1, page), pages);
+  const items = await db.mediaFile.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+    skip: (current - 1) * pageSize,
+    take: pageSize,
+    select: { ...mediaSelect, uploadedById: true },
+  });
+  return { items, total, pages, page: current };
+}
+
+// Admins change any image's alt text; editors only the images they uploaded (see canEditMediaAlt).
+export async function updateMediaAlt(id: string, alt: string, actor: MediaActor): Promise<"updated" | "missing" | "forbidden"> {
+  const media = await db.mediaFile.findUnique({ where: { id }, select: { uploadedById: true } });
+  if (!media) return "missing";
+  if (!canEditMediaAlt(actor, media.uploadedById)) return "forbidden";
+  // The ownership condition is repeated in the write, so the check and the update agree.
+  const where = actor.role === "admin" ? { id } : { id, uploadedById: actor.id };
+  const { count } = await db.mediaFile.updateMany({ where, data: { alt } });
+  return count === 0 ? "missing" : "updated";
 }
 
 // Each check returns labels like "Post: <title>" for the places that use the image URL.
@@ -99,15 +116,27 @@ export class MediaInUseError extends Error {
   }
 }
 
+export class MediaNotFoundError extends Error {}
+
+// R2 could not delete the object (outage, revoked token, network). The row is kept, so deleting again finishes the job.
+export class MediaStorageError extends Error {}
+
 // `usage` exists for the tests; callers keep the default.
 export async function deleteMedia(id: string, usage: MediaUsageCheck = mediaUsage) {
   const media = await db.mediaFile.findUnique({ where: { id }, select: { key: true, url: true } });
-  if (!media) return;
-  // Checked before touching the row: without R2 the object delete would fail after the row is gone.
+  if (!media) throw new MediaNotFoundError("The image no longer exists.");
+  // Checked before touching anything: without R2 the object cannot be deleted.
   if (!isR2Configured()) throw new R2NotConfiguredError("R2 is not configured.");
   const usedIn = await usage(media.url);
   if (usedIn.length > 0) throw new MediaInUseError(usedIn);
-  // Row first: if the object delete fails, a stray object is harmless; a row without an object is a broken image.
-  await db.mediaFile.delete({ where: { id } });
-  await deleteObject(media.key);
+  // Object first, row after. An R2 delete is idempotent, so whichever step fails, the row still
+  // holds the key and deleting again completes it. Row first would lose the row's metadata and
+  // leave an object nothing points to.
+  try {
+    await deleteObject(media.key);
+  } catch (cause) {
+    throw new MediaStorageError(`R2 could not delete ${media.key}.`, { cause });
+  }
+  // deleteMany: a concurrent delete of the same image is not an error.
+  await db.mediaFile.deleteMany({ where: { id } });
 }

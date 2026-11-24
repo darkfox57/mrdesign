@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Role } from "../auth/permissions";
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
@@ -32,6 +33,14 @@ export const altTextSchema = z.object({
 });
 
 export const deleteMediaSchema = z.object({ mediaId: z.string().min(1) });
+
+export type MediaActor = { id: string; role: Role };
+
+// Alt text is site-visible content. Admins change it on any image; editors (media: upload) only on
+// the images they uploaded. An image with no recorded uploader is admin-only.
+export function canEditMediaAlt(actor: MediaActor, uploadedById: string | null) {
+  return actor.role === "admin" || (uploadedById !== null && uploadedById === actor.id);
+}
 
 // The key comes from the content hash: the same image always maps to the same object.
 export function mediaKey(sha256: string, contentType: ImageContentType) {

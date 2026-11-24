@@ -7,7 +7,7 @@ Conventions for the dashboard at `/admin`. It is Spanish only and lives outside 
 | Role | Can |
 | --- | --- |
 | `admin` | Everything, including users, API keys, messages and deleting images |
-| `editor` | Content (read, write, publish) and images (read, upload) |
+| `editor` | Content (read, write, publish) and images (read, upload, and the alt text of the images they uploaded) |
 
 Permissions are defined in `src/lib/auth/permissions.ts`. A role missing from that file grants no access.
 
@@ -23,6 +23,11 @@ Permissions are defined in `src/lib/auth/permissions.ts`. A role missing from th
 6. **Login and password recovery only go through server actions.** The better-auth HTTP endpoints for sign-in, sign-up and reset stay closed in `src/app/api/auth/[...all]/route.ts`, because they would bypass the login rate limit.
 7. **Integration and e2e tests run only against the local Docker database**, never a shared one.
 8. **No `loading.tsx` in dashboard routes.** A loading boundary streams the page, so the status is sent before `requireSession()` redirects or `notFound()` runs: a forbidden or missing page would answer 200 instead of 307 or 404.
+
+## Images
+
+- `/admin/imagenes` is the R2 media library. Admins change the alt text of any image; editors only of the images they uploaded (`canEditMediaAlt` in `src/lib/media/rules.ts`). An image with no recorded uploader is admin-only.
+- Deleting an image deletes the R2 object first and the row after, so a failed R2 call keeps the row and deleting again finishes the job. An image in use by a post or a landing cannot be deleted.
 
 ## Landings
 

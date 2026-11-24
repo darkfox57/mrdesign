@@ -1,9 +1,11 @@
 "use client";
 
+import type { ErrorInfo } from "next/error";
 import { useEffect } from "react";
 
 // Shown when the library cannot load (for example, the database is unreachable).
-export default function MediaLibraryError({ error, retry }: { error: unknown; retry: () => void }) {
+// Props follow next/error ErrorInfo; retry() fetches the segment again.
+export default function MediaLibraryError({ error, retry }: ErrorInfo) {
   useEffect(() => {
     console.error(error);
   }, [error]);
