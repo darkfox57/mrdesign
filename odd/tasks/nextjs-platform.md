@@ -35,7 +35,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T3 | S6, S8 | Design tokens, fonts, atoms/molecules, Logo, header/footer, i18n setup | inline | done | 7599b42 |
 | T4 | S2, S3, S6 | Public pages: home, services/[service], portfolio, contact form + action, legal, SEO; migrate assets; remove legacy static files | inline (writer delegation denied by permission classifier) | done | 9d5cd99 |
 | T5 | S4 | Auth (better-auth), proxy guard, requireSession, login/recover/reset, dashboard shell, users | inline | done | e956888 |
-| T6a | S4 | Admin inbox (mensajes): list, detail, read/unread, delete, reply by email; dashboard counts admin-only (review R1-004) | delegated (parallel unit, writer trigger a) | done | (T6a commit) |
+| T6a | S4 | Admin inbox (mensajes): list, detail, read/unread, delete, reply by email; dashboard counts admin-only (review R1-004) | delegated (parallel unit, writer trigger a) | done | c0a25f9 |
 | T6b | S4 | Admin media library on R2: presigned upload, sha256 dedupe, alt text, admin-only delete | delegated (parallel unit, writer trigger a) | done | 948b6a8 |
 | T7 | S4, S6 | Blog: model, Tiptap editor, public blog routes, API keys and blog ingest API (moved from T6: keys only exist to publish posts) | inline | pending | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | inline | pending | |
@@ -102,3 +102,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     3. The project type label shared a text node with the locale. It is now wrapped in its own block.
   - Evidence: vitest 93/93 (integration tests against the local DB), lint and typecheck clean, e2e 93 passed with 0 failed (admin flows on desktop only). Screenshots at 360 (Pixel 7 at DPR 2.625 gives 945px images, no overflow) and 1280 for the dashboard, inbox and media pages.
   - T6b is 1167 authored lines, above the 400-line heuristic: it is one ported unit with code, tests and e2e together, so it was not split.
+- L12 (2026-11-23): Independent verifier for T6 (item 2 escalated).
+  - S4 PARTIAL with one blocker, B1: `mediaRemotePatterns` let wildcards from R2_PUBLIC_URL into the next/image allowlist.
+  - Fixed: wildcards, a query or a hash now allow nothing. RED (1 failing) then GREEN; this recheck uses the verifier's exact repro.
+  - Passed: guards, zod validation, presigned upload binding, no client secrets, reply header injection.
+  - The verifier's replay probe is now the regression test `e2e/admin-actions.spec.ts`: editor and anonymous replays of the inbox and media actions change nothing, and the admin replay does.
+  - Evidence: vitest 86 passed and 8 skipped (integration tests skip without DATABASE_URL), lint and typecheck clean, e2e 95 passed with 0 failed.
+  - Open, needs a real bucket: whether R2 returns ChecksumSHA256 on HeadObject. Editors can edit alt text (consistent with media:upload). The verifier's scratch was removed.

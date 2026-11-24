@@ -8,6 +8,9 @@ export function mediaRemotePatterns(publicUrl: string | undefined): RemotePatter
   const url = new URL(publicUrl);
   const protocol = url.protocol.slice(0, -1);
   if (protocol !== "http" && protocol !== "https") return [];
+  // next/image treats "*" as a wildcard, so a crafted value could open the optimizer to any host or path.
+  // A query or hash would also break the stored URLs, which append the key to this base.
+  if (url.hostname.includes("*") || url.pathname.includes("*") || url.search || url.hash) return [];
 
   // Same trailing slash handling as publicMediaUrl in rules.ts, so the pattern matches the stored URLs.
   const base = url.pathname.replace(/\/+$/, "");

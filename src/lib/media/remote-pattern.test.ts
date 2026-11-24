@@ -17,6 +17,18 @@ describe("mediaRemotePatterns", () => {
     ]);
   });
 
+  it("allows nothing when the public URL carries wildcards, a query or a hash", () => {
+    for (const value of [
+      "https://**",
+      "https://*.example.com",
+      "https://cdn.example.com/**",
+      "https://cdn.example.com/a?x=1",
+      "https://cdn.example.com/#y",
+    ]) {
+      expect(mediaRemotePatterns(value), value).toEqual([]);
+    }
+  });
+
   it("allows no remote image when the public URL is missing or not http(s)", () => {
     for (const value of [undefined, "", "not a url", "ftp://img.example.com"]) {
       expect(mediaRemotePatterns(value), String(value)).toEqual([]);
