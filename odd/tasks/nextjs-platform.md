@@ -449,3 +449,9 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - Evidence:
     - vitest 390/390 against the local DB; typecheck 0; lint 0.
     - e2e: 212 passed and 2 failed, both worker crashes (0xC0000409) that passed on rerun.
+- L49 (2026-11-24, user): "ya esta deployado y funcionando en produccion con todas las variables configuradas".
+  - Public smoke check of https://mrdesign.com.co (GET only, no credentials):
+    - These pages answer 200: /, /en, /servicios, /blog, /sitemap.xml, /robots.txt.
+    - /admin answers 307 to /admin/login?next=%2Fadmin; /es answers 307 to /; an unknown landing answers 404.
+    - HSTS, nosniff, X-Frame-Options DENY and Referrer-Policy are sent.
+    - The page title says "Mr. Design", and the canonical URL and sitemap use mrdesign.com.co.
