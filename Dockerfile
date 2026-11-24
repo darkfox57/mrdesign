@@ -26,6 +26,10 @@ COPY . .
 # sitemap is fixed here. Pass it as a build argument in Easypanel.
 ARG SITE_URL="https://mrdesign.agency"
 ENV SITE_URL=${SITE_URL}
+# next.config.ts builds the next/image allowlist from the bucket's public URL at build time.
+# Without it the site still works, but no image from the media library loads.
+ARG R2_PUBLIC_URL=""
+ENV R2_PUBLIC_URL=${R2_PUBLIC_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build

@@ -44,11 +44,11 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T7c | S4 | API keys admin and blog ingest API (/api/blog) | delegated (parallel unit) | done | 8d6ef99 |
 | T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | inline | pending | |
 | T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | inline | pending | |
-| T13 | S5 | Landing follow-ups from verifier L20: count nested blocks toward the 100-block limit (reference counts top level only), path-normalize image prefix (shared with T12), zod for translationOf and params.id, catch P2025 in setLandingPublication, explicit content:write permission (shared with T12 R1) | inline | pending | |
+| T13 | S5 | Landing follow-ups from verifier L20: count nested blocks toward the 100-block limit (reference counts top level only), path-normalize image prefix (shared with T12), zod for translationOf and params.id, catch P2025 in setLandingPublication, explicit content:write permission (shared with T12 R1); optimistic concurrency (updatedAt check) for save and publish; handle rejected editor actions in VisualEditor; one hasDraft definition; per-spec landing rows instead of shared seeded rows and whole-table fingerprints; assert each hostile payload in landings-security; explicit message when the translate params are invalid | inline | pending | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | inline | pending | |
 | T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
 | T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | 06435e2, 22f255d |
-| T9 | S8 | Dockerfile, standalone build, deploy doc, full e2e pass | inline | pending | |
+| T9 | S8 | Dockerfile (R2_PUBLIC_URL build arg), deploy doc, standalone smoke behind proxy headers, full e2e pass | inline | done | (T9 commit) |
 
 ## Log
 
@@ -171,3 +171,19 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - Also checked: XSS and JSON-LD escaping; invalid stored blocks answer 404; draft, future-dated and cross-locale handling; hreflang; sitemap. Anonymous, forged-cookie and `/admin/login` replays change nothing.
   - The verifier's probe spec is now `e2e/landings-security.spec.ts`, 6/6 in the repo; lint and typecheck clean. The verifier's scratch was removed.
   - Notes go to T13. The block limit counting top-level blocks only matches datilab-web.
+- L21 (2026-11-24): Native review of T8.
+  - The slice from d863737 (3626 lines) failed preflight with lens_context_budget_exceeded (not_started), so the budget sits between 2900 and 3600 lines.
+  - Reduced to 06435e2..f130af0 (admin editor and security e2e, 19 files, 1590 lines), consent granted, lenses risk and reliability.
+  - A capture slot was skipped by my shell loop. The bound STATUS re-offered it and it was run once.
+  - Result: approved, acknowledged, authority burned (lineage review-51e767d1a2d4be9c). 11 warnings and 6 suggestions, non-blocking, now in T13 (the main one: publish has no lost-update protection).
+  - Coverage: d863737 and 06435e2 (model, blocks, validation, public route) have no native review; the independent verifier covered them (L20). The reviewed boundary is now f130af0.
+- L22 (2026-11-24, user): "sigue con t9 cuando termine t8". T9 done.
+  - Dockerfile gains the `R2_PUBLIC_URL` build argument: next.config derives the image allowlist at build time.
+  - New `docs/deploy-easypanel.md` (English): service settings, build arguments, runtime variables, bucket CORS, migrations, first admin, local build, an antivirus TLS note, and what was verified. CLAUDE.md links it.
+  - `docker build` locally fails at `apk add` with "TLS: server certificate not trusted": this machine's antivirus intercepts HTTPS, the same issue datilab-web documents. It is not a Dockerfile defect, and the parent did not change the user's antivirus settings.
+  - Verified instead: the standalone server assembled like the image and run with `node server.js` and HOSTNAME=0.0.0.0 behind Easypanel-style proxy headers.
+    - Status codes: /, /en, services, portfolio, contact, blog and the sitemap answer 200; /es gives 307 to /; an unknown landing gives 404; /admin gives 307 to the login; POST /api/blog without a key gives 401.
+    - Headers: Location headers are relative, the canonical uses the public domain, and HSTS, X-Frame-Options and Permissions-Policy are sent.
+  - `npm run build` exits 0. BetterAuthError "default secret" lines are logged harmlessly during page data collection (documented).
+  - Final full check: vitest 227/227, lint 0, typecheck 0, e2e 192 passed with 0 failed (88 skipped: admin flows run on desktop only).
+  - Still needed on the user side: a real Docker build in Easypanel, BETTER_AUTH_SECRET, the R2 and Brevo keys, and testing HeadObject ChecksumSHA256 on a real bucket.
