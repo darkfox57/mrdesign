@@ -102,3 +102,21 @@ model Verification {
   @@map("verification")
 }
 
+
+// Images uploaded from the dashboard to Cloudflare R2 (src/lib/media). The object key and the
+// row come from the content hash, so the same image is stored once.
+model MediaFile {
+  id           String   @id @default(cuid())
+  sha256       String   @unique
+  key          String   @unique
+  url          String
+  contentType  String
+  size         Int
+  originalName String
+  // Required before an image is used on the site; empty until someone writes it.
+  alt          String   @default("")
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
