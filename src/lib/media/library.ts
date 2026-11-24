@@ -71,9 +71,22 @@ const postUsage: MediaUsageCheck = async (url) => {
   return posts.map((post) => `Post: ${post.title}`);
 };
 
+// Landings that show the image in their published blocks or in their unsaved draft, at any depth
+// (a TextImage inside Columns too). The blocks are JSON, where a library URL (https, hex key, no
+// quotes or backslashes) is stored as it is, so a substring match on the JSON text finds it.
+// strpos, not LIKE: "%" or "_" in a URL would act as wildcards.
+const landingUsage: MediaUsageCheck = async (url) => {
+  const landings = await db.$queryRaw<{ title: string }[]>`
+    select title from "Landing"
+    where strpos(coalesce(blocks::text, ''), ${url}) > 0 or strpos(coalesce("draftBlocks"::text, ''), ${url}) > 0
+    order by title asc, id asc
+    limit 5`;
+  return landings.map((landing) => `Landing: ${landing.title}`);
+};
+
 // Hook point: every module that stores image URLs adds its check here, so an image it uses
-// cannot be deleted. The landing builder adds its own when it ships.
-const usageChecks: MediaUsageCheck[] = [postUsage];
+// cannot be deleted.
+const usageChecks: MediaUsageCheck[] = [postUsage, landingUsage];
 
 export async function mediaUsage(url: string) {
   const results = await Promise.all(usageChecks.map((check) => check(url)));

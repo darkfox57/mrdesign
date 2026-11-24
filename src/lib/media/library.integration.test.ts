@@ -37,6 +37,7 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
 
   afterAll(async () => {
     await db.post.deleteMany({ where: { slug: { startsWith: `media-usage-${run}` } } });
+    await db.landing.deleteMany({ where: { slug: { startsWith: `media-usage-${run}` } } });
     await db.mediaFile.deleteMany({ where: { sha256: { startsWith: run } } });
   });
 
@@ -150,6 +151,43 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     await deleteMedia(inline.id);
     expect(await db.mediaFile.count({ where: { id: { in: [cover.id, inline.id] } } })).toBe(0);
     expect(deleted).toEqual([mediaKey(hash(10), "image/png"), mediaKey(hash(11), "image/png")]);
+  });
+
+  it("refuses to delete an image a landing uses in its published blocks or its draft, nested blocks included", async () => {
+    const published = await registerImage(12);
+    const drafted = await registerImage(13);
+    const textImage = (imageUrl: string) => ({
+      type: "TextImage",
+      props: { id: "ti", title: "T", text: "", imageUrl, imageAlt: "A", imageSide: "right", background: "paper" },
+    });
+    const columns = (imageUrl: string) => ({
+      type: "Columns",
+      props: { id: "cols", ratio: "1-1", background: "paper", left: [textImage(imageUrl)], right: [] },
+    });
+    const landings = await Promise.all([
+      db.landing.create({
+        data: { locale: "es", slug: `media-usage-${run}-publicada`, title: `Landing publicada ${run}`, blocks: { root: { props: {} }, content: [textImage(published.url)] } },
+      }),
+      db.landing.create({
+        data: { locale: "es", slug: `media-usage-${run}-borrador`, title: `Landing borrador ${run}`, draftBlocks: { root: { props: {} }, content: [columns(drafted.url)] } },
+      }),
+    ]);
+
+    for (const [media, landing] of [
+      [published, landings[0]],
+      [drafted, landings[1]],
+    ] as const) {
+      const attempt = deleteMedia(media.id);
+      await expect(attempt).rejects.toBeInstanceOf(MediaInUseError);
+      await expect(attempt).rejects.toMatchObject({ usedIn: [`Landing: ${landing.title}`] });
+      expect(await db.mediaFile.count({ where: { id: media.id } })).toBe(1);
+    }
+    expect(deleted).toEqual([]);
+
+    await db.landing.deleteMany({ where: { id: { in: landings.map((landing) => landing.id) } } });
+    await deleteMedia(published.id);
+    await deleteMedia(drafted.id);
+    expect(await db.mediaFile.count({ where: { id: { in: [published.id, drafted.id] } } })).toBe(0);
   });
 
   it("keeps the row when R2 is not configured, so no row ever outlives its object", async () => {

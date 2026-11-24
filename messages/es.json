@@ -187,5 +187,8 @@
       "rateLimited": "Llegaron varios mensajes desde tu conexión. Prueba de nuevo en un rato.",
       "generic": "El mensaje no se pudo enviar. Prueba de nuevo o escríbeme por email."
     }
+  },
+  "Landing": {
+    "breadcrumbHome": "Inicio"
   }
 }

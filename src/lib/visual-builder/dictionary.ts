@@ -1,0 +1,36 @@
+import type { Puck } from "@puckeditor/core";
+import type { ComponentProps } from "react";
+
+// Spanish labels for Puck's own interface (its default dictionary is English).
+export const builderDictionary: NonNullable<ComponentProps<typeof Puck>["dictionary"]> = {
+  "header-publish": "Guardar borrador",
+  "header-undo": "Deshacer",
+  "header-redo": "Rehacer",
+  "header-toggle-leftsidebar": "Mostrar u ocultar bloques",
+  "header-toggle-rightsidebar": "Mostrar u ocultar campos",
+  "header-toggle-menubar": "Menú",
+  "action-selectparent": "Seleccionar el bloque que lo contiene",
+  "action-drag": "Arrastrar para mover",
+  "action-duplicate": "Duplicar",
+  "action-delete": "Borrar",
+  "label-page": "Página",
+  "label-component": "Bloque",
+  "outline-empty": "Sin bloques",
+  "outline-item-collapse": "Contraer",
+  "outline-item-expand": "Expandir",
+  "outline-header-title": "Esquema",
+  "outline-header-collapseall": "Contraer todo",
+  "outline-item-duplicate": "Duplicar",
+  "outline-item-delete": "Borrar",
+  "drawer-category-collapse": "Contraer {title}",
+  "drawer-category-expand": "Expandir {title}",
+  "drawer-category-other": "Otros",
+  "field-arrayitem-summary": "Elemento {index}",
+  "field-arrayitem-duplicate": "Duplicar",
+  "field-arrayitem-delete": "Borrar",
+  "plugin-blocks": "Bloques",
+  "plugin-outline": "Esquema",
+  "plugin-fields": "Campos",
+  "viewport-switch": "Ver en {label}",
+  "loader-loading": "cargando",
+};

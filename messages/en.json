@@ -187,5 +187,8 @@
       "rateLimited": "Several messages came from your connection. Try again in a while.",
       "generic": "The message could not be sent. Try again or email me."
     }
+  },
+  "Landing": {
+    "breadcrumbHome": "Home"
   }
 }
