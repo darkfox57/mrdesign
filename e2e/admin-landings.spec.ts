@@ -4,19 +4,39 @@ import { E2E_ADMIN, E2E_DATABASE_URL } from "./test-env";
 
 test.skip(({ viewport }) => (viewport?.width ?? 0) < 1024, "Admin flows run once, on desktop");
 
-async function query<T>(sql: string): Promise<T[]> {
+async function query<T>(sql: string, values: unknown[] = []): Promise<T[]> {
   const client = new Client({ connectionString: E2E_DATABASE_URL });
   await client.connect();
   try {
-    return (await client.query(sql)).rows as T[];
+    return (await client.query(sql, values)).rows as T[];
   } finally {
     await client.end();
   }
 }
 
-// Back to what scripts/seed-e2e-landings.ts leaves, so the public specs never see it published.
-const resetDraft = () => query(`update "Landing" set status = 'DRAFT', "publishedAt" = null where "translationKey" = 'e2e-landing-draft'`);
-test.afterEach(resetDraft);
+// The tests that publish work on landings of their own; the seeded ones are only read here. The
+// slug never starts with "e2e-": the landing seed deletes those.
+const RUN = `spec-list-${Date.now()}`;
+let counter = 0;
+const PAGE = JSON.stringify({
+  root: { props: {} },
+  content: [{ type: "Button", props: { id: "b", label: "Hablemos", href: "/contacto", variant: "primary", align: "left" } }],
+});
+
+async function ownLanding({ withPage = true } = {}) {
+  counter += 1;
+  const id = `${RUN}-${counter}`;
+  await query(
+    `insert into "Landing" (id, locale, "translationKey", slug, title, blocks, status, "updatedAt")
+     values ($1, 'es', $1, $1, $2, $3::jsonb, 'DRAFT', now())`,
+    [id, `Lista ${id}`, withPage ? PAGE : null],
+  );
+  return { id, slug: id, title: `Lista ${id}` };
+}
+
+const statusOf = async (id: string) => (await query<{ status: string }>(`select status from "Landing" where id = $1`, [id]))[0]?.status;
+
+test.afterEach(() => query(`delete from "Landing" where id like $1`, [`${RUN}-%`]));
 
 async function logIn(page: Page) {
   await page.goto("/admin/login");
@@ -50,42 +70,49 @@ test("lists the landings with their language, status and public address", async 
 });
 
 test("publishes a landing with blocks from the list and unpublishes it", async ({ page }) => {
+  const landing = await ownLanding();
   await logIn(page);
   await page.goto("/admin/landings");
-  expect((await page.request.get("/soluciones/e2e-borrador", { maxRedirects: 0 })).status()).toBe(404);
+  expect((await page.request.get(`/soluciones/${landing.slug}`, { maxRedirects: 0 })).status()).toBe(404);
 
-  await page.getByRole("button", { name: "Publicar E2E Landing borrador", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Despublicar E2E Landing borrador", exact: true })).toBeVisible();
-  const [row] = await query<{ status: string; publishedAt: Date | null }>(
-    `select status, "publishedAt" from "Landing" where "translationKey" = 'e2e-landing-draft'`,
-  );
+  await page.getByRole("button", { name: `Publicar ${landing.title}`, exact: true }).click();
+  await expect(page.getByRole("button", { name: `Despublicar ${landing.title}`, exact: true })).toBeVisible();
+  const [row] = await query<{ status: string; publishedAt: Date | null }>(`select status, "publishedAt" from "Landing" where id = $1`, [landing.id]);
   expect(row.status).toBe("PUBLISHED");
   expect(row.publishedAt).not.toBeNull();
-  expect((await page.request.get("/soluciones/e2e-borrador")).status()).toBe(200);
+  expect((await page.request.get(`/soluciones/${landing.slug}`)).status()).toBe(200);
 
-  await page.getByRole("button", { name: "Despublicar E2E Landing borrador", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Publicar E2E Landing borrador", exact: true })).toBeVisible();
-  expect((await page.request.get("/soluciones/e2e-borrador", { maxRedirects: 0 })).status()).toBe(404);
+  await page.getByRole("button", { name: `Despublicar ${landing.title}`, exact: true }).click();
+  await expect(page.getByRole("button", { name: `Publicar ${landing.title}`, exact: true })).toBeVisible();
+  expect((await page.request.get(`/soluciones/${landing.slug}`, { maxRedirects: 0 })).status()).toBe(404);
 });
 
 test("refuses to publish a landing that has no page yet", async ({ page }) => {
+  const landing = await ownLanding({ withPage: false });
   await logIn(page);
   await page.goto("/admin/landings");
-  await page.getByRole("button", { name: "Publicar E2E Landing sin página", exact: true }).click();
+  await page.getByRole("button", { name: `Publicar ${landing.title}`, exact: true }).click();
   // Next.js also renders an empty route announcer with role="alert".
   await expect(
     page.getByRole("alert").filter({ hasText: "Esta landing todavía no tiene página. Ármala y publícala desde el editor visual." }),
   ).toBeVisible();
-  const [row] = await query<{ status: string }>(`select status from "Landing" where "translationKey" = 'e2e-landing-empty'`);
-  expect(row.status).toBe("DRAFT");
+  expect(await statusOf(landing.id)).toBe("DRAFT");
 });
 
-test("an anonymous replay of the publish action changes nothing, and an editor can publish", async ({ page, browser, playwright }) => {
+test("answers that a landing deleted after the list loaded no longer exists", async ({ page }) => {
+  const landing = await ownLanding();
   await logIn(page);
   await page.goto("/admin/landings");
+  await query(`delete from "Landing" where id = $1`, [landing.id]);
+  await page.getByRole("button", { name: `Publicar ${landing.title}`, exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "La landing ya no existe. Recarga la página." })).toBeVisible();
+});
 
-  // Capture the admin's publish request without letting it through, then replay it with no session.
-  let captured: { url: string; headers: Record<string, string>; body: Buffer } | null = null;
+type Captured = { url: string; headers: Record<string, string>; body: Buffer };
+
+// Captures the publish request without letting it through, so the test can replay it.
+async function capturePublish(page: Page, title: string): Promise<Captured> {
+  let captured: Captured | null = null;
   await page.route("**/admin/**", async (route) => {
     const request = route.request();
     const headers = await request.allHeaders();
@@ -97,18 +124,28 @@ test("an anonymous replay of the publish action changes nothing, and an editor c
     }
     await route.continue();
   });
-  await page.getByRole("button", { name: "Publicar E2E Landing borrador", exact: true }).click();
+  await page.getByRole("button", { name: `Publicar ${title}`, exact: true }).click();
   await expect.poll(() => captured !== null).toBe(true);
   await page.unrouteAll({ behavior: "ignoreErrors" });
-  const anonymous = await playwright.request.newContext({ baseURL: new URL(page.url()).origin });
-  const action = captured!;
-  await anonymous.post(action.url, { headers: action.headers, data: action.body, maxRedirects: 0 });
-  await anonymous.dispose();
-  const status = async () =>
-    (await query<{ status: string }>(`select status from "Landing" where "translationKey" = 'e2e-landing-draft'`))[0].status;
-  expect(await status()).toBe("DRAFT");
+  return captured!;
+}
 
-  // Editors hold content:publish, like admins.
+test("an anonymous replay of the publish action changes nothing, and an editor can publish", async ({ page, browser, playwright }) => {
+  const landing = await ownLanding();
+  await logIn(page);
+  await page.goto("/admin/landings");
+
+  const action = await capturePublish(page, landing.title);
+  const anonymous = await playwright.request.newContext({ baseURL: new URL(page.url()).origin });
+  const replay = await anonymous.post(action.url, { headers: action.headers, data: action.body, maxRedirects: 0 });
+  // The proxy turns a cookie-less POST into a GET of the login page.
+  expect(replay.status()).toBe(303);
+  expect(replay.headers().location).toContain("/admin/login");
+  await anonymous.dispose();
+  expect(await statusOf(landing.id)).toBe("DRAFT");
+
+  // Editors hold content:publish, like admins. A role without it is turned away by
+  // requirePermission (src/lib/auth/require-permission.roles.test.ts); no configured role lacks it.
   const email = `landing-editor-${Date.now()}@mrdesign.test`;
   await page.goto("/admin/usuarios");
   const form = page.getByRole("form", { name: "Nuevo usuario" });
@@ -127,12 +164,29 @@ test("an anonymous replay of the publish action changes nothing, and an editor c
     await editor.getByRole("button", { name: "Ingresar" }).click();
     await expect(editor).toHaveURL(/\/admin$/);
     await editor.goto("/admin/landings");
-    await editor.getByRole("button", { name: "Publicar E2E Landing borrador", exact: true }).click();
-    await expect(editor.getByRole("button", { name: "Despublicar E2E Landing borrador", exact: true })).toBeVisible();
-    expect(await status()).toBe("PUBLISHED");
+    await editor.getByRole("button", { name: `Publicar ${landing.title}`, exact: true }).click();
+    await expect(editor.getByRole("button", { name: `Despublicar ${landing.title}`, exact: true })).toBeVisible();
+    expect(await statusOf(landing.id)).toBe("PUBLISHED");
   } finally {
     await context.close();
   }
+});
+
+test("an archived landing is not published or unpublished, even by a replayed request", async ({ page }) => {
+  const landing = await ownLanding();
+  await logIn(page);
+  await page.goto("/admin/landings");
+  const action = await capturePublish(page, landing.title);
+  await query(`update "Landing" set status = 'ARCHIVED' where id = $1`, [landing.id]);
+
+  // The list offers no publish button for it.
+  await page.reload();
+  await expect(page.getByRole("button", { name: `Publicar ${landing.title}`, exact: true })).toHaveCount(0);
+  // The admin's own request, replayed with the session, gets the same answer.
+  const replay = await page.request.post(action.url, { headers: action.headers, data: action.body, maxRedirects: 0 });
+  expect(replay.status()).toBe(200);
+  expect(await replay.text()).toContain("Esta landing está archivada: no se publica ni se despublica desde la lista.");
+  expect(await statusOf(landing.id)).toBe("ARCHIVED");
 });
 
 test("the landings list and the new landing form need a session", async ({ request }) => {

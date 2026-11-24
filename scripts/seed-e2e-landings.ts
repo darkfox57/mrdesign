@@ -1,8 +1,8 @@
 // Landing builder fixtures for the e2e tests: a published landing with every block type and its
-// English translation, a published landing with no translation, a draft with blocks, a draft the
-// visual builder spec edits, and a draft with no page yet. Every stored page passes
-// validateBuilderData. Idempotent (each run resets them), and refuses to run against anything but
-// the local docker database.
+// English translation, a published landing with no translation, a draft with blocks, and a draft
+// with no page yet. The specs only read them: a spec that edits, publishes or deletes a landing
+// creates its own row. Every stored page passes validateBuilderData. Idempotent (each run resets
+// them), and refuses to run against anything but the local docker database.
 import "dotenv/config";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
@@ -99,10 +99,6 @@ const pages: Record<string, Block[]> = {
   ],
   solo: [hero("hero", "Sitios WordPress que se administran solos", "Solo en español.", "Cuéntame tu proyecto")],
   draft: [hero("hero", "Landing en borrador", "Todavía no se publica.", "Cuéntame tu proyecto")],
-  editable: [
-    hero("hero", "Landing para el editor visual", "La edita el e2e del editor.", "Cuéntame tu proyecto"),
-    faq("faq", "Preguntas", [["¿Se guarda?", "Como borrador."]]),
-  ],
 };
 
 function page(content: Block[]): Prisma.InputJsonValue {
@@ -127,8 +123,6 @@ const fixtures: Fixture[] = [
   { locale: "en", slug: "e2e-builder-en", title: "E2E Landing with blocks", translationKey: "e2e-builder", published: true, blocks: pages.en },
   { locale: "es", slug: "e2e-solo-espanol", title: "E2E Landing solo en español", translationKey: "e2e-landing-solo", published: true, blocks: pages.solo },
   { locale: "es", slug: "e2e-borrador", title: "E2E Landing borrador", translationKey: "e2e-landing-draft", published: false, blocks: pages.draft },
-  // Edited, saved and published by e2e/admin-visual-builder.spec.ts, which restores it after each test.
-  { locale: "es", slug: "e2e-landing", title: "E2E Landing", translationKey: "e2e-landing", published: false, blocks: pages.editable },
   // Created in the dashboard and never built: it cannot be published from the list.
   { locale: "es", slug: "e2e-sin-pagina", title: "E2E Landing sin página", translationKey: "e2e-landing-empty", published: false, blocks: null },
 ];
@@ -138,8 +132,8 @@ async function main() {
     throw new Error("seed-e2e-landings only runs against the local docker database.");
   }
 
-  // Landings the dashboard specs create (new ones, translations) are removed; the fixtures are
-  // reset below, including any slug or title a test changed.
+  // Any other "e2e-" landing (an older fixture, a leftover) is removed; the fixtures are reset
+  // below, including any slug or title a test changed.
   const fixtureVersions = fixtures.map(({ translationKey, locale }) => ({ translationKey, locale }));
   await db.landing.deleteMany({
     where: {
