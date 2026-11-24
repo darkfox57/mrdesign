@@ -20,6 +20,12 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - "API del blog: el endpoint de ingesta no tiene límite de pedidos por key, y revocar una key que ya estaba revocada no avisa nada."
   - Assumption A10: the ingest limit is 60 requests per hour per API key. Over the limit the endpoint answers 429 with Retry-After, before the body is read. The user can change the number.
 
+- S10. (2026-11-24) "Implement this design in this codebase: https://claude.ai/code/artifact/03bd4bd4-736d-4adb-a062-c046461ca82c Read the design's files from that link. Match how it looks, using this codebase's own components and conventions."
+  - The design is the canvas "MR Design — Homepage": Main.dc.html (desktop, interactive, 1440), Mobile.dc.html (390), Spec.dc.html (motion, accessibility and pending content), and mr.css.
+  - Assumption A11: the design's tokens (paper #EFEBE3, ink #151513, orange #FF5A1F / #B83A0B on paper; Bricolage Grotesque, Inter, JetBrains Mono) replace the site-wide theme, so header, footer and other pages inherit them. Only the homepage gets the new sections.
+  - Assumption A12: motion uses GSAP 3 + ScrollTrigger from npm, as the Spec says. Without it, or with reduced motion, the page is complete and static.
+  - Assumption A13: content the Spec lists as pending (client authorizations, metrics, founder data) stays as the design shows it, with visible placeholders. Brand name "Mr. Design" (L48).
+
 ### Assumptions (to confirm)
 
 - A1. Keep the "Mr. Design" brand and existing logo; positioning changes from marketing agency to development services.
@@ -54,6 +60,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T15 | S4 | T12 follow-ups (L30): savePost and ingest keep a generic P2002 fallback (returning the typed values) for unique errors that match no known index; order-independent field match in violatesUnique; drop the double P2002 guard in createLanding; dashboard home post counts behind content:read and stale comment; document the http-cover message; exercise the real transaction in the term clash test; T13 notes: `?idioma=` without `traducir` shows the plain form silently, landings-security public-route rows use a fixed prefix; investigate the intermittent ECONNRESET in e2e/admin-actions (editor inbox replay, full-suite only, likely keep-alive reuse) | delegated (context backstop) | done | 56baea8 |
 | T16 | S4 | Throttle follow-ups from review L38: count both keys in one transaction; refund the counted attempt when the password check fails for infrastructure (non-APIError); the success refund must never release an address lock already reached; a failed success write must not leave a valid login locked; guard rows[0] inside the fail-closed path; one key-derivation helper shared with tests; rename failures to attempts | delegated (context backstop) | done | (T16 commit) |
 | T17 | S4, S9 | Pending fixes from L17/L29: (a) media delete vs save race: an image cannot be deleted while a post or landing save that references it commits, and a save cannot reference an image whose delete committed; (b) ingest API: per-key request limit with 429 + Retry-After; revoking a key that is missing or already revoked tells the admin instead of silently succeeding | delegated, two parallel writers (context backstop + two independent units with disjoint surfaces) | done | (T17 commits) |
+| T18 | S6, S10 | Implement the homepage design (artifact 03bd4bd4): site-wide tokens and fonts, header/footer restyle, new homepage sections with GSAP motion, es/en strings, tests | delegated (context backstop) | in progress | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | delegated (context backstop) | done | 0111320 |
 | T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
 | T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | 06435e2, 22f255d |
@@ -505,3 +512,4 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - Suggestions:
     - Unauthenticated ingest requests are not throttled; they are 401s before the body is read.
     - Retry-After is always the full window.
+- L54 (2026-11-24, user): asked to implement the homepage design from the artifact (S10 quotes the request). T18 was opened and delegated to one writer (context backstop).
