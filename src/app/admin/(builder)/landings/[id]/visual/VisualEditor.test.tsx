@@ -51,6 +51,20 @@ describe("VisualEditor", () => {
     vi.resetAllMocks();
   });
 
+  it("ignores a second save while the first one is pending, so a double click does not report a false conflict", async () => {
+    let finish: (value: { version: string }) => void = () => {};
+    actions.saveLandingDraft.mockImplementation(() => new Promise((resolve) => (finish = resolve)));
+    render(<VisualEditor {...props} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Guardar borrador" }));
+      fireEvent.click(screen.getByRole("button", { name: "Guardar borrador" }));
+    });
+    await act(async () => finish({ version: "2026-11-24T10:00:00.001Z" }));
+
+    expect(actions.saveLandingDraft).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("shows an error and re-enables the buttons when the save action rejects", async () => {
     actions.saveLandingDraft.mockRejectedValueOnce(new TypeError("Failed to fetch"));
     render(<VisualEditor {...props} />);

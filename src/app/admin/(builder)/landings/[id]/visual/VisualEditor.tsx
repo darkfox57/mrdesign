@@ -107,19 +107,29 @@ export function VisualEditor({
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
 
-  const run = (action: (version: string) => Promise<BuilderActionState>, onSuccess: () => void) =>
+  // One write at a time. Puck's own save button stays enabled while a save runs, and `pending`
+  // updates too late for a double click: the second call would send the same version and report
+  // a false conflict. The ref is set synchronously, before the transition starts.
+  const inFlight = useRef(false);
+
+  const run = (action: (version: string) => Promise<BuilderActionState>, onSuccess: () => void) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     startTransition(async () => {
       let outcome: BuilderActionState;
       try {
         outcome = await action(version.current);
       } catch {
         outcome = { errors: [UNREACHABLE] };
+      } finally {
+        inFlight.current = false;
       }
       setResult(outcome);
       if (outcome.errors?.length) return;
       if (outcome.version) version.current = outcome.version;
       onSuccess();
     });
+  };
 
   const save = (data: Data) =>
     run((current) => saveLandingDraft(landingId, current, data), () => {

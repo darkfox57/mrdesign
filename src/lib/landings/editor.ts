@@ -58,7 +58,7 @@ async function writeIfUnchanged(id: string, version: Date, data: Prisma.LandingU
   try {
     rows = await db.landing.updateManyAndReturn({
       where: { id, updatedAt: version },
-      data: { ...data, updatedAt: new Date(Math.max(Date.now(), version.getTime() + 1)) },
+      data: { ...data, updatedAt: nextVersion(version) },
       select: { updatedAt: true },
     });
   } catch (error) {
@@ -116,15 +116,29 @@ export async function discardDraft(rawId: unknown, rawVersion: unknown): Promise
   return writeIfUnchanged(to.id, to.version, { draftBlocks: Prisma.DbNull });
 }
 
-// Publish or unpublish from the landings list. It changes the status only, so it takes no version;
-// an editor open on the landing sees the change as a newer version on its next save.
+// Every write moves the version strictly forward, even within the same millisecond or with a clock
+// behind the stored value, so no write can hand an old version back to a stale editor.
+function nextVersion(version: Date) {
+  return new Date(Math.max(Date.now(), version.getTime() + 1));
+}
+
+// Publish or unpublish from the landings list. It changes the status only, so the client sends no
+// version; the write still moves the version forward, and an open editor sees a newer version.
 export async function changePublication(id: string, intent: "publish" | "unpublish"): Promise<{ error?: string }> {
-  const landing = await db.landing.findUnique({ where: { id }, select: { status: true, publishedAt: true, blocks: true } });
+  const landing = await db.landing.findUnique({
+    where: { id },
+    select: { status: true, publishedAt: true, blocks: true, updatedAt: true },
+  });
   if (!landing) return { error: LANDING_GONE };
   // The list shows no publish button for an archived landing; a replayed request gets the same answer.
   if (landing.status === "ARCHIVED") return { error: ARCHIVED };
   if (intent === "publish" && !canPublishLanding(landing)) return { error: NO_PAGE };
-  // The row can disappear between the read and the write: no match means it is gone.
-  const { count } = await db.landing.updateMany({ where: { id }, data: publicationChange(intent, landing.publishedAt) });
-  return count === 0 ? { error: LANDING_GONE } : {};
+  // Conditional on the version read above: no match means the row is gone, or another write
+  // changed it in between (then the visitor reloads and decides again).
+  const { count } = await db.landing.updateMany({
+    where: { id, updatedAt: landing.updatedAt },
+    data: { ...publicationChange(intent, landing.publishedAt), updatedAt: nextVersion(landing.updatedAt) },
+  });
+  if (count > 0) return {};
+  return (await db.landing.count({ where: { id } })) === 0 ? { error: LANDING_GONE } : { error: LANDING_CONFLICT };
 }

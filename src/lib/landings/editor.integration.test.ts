@@ -135,10 +135,27 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
       expect((await stored(landing.id)).status).toBe("DRAFT");
     });
 
+    it("moves the version forward even within the same millisecond, so a stale editor cannot overwrite after it", async () => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(landing.updatedAt);
+      try {
+        const saved = await saveDraft(landing.id, version(), ownPage("Editor"), PREFIXES);
+        expect(saved.ok).toBe(true);
+        expect(await changePublication(landing.id, "publish")).toEqual({});
+        // With the clock frozen, a list publish stamped with "now" would put the version back to the
+        // original one, and an editor still holding it would overwrite the first editor's draft.
+        const stale = await saveDraft(landing.id, version(), ownPage("Viejo"), PREFIXES);
+        expect(stale).toEqual({ ok: false, errors: [LANDING_CONFLICT] });
+        expect(label((await stored(landing.id)).draftBlocks)).toBe("Editor");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it("answers that the landing is gone when it disappears between the read and the write", async () => {
       await db.landing.delete({ where: { id: landing.id } });
       // The read still sees the row; the write finds nothing.
-      vi.spyOn(db.landing, "findUnique").mockResolvedValueOnce({ status: "DRAFT", publishedAt: null, blocks: {} } as never);
+      vi.spyOn(db.landing, "findUnique").mockResolvedValueOnce({ status: "DRAFT", publishedAt: null, blocks: {}, updatedAt: new Date() } as never);
       expect(await changePublication(landing.id, "publish")).toEqual({ error: LANDING_GONE });
     });
 
