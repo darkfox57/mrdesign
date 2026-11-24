@@ -400,3 +400,8 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - the IPv6 per-IP cap has no /64 grouping (the account cap still binds)
     - up to 2x the limit can pass around a window edge (L36)
     - a banned user with the correct password costs one extra user lookup (small timing difference)
+- L42 (2026-11-24): T16 native review, lineage review-ecb25908c73ccb0f, base 0cd6644, lenses risk, resilience and reliability. Consent granted by the user.
+  - Risk and reliability: results admitted.
+  - Resilience: the model's safeguards rejected the reviewer twice.
+  - User decision: "Dejarla abierta". The lineage stays open, as in T10.
+  - DB failures, retries and fail-closed are covered by the independent verification (L41).
