@@ -24,6 +24,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 - A6. The contact form adds a required "project type" select (the service ids plus "other") and stores the locale, so the inbox can triage leads.
 - A7. The agency stats from the old site ("8 especialistas", "100+ proyectos") are dropped: they contradict the independent positioning, and no verified numbers exist. The copy is first person singular.
 - A8. Service catalog (src/content/services.ts): custom websites, web and mobile apps, plugins and integrations, WordPress, Shopify, PrestaShop. The deliverables are a draft for the user to review. The legal texts follow Colombian Law 1581 of 2012 and still need the data controller's legal name.
+- A9. Public landing URL: es `/soluciones/[slug]`, en `/solutions/[slug]`, with a single landing kind (no DatiLab SECTOR/USE_CASE split). The legacy form editor and legacy JSON fields are not ported: landings are builder-only.
 - A5. Locales: es (default, unprefixed) + en (`/en`), with next-intl `localePrefix: "as-needed"` (user decision, L3).
 
 ## Tasks
@@ -42,9 +43,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T7b | S6 | Public blog: index, post page, category page, SEO and JSON-LD, sitemap entries, e2e seed | delegated (parallel unit) | done | 83e5d4c |
 | T7c | S4 | API keys admin and blog ingest API (/api/blog) | delegated (parallel unit) | done | 8d6ef99 |
 | T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | inline | pending | |
-| T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check | inline | pending | |
+| T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | inline | pending | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | inline | pending | |
-| T8 | S5 | Landing builder (Puck): model, blocks, editor, draft/publish, public route | inline | pending | |
+| T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | (T8.0 commit) |
+| T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | in progress | |
 | T9 | S8 | Dockerfile, standalone build, deploy doc, full e2e pass | inline | pending | |
 
 ## Log
@@ -148,3 +150,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - `docs/api-blog.md` overstated the sanitizer: relative URLs are kept on purpose.
     - A stale comment in `post-form.ts` still referred to the legacy import.
   - Remaining notes go to T12. The verifier's scratch directories were removed.
+- L17 (2026-11-23): Native review of T7.
+  - The full slice (base 740046d, 5511 lines) failed preflight with lens_context_budget_exceeded (not_started, retry_safe), which was confirmed by capturing the code.
+  - The user chose "Desde 83e5d4c" and granted consent. Scope: 83e5d4c..e821a13 (API keys, ingest, admin blog, security e2e; 34 files, 2899 lines). Lenses: risk, readability, reliability.
+  - Result: approved, acknowledged, authority burned (lineage review-4ea8689b99b52b3b). There are 13 warnings and 9 suggestions, all non-blocking, now folded into T12. The notable one is R1: the content actions authorize on any valid session. That is correct today, because only admin and editor exist and both hold content:write, but it is fragile if a role is added.
+  - Coverage: f1f516e (foundation) and 83e5d4c (public blog) have no native review; they are covered by the independent verifier (L16) and the security e2e. The reviewed boundary is now e821a13.
+- L18 (2026-11-23, user): "sigue con t8".
+  - The parent built the foundation (Landing model, migration `landings`, Puck 0.24.2; typecheck clean). The rest of T8 is one bounded writer: the builder lib, admin editor and public route are one dependent unit, and parent context is past the backstop.

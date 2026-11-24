@@ -214,3 +214,27 @@ model ApiKey {
   createdAt  DateTime  @default(now())
 }
 
+
+// Landing pages built with the visual builder (Puck). One row per locale; versions share a translationKey.
+model Landing {
+  id             String        @id @default(cuid())
+  locale         Locale
+  translationKey String        @default(cuid())
+  slug           String
+  // Internal name shown in the dashboard; the page's visible text lives in the blocks.
+  title          String
+  // Visual builder page: what the public page shows. Validated by src/lib/visual-builder/validate.ts.
+  blocks         Json?
+  // The builder's unpublished draft; publishing copies it to blocks.
+  draftBlocks    Json?
+  seoTitle       String?
+  seoDescription String?
+  status         ContentStatus @default(DRAFT)
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([locale, slug])
+  @@unique([translationKey, locale])
+  @@index([locale, status])
+}
