@@ -45,7 +45,8 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | inline | pending | |
 | T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | inline | pending | |
 | T13 | S5 | Landing follow-ups from verifier L20: count nested blocks toward the 100-block limit (reference counts top level only), path-normalize image prefix (shared with T12), zod for translationOf and params.id, catch P2025 in setLandingPublication, explicit content:write permission (shared with T12 R1); optimistic concurrency (updatedAt check) for save and publish; handle rejected editor actions in VisualEditor; one hasDraft definition; per-spec landing rows instead of shared seeded rows and whole-table fingerprints; assert each hostile payload in landings-security; explicit message when the translate params are invalid | inline | pending | |
-| T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | delegated (context backstop) | done | (T10 commit) |
+| T14 | S4 | Limiter design decision from verifier L25: A1 lock flooding (~2000 addresses evict a target's lock; choose: evict-expired-only + refuse new locks, or fail closed, or shared store) and A2 reset residual under partial write faults | inline | pending (needs a design decision) | |
+| T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | delegated (context backstop) | done | 0111320 |
 | T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
 | T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | 06435e2, 22f255d |
 | T9 | S8 | Dockerfile (R2_PUBLIC_URL build arg), deploy doc, standalone smoke behind proxy headers, full e2e pass | inline | done | (T9 commit) |
@@ -204,3 +205,18 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - Evidence:
     - Writer RED then GREEN: limiter 13, proxy 3, reset action and form, fresh ban and demotion e2e.
     - Parent spot check: vitest 236/236, lint 0, typecheck 0, matcher intact, e2e 194 passed with 0 failed.
+- L25 (2026-11-24): Independent verifier for T10: S4 PASS, no blockers.
+  - Measured:
+    - A banned user written straight to the DB is rejected on the next request.
+    - The limiter stays bounded under 200k email and 300k IP sprays.
+    - The retry estimate is exact in 845 of 845 histories.
+    - Non-GET requests get 303. `next` resists open redirects (`safeNext` only accepts /admin paths).
+    - The reset answers are identical in the normal path.
+  - Advisories, now T14:
+    - A1: about 2000 addresses can flood the lock map and evict a target's lock, diluting brute-force protection to 5 tries per ~40k requests.
+    - A2: under partial write faults, the reset flow reveals which accounts exist.
+  - The verifier's probe spec is now `e2e/auth-hardening.spec.ts` (6/6). Its scratch was removed.
+  - Native review of T10 (lineage review-d79949bf227348fd, the hook's candidate c727c37..0111320, consent granted, four lenses):
+    - risk and readability were captured.
+    - resilience and reliability failed three times with "safeguards flagged this message". That is a model-safety rejection in the reviewer transport, deterministic for this content, not a code or Gentle AI defect.
+    - Left open, not retried further. T10 is covered by the independent verifier and the e2e suite.
