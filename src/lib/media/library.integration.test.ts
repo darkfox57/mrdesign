@@ -1,15 +1,18 @@
 // @vitest-environment node
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
 // In-memory stand-in for R2: what was "uploaded" and what got deleted.
 const bucket = new Map<string, { size: number; contentType?: string; checksumSha256?: string }>();
 const deleted: string[] = [];
+// Slows the R2 delete down, so a test can act while the delete holds its row lock and "calls R2".
+let r2DelayMs = 0;
 vi.mock("./r2", () => ({
   presignUpload: vi.fn(async ({ key }: { key: string }) => ({ url: `https://r2.test/${key}`, headers: {} })),
   headObject: vi.fn(async (key: string) => bucket.get(key) ?? null),
   deleteObject: vi.fn(async (key: string) => {
+    if (r2DelayMs > 0) await new Promise((resolve) => setTimeout(resolve, r2DelayMs));
     deleted.push(key);
     bucket.delete(key);
   }),
@@ -32,7 +35,7 @@ const {
   requestUpload,
   updateMediaAlt,
 } = await import("./library");
-const { withLibraryImages } = await import("./references");
+const { MediaMissingError, withLibraryImages } = await import("./references");
 const { saveDraft } = await import("../landings/editor");
 const { hexToBase64, mediaKey } = await import("./rules");
 const { R2NotConfiguredError, deleteObject, isR2Configured } = await import("./r2");
@@ -234,6 +237,16 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     const prefixes = ["https://img.test/media/"];
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     const outcome = (promise: Promise<unknown>) => promise.then(() => "done" as const, (error: unknown) => error);
+    const settle = (promise: Promise<unknown>) => promise.then((value) => ({ value }), (error: unknown) => ({ error }));
+    const storedDraft = async (id: string) => (await db.landing.findUniqueOrThrow({ where: { id }, select: { draftBlocks: true } })).draftBlocks;
+    const buttonPage = (slug: string, href: string) => ({
+      root: { props: { title: "Landing", slug } },
+      content: [{ type: "Button", props: { id: "b1", label: "Ver", href, variant: "primary", align: "left" } }],
+    });
+
+    afterEach(() => {
+      r2DelayMs = 0;
+    });
     const landingPage = (slug: string, imageUrl: string) => ({
       root: { props: { title: "Landing", slug } },
       content: [{ type: "TextImage", props: { id: "ti", title: "T", text: "", imageUrl, imageAlt: "A", imageSide: "right", background: "paper" } }],
@@ -280,6 +293,91 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
       expect(refused).toMatchObject({ usedIn: [`Landing: Landing guardando ${run}`] });
       expect(await db.mediaFile.count({ where: { id: media.id } })).toBe(1);
       expect(deleted).toEqual([]);
+    });
+
+    // P1 to P5: the independent verifier's probes (T17 B1), kept as regression tests.
+    it("refuses a draft that links to the image (a Button href) while the delete calls R2, so no link points at the deleted image", async () => {
+      const media = await registerImage(30);
+      const landing = await emptyLanding("boton");
+      r2DelayMs = 500;
+      const deletion = settle(deleteMedia(media.id));
+      await sleep(150); // The delete has locked the row, found no usage and is calling R2.
+      const save = await saveDraft(landing.id, landing.version, buttonPage(landing.slug, media.url), prefixes);
+
+      expect(await deletion).toEqual({ value: undefined });
+      expect(save).toEqual({ ok: false, errors: [expect.stringContaining("no está en la biblioteca")] });
+      expect(await db.mediaFile.count({ where: { id: media.id } })).toBe(0);
+      expect(await storedDraft(landing.id)).toBeNull();
+    });
+
+    it("refuses a draft with the image in a TextImage under the same interleaving", async () => {
+      const media = await registerImage(31);
+      const landing = await emptyLanding("textimage");
+      r2DelayMs = 500;
+      const deletion = settle(deleteMedia(media.id));
+      await sleep(150);
+      const save = await saveDraft(landing.id, landing.version, landingPage(landing.slug, media.url), prefixes);
+
+      expect(await deletion).toEqual({ value: undefined });
+      expect(save).toEqual({ ok: false, errors: [expect.stringContaining("no está en la biblioteca")] });
+      expect(await storedDraft(landing.id)).toBeNull();
+    });
+
+    it("leaves nothing pointing at the image when the save waits on a delete whose R2 call takes over 5 s", async () => {
+      const media = await registerImage(32);
+      const landing = await emptyLanding("r2-lento");
+      r2DelayMs = 6500;
+      const deletion = settle(deleteMedia(media.id));
+      await sleep(150);
+      await settle(saveDraft(landing.id, landing.version, landingPage(landing.slug, media.url), prefixes));
+      await deletion;
+      expect(await storedDraft(landing.id)).toBeNull();
+    }, 20_000);
+
+    it("refuses every variant of an existing image's URL and accepts the exact one", async () => {
+      const media = await registerImage(33);
+      const tail = media.url.replace("https://img.test/", "");
+      const file = tail.replace("media/", "");
+      const variants = [
+        `https://IMG.TEST/${tail}`,
+        `https://img.test:443/${tail}`,
+        `${media.url}?v=1`,
+        `${media.url}#x`,
+        `https://img.test/media/sub/../${file}`,
+        `https://img.test/media/%2e%2e/media/${file}`,
+      ];
+      for (const url of variants) {
+        const result = await settle(withLibraryImages([url], prefixes, async () => "written"));
+        expect("error" in result && result.error instanceof MediaMissingError, url).toBe(true);
+      }
+      expect(await settle(withLibraryImages([media.url], prefixes, async () => "written"))).toEqual({ value: "written" });
+    });
+
+    it("refuses two deletes while two saves hold both images, and lets both saves through without a deadlock", async () => {
+      const a = await registerImage(34);
+      const b = await registerImage(35);
+      const landing = await emptyLanding("dos-guardados");
+      const page = { root: { props: { title: "L", slug: landing.slug } }, content: [] };
+      let deleteA: Promise<unknown> = Promise.resolve();
+      let deleteB: Promise<unknown> = Promise.resolve();
+      let saveTwo: Promise<unknown> = Promise.resolve();
+      const saveOne = settle(
+        withLibraryImages([b.url, a.url], prefixes, async (tx) => {
+          await tx.landing.update({ where: { id: landing.id }, data: { draftBlocks: { ...page, note: `${a.url} ${b.url}` } } });
+          deleteA = settle(deleteMedia(a.id));
+          deleteB = settle(deleteMedia(b.id));
+          await sleep(200);
+          saveTwo = settle(withLibraryImages([a.url, b.url], prefixes, async () => "second"));
+          await sleep(200);
+          return "first";
+        }),
+      );
+
+      expect(await saveOne).toEqual({ value: "first" });
+      expect(await saveTwo).toEqual({ value: "second" });
+      expect(((await deleteA) as { error: unknown }).error).toBeInstanceOf(MediaInUseError);
+      expect(((await deleteB) as { error: unknown }).error).toBeInstanceOf(MediaInUseError);
+      expect(await db.mediaFile.count({ where: { id: { in: [a.id, b.id] } } })).toBe(2);
     });
 
     it("lets two deletes of the same image both succeed, as before", async () => {

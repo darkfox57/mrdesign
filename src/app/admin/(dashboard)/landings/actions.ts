@@ -12,11 +12,11 @@ import { LANDING_SLUG_TAKEN as SLUG_TAKEN, changePublication } from "@/lib/landi
 import { PUBLIC_LANDING_ROUTE } from "@/lib/landings/routes";
 import { coverPrefixes } from "@/lib/media/cover-prefixes";
 import { MediaMissingError, withLibraryImages } from "@/lib/media/references";
-import { collectImageUrls } from "@/lib/visual-builder/images";
+import { collectPageStrings } from "@/lib/visual-builder/images";
 
 const TRANSLATION_TAKEN = "Esa landing ya tiene versión en ese idioma.";
 const copiedImageMissing = (url: string) =>
-  `Imagen ${url}: la landing original la usa, pero no está en la biblioteca (puede que la hayan borrado). Quítala de la original o elige otra.`;
+  `La imagen o el enlace ${url}: la landing original lo usa, pero no está en la biblioteca (puede que la hayan borrado). Quítalo de la original o cámbialo.`;
 
 const publicationSchema = z.object({
   landingId: z.string().refine((value) => parseLandingId(value) !== null),
@@ -77,7 +77,7 @@ export async function createLanding(_: CreateLandingState, formData: FormData): 
     translation = {
       translationKey: source.translationKey,
       draftBlocks: start as unknown as Prisma.InputJsonValue,
-      imageUrls: collectImageUrls(start.content),
+      imageUrls: collectPageStrings(start),
     };
   }
 
@@ -86,7 +86,7 @@ export async function createLanding(_: CreateLandingState, formData: FormData): 
 
   let id: string;
   try {
-    // The copied blocks' library images are locked with the insert, so one deleted meanwhile
+    // The copied blocks' library URLs (images and links) are locked with the insert, so one deleted meanwhile
     // refuses the copy instead of leaving the new landing pointing at it (src/lib/media/references.ts).
     const created = await withLibraryImages(translation?.imageUrls ?? [], coverPrefixes(), (tx) =>
       tx.landing.create({

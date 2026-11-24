@@ -141,13 +141,39 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
       for (const write of [saveDraft, publishPage]) {
         expect(await write(landing.id, version(), imagePage(gone), PREFIXES), write.name).toEqual({
           ok: false,
-          errors: [`Imagen ${gone}: no está en la biblioteca (puede que la hayan borrado). Elige otra.`],
+          errors: [`La imagen o el enlace ${gone} no está en la biblioteca (puede que la hayan borrado). Elige otra imagen o cambia el enlace.`],
         });
       }
       const row = await stored(landing.id);
       expect(row.updatedAt).toEqual(landing.updatedAt);
       expect(label(row.blocks)).toBe("Publicado");
       expect(row.draftBlocks).toBeNull();
+    });
+
+    it("refuses a publish whose Button links to an image no longer in the library, inside a slot too", async () => {
+      const gone = `${PREFIXES[0]}${hash(3)}.png`;
+      const linkPage = {
+        root: { props: { title: "Landing", slug: `${run}-${counter}` } },
+        content: [
+          {
+            type: "Columns",
+            props: {
+              id: "cols",
+              ratio: "1-1",
+              background: "paper",
+              left: [{ type: "Button", props: { id: "b1", label: "Ver", href: gone, variant: "primary", align: "left" } }],
+              right: [],
+            },
+          },
+        ],
+      };
+      expect(await publishPage(landing.id, version(), linkPage, PREFIXES)).toEqual({
+        ok: false,
+        errors: [`La imagen o el enlace ${gone} no está en la biblioteca (puede que la hayan borrado). Elige otra imagen o cambia el enlace.`],
+      });
+      const row = await stored(landing.id);
+      expect(label(row.blocks)).toBe("Publicado");
+      expect(row.status).toBe("DRAFT");
     });
 
     it("saves and publishes a page whose images are in the library, as before", async () => {

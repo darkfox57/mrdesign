@@ -20,6 +20,21 @@ export function collectImageUrls(blocks: readonly unknown[]): string[] {
   return urls;
 }
 
+// Every string of a page at any depth: block props, slots, item lists and the root props. A
+// library URL can sit in an image or in a link (a Button href, for example), and the media delete
+// counts any of them as usage, so a save locks every one (src/lib/media/references.ts filters
+// them down to library URLs).
+export function collectPageStrings(page: unknown): string[] {
+  const strings: string[] = [];
+  const walk = (value: unknown) => {
+    if (typeof value === "string") strings.push(value);
+    else if (Array.isArray(value)) value.forEach(walk);
+    else if (value && typeof value === "object") Object.values(value).forEach(walk);
+  };
+  walk(page);
+  return strings;
+}
+
 export function imageHostErrors(page: { content: readonly unknown[] }, prefixes: readonly string[]): string[] {
   return collectImageUrls(page.content)
     .filter((url) => !isLibraryUrl(url, prefixes))

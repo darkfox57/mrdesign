@@ -478,3 +478,17 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - Writers' RED: (b) 8 tests failed on the old code; (a) the races are deterministic and failed on the old code for every path.
     - Parent: vitest 422/422 against the local DB; lint 0; typecheck 0; e2e 216 passed and 0 failed.
   - Residual risk: an R2 delete hanging past 30 s may remove the object while the row rolls back. Deleting again finishes the job.
+- L52 (2026-11-24): T17 independent verification of 77601d8.
+  - B1: landing links (Hero, Button and Cta hrefs) that point to a library image were counted as usage by the delete but not locked by saves. Probe P1 showed a draft left linking to a deleted image.
+  - One correction batch: `collectPageStrings` locks every library URL in the page, slots included, for draft save, publish and translation create. Spanish messages now say "La imagen o el enlace…". The verifier's P1–P5 are now regression tests in library.integration.test.ts. P1 was RED on 77601d8.
+  - Recheck: B1 closed (6 files, 63 tests).
+  - Advisory, not fixed:
+    - R2 deleteObject has no request timeout, so a hang past the 30 s transaction can leave a row without its object.
+    - A delete holds two pool connections.
+    - Transaction timeouts are not mapped to friendly messages.
+    - URLs under an old R2_PUBLIC_URL are not recognized.
+  - S9 (b) was not independently verified: its Risk line is none.
+  - Evidence:
+    - vitest 430/430 against the local DB; lint 0; typecheck 0.
+    - e2e: 215 passed and 1 failed. The failure was admin-users block/unblock, where the action was still pending after 5 s. The cause was 718 accumulated e2e users in the local DB rendered on one page. They were deleted from the local DB, and the spec then passed 7/7.
+  - Follow-up: e2e specs that create users never delete them, and /admin/usuarios has no pagination.

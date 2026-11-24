@@ -4,7 +4,7 @@ import { canPublishLanding, parseLandingId } from "@/lib/admin/landing-create";
 import { publicationChange } from "@/lib/admin/posts";
 import { db } from "@/lib/db";
 import { MediaMissingError, withLibraryImages } from "@/lib/media/references";
-import { collectImageUrls, imageHostErrors } from "@/lib/visual-builder/images";
+import { collectPageStrings, imageHostErrors } from "@/lib/visual-builder/images";
 import { parsePageFields, type LandingPageColumns } from "@/lib/visual-builder/page-fields";
 import { validateBuilderData, type BuilderPage } from "@/lib/visual-builder/validate";
 
@@ -22,7 +22,8 @@ export const LANDING_SLUG_TAKEN = "Slug: otra landing de este idioma ya lo usa."
 const NO_PAGE = "Esta landing todavía no tiene página. Ármala y publícala desde el editor visual.";
 const ARCHIVED = "Esta landing está archivada: no se publica ni se despublica desde la lista.";
 
-export const landingImageMissing = (url: string) => `Imagen ${url}: no está en la biblioteca (puede que la hayan borrado). Elige otra.`;
+export const landingImageMissing = (url: string) =>
+  `La imagen o el enlace ${url} no está en la biblioteca (puede que la hayan borrado). Elige otra imagen o cambia el enlace.`;
 
 export type EditorWrite = { ok: true; version: string } | { ok: false; errors: string[] };
 
@@ -56,7 +57,7 @@ async function checkPage(id: string, data: unknown, imagePrefixes: readonly stri
 // The conditional write: one UPDATE ... WHERE id AND updatedAt, atomic in the database, so of two
 // writes with the same version only the first matches. The new version is always later than the
 // one it replaces, even for two writes within the same millisecond.
-// `images`: the library images the written page uses. Their rows are locked in the same
+// `images`: the library URLs the written page uses, in images or links. Their rows are locked in the same
 // transaction as the write, so an image deleted meanwhile refuses the write instead of leaving the
 // landing pointing at it (src/lib/media/references.ts).
 async function writeIfUnchanged(
@@ -98,7 +99,8 @@ async function target(rawId: unknown, rawVersion: unknown): Promise<Target> {
   return { errors: [exists ? LANDING_CONFLICT : LANDING_GONE] };
 }
 
-const pageImages = (page: BuilderPage, prefixes: readonly string[]) => ({ urls: collectImageUrls(page.content), prefixes });
+// Every library URL of the page, images and links alike.
+const pageImages = (page: BuilderPage, prefixes: readonly string[]) => ({ urls: collectPageStrings(page), prefixes });
 
 // Saves the draft only: nothing the public page uses changes. The page fields (title, slug, SEO)
 // travel inside the draft (its root props) and reach the landing's columns only on publish, so a

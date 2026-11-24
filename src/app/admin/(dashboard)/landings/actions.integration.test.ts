@@ -59,11 +59,28 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     const original = await source("borrada", imageUrl(1));
     const state = await createLanding({}, form(original.id, `${run}-borrada-en`));
     expect(state).toEqual({
-      errors: [`Imagen ${imageUrl(1)}: la landing original la usa, pero no está en la biblioteca (puede que la hayan borrado). Quítala de la original o elige otra.`],
+      errors: [`La imagen o el enlace ${imageUrl(1)}: la landing original lo usa, pero no está en la biblioteca (puede que la hayan borrado). Quítalo de la original o cámbialo.`],
       values: { locale: "en", title: "Translated", slug: `${run}-borrada-en`, translationOf: original.id },
     });
     expect(await db.landing.count({ where: { translationKey: original.translationKey, locale: "en" } })).toBe(0);
     expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("refuses a translation whose copied Button links to an image no longer in the library", async () => {
+    const original = await db.landing.create({
+      data: {
+        locale: "es",
+        slug: `${run}-enlace`,
+        title: "Origen enlace",
+        blocks: { root: { props: {} }, content: [{ type: "Button", props: { id: "b1", label: "Ver", href: imageUrl(3), variant: "primary", align: "left" } }] },
+      },
+      select: { id: true, translationKey: true },
+    });
+    const state = await createLanding({}, form(original.id, `${run}-enlace-en`));
+    expect(state).toMatchObject({
+      errors: [`La imagen o el enlace ${imageUrl(3)}: la landing original lo usa, pero no está en la biblioteca (puede que la hayan borrado). Quítalo de la original o cámbialo.`],
+    });
+    expect(await db.landing.count({ where: { translationKey: original.translationKey, locale: "en" } })).toBe(0);
   });
 
   it("creates the translation with the copied blocks when their images are in the library, as before", async () => {
