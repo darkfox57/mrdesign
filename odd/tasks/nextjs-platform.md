@@ -44,9 +44,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T7c | S4 | API keys admin and blog ingest API (/api/blog) | delegated (parallel unit) | done | 8d6ef99 |
 | T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | inline | pending | |
 | T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | inline | pending | |
+| T13 | S5 | Landing follow-ups from verifier L20: count nested blocks toward the 100-block limit (reference counts top level only), path-normalize image prefix (shared with T12), zod for translationOf and params.id, catch P2025 in setLandingPublication, explicit content:write permission (shared with T12 R1) | inline | pending | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | inline | pending | |
 | T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
-| T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | (T8 commits) |
+| T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | 06435e2, 22f255d |
 | T9 | S8 | Dockerfile, standalone build, deploy doc, full e2e pass | inline | pending | |
 
 ## Log
@@ -165,3 +166,8 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - A suspected mid-page header in the writer's screenshot was a scrolled full-page capture: a fresh capture shows the header at top 0 on both viewports.
   - Removed the uppercase tracked eyebrow from the Hero (a generic design tell in the design plan).
   - Commits: builder, blocks and public route first, then the admin editor.
+- L20 (2026-11-24): Independent verifier for T8 (items 2 and 3). S4, S5 and S6 PASS, no blockers.
+  - Probed about 60 hostile payloads: unknown and DatiHub block types, prototype keys, extra props, javascript/data/vbscript and protocol-relative links, backslash tricks, non-R2 images, depth and count limits, slot misuse.
+  - Also checked: XSS and JSON-LD escaping; invalid stored blocks answer 404; draft, future-dated and cross-locale handling; hreflang; sitemap. Anonymous, forged-cookie and `/admin/login` replays change nothing.
+  - The verifier's probe spec is now `e2e/landings-security.spec.ts`, 6/6 in the repo; lint and typecheck clean. The verifier's scratch was removed.
+  - Notes go to T13. The block limit counting top-level blocks only matches datilab-web.
