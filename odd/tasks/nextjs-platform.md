@@ -38,10 +38,11 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T6a | S4 | Admin inbox (mensajes): list, detail, read/unread, delete, reply by email; dashboard counts admin-only (review R1-004) | delegated (parallel unit, writer trigger a) | done | c0a25f9 |
 | T6b | S4 | Admin media library on R2: presigned upload, sha256 dedupe, alt text, admin-only delete | delegated (parallel unit, writer trigger a) | done | 948b6a8 |
 | T7.0 | S4, S6 | Blog foundation: Post/Category/Tag/Author/ApiKey models and migration, slugify, sanitizePostHtml, parsePostForm, coverPrefixes (R2 only), deps | inline | done | f1f516e |
-| T7a | S4 | Admin blog: list, Tiptap editor, media picker, translations, publish; register post covers in media usage checks | delegated (parallel unit) | done | (T7a commit) |
+| T7a | S4 | Admin blog: list, Tiptap editor, media picker, translations, publish; register post covers in media usage checks | delegated (parallel unit) | done | 51d243b |
 | T7b | S6 | Public blog: index, post page, category page, SEO and JSON-LD, sitemap entries, e2e seed | delegated (parallel unit) | done | 83e5d4c |
 | T7c | S4 | API keys admin and blog ingest API (/api/blog) | delegated (parallel unit) | done | 8d6ef99 |
 | T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | inline | pending | |
+| T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check | inline | pending | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | inline | pending | |
 | T8 | S5 | Landing builder (Puck): model, blocks, editor, draft/publish, public route | inline | pending | |
 | T9 | S8 | Dockerfile, standalone build, deploy doc, full e2e pass | inline | pending | |
@@ -140,3 +141,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - Category pages are force-dynamic, so they need no revalidation from ingest.
     - The earlier warning about a French translation spec was stale; the spec has no fr references.
   - The whole-branch RDD START returned `invalid_request` because untracked files were not declared. It was not pursued: the branch exceeds the reviewer budget anyway, and reviews run per slice.
+- L16 (2026-11-23): Independent verifier for T7 (items 2 and 3). S4 and S6 PASS, no blockers.
+  - Probes: 39 XSS payloads against sanitizePostHtml and parsePostForm, all neutralized and idempotent. `/api/blog` answers 401 for missing, malformed, unknown or revoked keys before reading the body, 413 also without Content-Length, 400 cases, and a 201 response with exactly id, locale, slug, status and url. A draft key never publishes. JSON-LD carries no "<". `%2F%2Fevil` gives 404 with no Location. Archived and future posts are hidden everywhere. Editor and anonymous replays of the API key actions change nothing. The media guard blocks images used by posts.
+  - The verifier's probe spec is now the regression test `e2e/blog-security.spec.ts`, 8/8 in the repo.
+  - Fixed now:
+    - `docs/api-blog.md` overstated the sanitizer: relative URLs are kept on purpose.
+    - A stale comment in `post-form.ts` still referred to the legacy import.
+  - Remaining notes go to T12. The verifier's scratch directories were removed.

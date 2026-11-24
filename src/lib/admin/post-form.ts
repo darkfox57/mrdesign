@@ -32,8 +32,8 @@ export type PostFormData = Omit<z.output<typeof schema>, "coverImageUrl"> & { co
 
 const hasText = (html: string) => /<img\s[^>]*src=/i.test(html) || html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim() !== "";
 
-// The sanitizer keeps an <img> whose unsafe src it removed (pinned by its own tests for the
-// legacy import); from the dashboard such an image is useless, so it goes.
+// The sanitizer keeps an <img> whose unsafe src it removed (pinned by its own tests); from the
+// dashboard or the API such an image is useless, so it goes.
 const dropImagesWithoutSource = (html: string) => html.replace(/<img(?![^>]*\ssrc=)[^>]*>/gi, "");
 
 // Validates the form and returns what may be stored: the slug normalized (from the title when

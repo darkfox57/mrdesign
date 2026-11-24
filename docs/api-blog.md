@@ -31,7 +31,7 @@ JSON, up to 1 MB. Validation and HTML sanitizing are the same as in the dashboar
 | --- | --- | --- |
 | `title` | Yes | Title, up to 200 characters. |
 | `description` | Yes | Summary, up to 300 characters. |
-| `content` | Yes | Post HTML. It is sanitized before it is stored: scripts, styles, event attributes, links other than `https` or `mailto`, and non-`https` images are removed, and an `h1` becomes an `h2`. |
+| `content` | Yes | Post HTML. It is sanitized before it is stored: scripts, styles, event attributes, and any URL with a scheme other than `https` (links may also use `mailto`) are removed, and an `h1` becomes an `h2`. Relative URLs (`/servicios`, `#section`) are kept, so posts can link to other pages of the site. |
 | `slug` | No | Taken from the title when missing. If another post in the same language already uses it, the request fails with `400` (see below); the slug is never renamed silently. |
 | `locale` | No | `es` (the default) or `en`. |
 | `img` | No | Cover image. It must come from the dashboard image library (`R2_PUBLIC_URL/media/...`); any other URL returns `400`. |
