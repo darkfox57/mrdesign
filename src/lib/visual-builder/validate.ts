@@ -5,8 +5,10 @@ import { rootPropsSchema } from "./page-fields";
 // block type has a strict schema; slots only take the block types they allow; links can only be
 // relative paths, anchors, https or mailto (never javascript:, data: or plain http).
 
+// Every block counts toward the limit, the ones inside slots too.
 const MAX_BLOCKS = 100;
 const MAX_DEPTH = 3;
+const TOO_MANY_BLOCKS = `La página tiene más de ${MAX_BLOCKS} bloques.`;
 const text = (max: number) => z.string().max(max);
 
 const SAFE_LINK = /^(\/(?![/\\])|#|https:\/\/|mailto:)/i;
@@ -93,7 +95,7 @@ export const BLOCKS: Record<string, BlockDefinition> = {
 const pageSchema = z.object({
   // The page fields (title, slug, SEO), edited as Puck root fields.
   root: z.object({ props: rootPropsSchema.optional() }).optional(),
-  content: z.array(z.unknown()).max(MAX_BLOCKS, `La página tiene más de ${MAX_BLOCKS} bloques.`),
+  content: z.array(z.unknown()).max(MAX_BLOCKS, TOO_MANY_BLOCKS),
   zones: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -101,9 +103,13 @@ const blockShape = z.object({ type: z.string(), props: z.record(z.string(), z.un
 
 type CleanBlock = { type: string; props: { id: string } & Record<string, unknown> };
 
+type Walk = { errors: string[]; count: number };
+
 // Returns the block rebuilt from the parsed props (only what the schemas describe, with its slot
 // children cleaned the same way), or null after recording why it is not valid.
-function validateBlock(raw: unknown, label: string, allowed: readonly string[] | null, depth: number, errors: string[]): CleanBlock | null {
+function validateBlock(raw: unknown, label: string, allowed: readonly string[] | null, depth: number, walk: Walk): CleanBlock | null {
+  const { errors } = walk;
+  walk.count += 1;
   const shape = blockShape.safeParse(raw);
   if (!shape.success) {
     errors.push(`${label}: bloque mal formado.`);
@@ -134,7 +140,7 @@ function validateBlock(raw: unknown, label: string, allowed: readonly string[] |
       continue;
     }
     clean[slotName] = children
-      .map((child, index) => validateBlock(child, `${label} > ${slotName} ${index + 1}`, slotAllowed, depth + 1, errors))
+      .map((child, index) => validateBlock(child, `${label} > ${slotName} ${index + 1}`, slotAllowed, depth + 1, walk))
       .filter((child): child is CleanBlock => child !== null);
   }
   return { type, props: clean };
@@ -148,9 +154,10 @@ export function validateBuilderData(raw: unknown): { success: true; data: Builde
     return { success: false, errors: page.error.issues.map((issue) => issue.message || "La página está mal formada.") };
   }
 
-  const errors: string[] = [];
-  const content = page.data.content.map((block, index) => validateBlock(block, `Bloque ${index + 1}`, null, 1, errors));
-  if (errors.length > 0) return { success: false, errors };
+  const walk: Walk = { errors: [], count: 0 };
+  const content = page.data.content.map((block, index) => validateBlock(block, `Bloque ${index + 1}`, null, 1, walk));
+  if (walk.count > MAX_BLOCKS) walk.errors.push(TOO_MANY_BLOCKS);
+  if (walk.errors.length > 0) return { success: false, errors: walk.errors };
   // What is stored is the parsed page, not what the browser sent: extra keys never survive.
   // Legacy Puck zones are not used: only slots, which travel inside each block's props.
   return { success: true, data: { root: { props: page.data.root?.props ?? {} }, content: content as CleanBlock[] } };

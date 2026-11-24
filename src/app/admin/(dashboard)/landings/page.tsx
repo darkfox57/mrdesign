@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getPathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { LANDINGS_ADMIN_PATH } from "@/lib/admin/landing-create";
+import { LANDINGS_ADMIN_PATH, hasLandingDraft } from "@/lib/admin/landing-create";
 import { LOCALE_IN_SENTENCE, LOCALE_LABELS, STATUS_LABELS } from "@/lib/admin/posts";
 import { requirePermission } from "@/lib/auth/require-permission";
 import { db } from "@/lib/db";
@@ -83,7 +83,7 @@ export default async function LandingsPage() {
                   <td className="px-4 py-3 text-ink">{LOCALE_LABELS[landing.locale]}</td>
                   <td className="px-4 py-3">
                     <span className={published ? "font-medium text-ink" : "text-graphite"}>{STATUS_LABELS[landing.status]}</span>
-                    {landing.draftBlocks !== null ? <span className="mt-1 block text-xs text-graphite">Con borrador sin publicar</span> : null}
+                    {hasLandingDraft(landing) ? <span className="mt-1 block text-xs text-graphite">Con borrador sin publicar</span> : null}
                   </td>
                   <td className="px-4 py-3">
                     {missing.length === 0 ? (

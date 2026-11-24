@@ -4,17 +4,19 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
-import { LANDINGS_ADMIN_PATH, canPublishLanding, parseNewLanding, translationStart } from "@/lib/admin/landing-create";
-import { publicationChange } from "@/lib/admin/posts";
+import { LANDINGS_ADMIN_PATH, parseLandingId, parseNewLanding, translationStart } from "@/lib/admin/landing-create";
 import { requirePermission } from "@/lib/auth/require-permission";
 import { violatesUnique } from "@/lib/blog/unique-violation";
 import { db } from "@/lib/db";
+import { LANDING_SLUG_TAKEN as SLUG_TAKEN, changePublication } from "@/lib/landings/editor";
 import { PUBLIC_LANDING_ROUTE } from "@/lib/landings/routes";
 
-const SLUG_TAKEN = "Slug: otra landing de este idioma ya lo usa.";
 const TRANSLATION_TAKEN = "Esa landing ya tiene versión en ese idioma.";
 
-const publicationSchema = z.object({ landingId: z.string().min(1).max(100), intent: z.enum(["publish", "unpublish"]) });
+const publicationSchema = z.object({
+  landingId: z.string().refine((value) => parseLandingId(value) !== null),
+  intent: z.enum(["publish", "unpublish"]),
+});
 
 export type LandingPublicationState = { error?: string };
 
@@ -25,13 +27,9 @@ export async function setLandingPublication(_: LandingPublicationState, formData
   const parsed = publicationSchema.safeParse({ landingId: formData.get("landingId"), intent: formData.get("intent") });
   if (!parsed.success) return { error: "Acción no válida." };
 
-  const landing = await db.landing.findUnique({ where: { id: parsed.data.landingId }, select: { publishedAt: true, blocks: true } });
-  if (!landing) return { error: "La landing ya no existe. Recarga la página." };
-  if (parsed.data.intent === "publish" && !canPublishLanding(landing)) {
-    return { error: "Esta landing todavía no tiene página. Ármala y publícala desde el editor visual." };
-  }
   // Same rule as posts: a first publish stamps today's date, later ones keep it.
-  await db.landing.update({ where: { id: parsed.data.landingId }, data: publicationChange(parsed.data.intent, landing.publishedAt) });
+  const outcome = await changePublication(parsed.data.landingId, parsed.data.intent);
+  if (outcome.error) return outcome;
   revalidatePath(LANDINGS_ADMIN_PATH, "layout");
   revalidatePath(PUBLIC_LANDING_ROUTE, "page");
   return {};
@@ -57,8 +55,10 @@ export async function createLanding(_: CreateLandingState, formData: FormData): 
 
   let translation: { translationKey: string; draftBlocks: Prisma.InputJsonValue } | null = null;
   if (values.translationOf) {
+    const sourceId = parseLandingId(values.translationOf);
+    if (!sourceId) return { errors: ["La landing original ya no existe."], values };
     const source = await db.landing.findUnique({
-      where: { id: values.translationOf },
+      where: { id: sourceId },
       select: { locale: true, translationKey: true, blocks: true, draftBlocks: true },
     });
     if (!source) return { errors: ["La landing original ya no existe."], values };

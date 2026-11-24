@@ -232,6 +232,20 @@ describe("validateBuilderData: slots, limits and shape", () => {
     expect(!result.success && result.errors).toEqual(["La página tiene más de 100 bloques."]);
   });
 
+  it("counts the blocks inside slots toward the 100-block limit", () => {
+    const buttons = (count: number, prefix: string) =>
+      Array.from({ length: count }, (_, index) => ({ ...blocks.Button(), props: { ...blocks.Button().props, id: `${prefix}${index}` } }));
+    const columns = (left: number, right: number, id: string): Block => ({
+      ...blocks.Columns(),
+      props: { ...blocks.Columns().props, id, left: buttons(left, `${id}l`), right: buttons(right, `${id}r`) },
+    });
+    // One Columns block holding 49 + 50 buttons: 100 blocks in all.
+    expect(validateBuilderData(page(columns(49, 50, "c"))).success).toBe(true);
+    // Two top-level blocks, but 102 in all.
+    const result = validateBuilderData(page(columns(50, 0, "a"), columns(0, 50, "b")));
+    expect(!result.success && result.errors).toEqual(["La página tiene más de 100 bloques."]);
+  });
+
   it("rejects nesting past three levels", async () => {
     // No block allows a container in its slots today, so the depth limit is checked with a stand-in
     // registry entry: a Columns block whose slots accept Columns again.

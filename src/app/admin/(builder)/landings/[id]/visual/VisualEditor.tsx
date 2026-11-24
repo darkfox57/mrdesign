@@ -65,9 +65,16 @@ type VisualEditorProps = {
   // The landing's public address, shown next to its title in the editor header.
   publicPath: string;
   initialData: Data;
+  // Why the editor did not start from the stored page (it failed validation), or null.
+  notice: string | null;
+  // The landing's version as loaded; each successful write returns the next one.
+  version: string;
   published: boolean;
   hasDraft: boolean;
 };
+
+// A rejected action (network error, server error) is shown like a refused save, never left unhandled.
+const UNREACHABLE = "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.";
 
 export function VisualEditor({
   landingId,
@@ -75,10 +82,15 @@ export function VisualEditor({
   locale,
   publicPath,
   initialData,
+  notice: initialNotice,
+  version: initialVersion,
   published: initiallyPublished,
   hasDraft: initialDraft,
 }: VisualEditorProps) {
   const [result, setResult] = useState<BuilderActionState | null>(null);
+  const [notice, setNotice] = useState(initialNotice);
+  // Kept in a ref so the action reads the latest version even from a callback Puck captured earlier.
+  const version = useRef(initialVersion);
   const [hasDraft, setHasDraft] = useState(initialDraft);
   const [published, setPublished] = useState(initiallyPublished);
   const [pending, startTransition] = useTransition();
@@ -95,21 +107,28 @@ export function VisualEditor({
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
 
-  const run = (action: () => Promise<BuilderActionState>, onSuccess: () => void) =>
+  const run = (action: (version: string) => Promise<BuilderActionState>, onSuccess: () => void) =>
     startTransition(async () => {
-      const outcome = await action();
+      let outcome: BuilderActionState;
+      try {
+        outcome = await action(version.current);
+      } catch {
+        outcome = { errors: [UNREACHABLE] };
+      }
       setResult(outcome);
-      if (!outcome.errors?.length) onSuccess();
+      if (outcome.errors?.length) return;
+      if (outcome.version) version.current = outcome.version;
+      onSuccess();
     });
 
   const save = (data: Data) =>
-    run(() => saveLandingDraft(landingId, data), () => {
+    run((current) => saveLandingDraft(landingId, current, data), () => {
       dirty.current = false;
       setHasDraft(true);
     });
 
   const publish = (data: Data) =>
-    run(() => publishLanding(landingId, data), () => {
+    run((current) => publishLanding(landingId, current, data), () => {
       dirty.current = false;
       setHasDraft(false);
       setPublished(true);
@@ -120,7 +139,7 @@ export function VisualEditor({
 
   const discard = () => {
     if (!window.confirm("¿Descartar el borrador? El editor vuelve a lo publicado.")) return;
-    run(() => discardLandingDraft(landingId), () => {
+    run((current) => discardLandingDraft(landingId, current), () => {
       dirty.current = false;
       window.location.reload();
     });
@@ -128,6 +147,15 @@ export function VisualEditor({
 
   return (
     <div className="h-svh">
+      {notice ? (
+        // Bottom left, clear of Puck's header and of the save result (bottom right).
+        <div role="status" className="fixed bottom-4 left-4 z-1000 flex max-w-md items-start gap-3 rounded-control bg-ink px-4 py-3 text-sm text-white shadow-lg">
+          <p>{notice}</p>
+          <button type="button" className="shrink-0 font-medium underline underline-offset-2" onClick={() => setNotice(null)}>
+            Entendido
+          </button>
+        </div>
+      ) : null}
       {result?.ok ? (
         <p role="status" className="fixed right-4 bottom-4 z-1000 rounded-control bg-ink px-4 py-2 text-sm text-white shadow-lg">
           {result.ok}

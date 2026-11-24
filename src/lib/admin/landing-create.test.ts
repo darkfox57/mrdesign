@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { canPublishLanding, editorStartData, parseNewLanding, translationStart } from "./landing-create";
+import {
+  EDITOR_NOTICES,
+  canPublishLanding,
+  editorStartData,
+  hasLandingDraft,
+  parseLandingId,
+  parseNewLanding,
+  resolveTranslationRequest,
+  translationStart,
+} from "./landing-create";
 
 const heroBlock = {
   type: "Hero",
@@ -33,6 +42,13 @@ describe("parseNewLanding", () => {
     expect(parsed).toEqual({ success: false, errors: ["Idioma: elige español o inglés.", "Título: no puede quedar vacío."] });
   });
 
+  it("cuts an over-limit slug at 80 characters without leaving a trailing hyphen", () => {
+    const parsed = parseNewLanding({ locale: "es", title: "Tiendas", slug: `${"a".repeat(79)} b` });
+    expect(parsed.success && parsed.data.slug).toBe("a".repeat(79));
+    const long = parseNewLanding({ locale: "es", title: "x".repeat(150), slug: "" });
+    expect(long.success && long.data.slug).toBe("x".repeat(80));
+  });
+
   it("rejects a title over the limit and a slug with no letters or numbers", () => {
     expect(parseNewLanding({ locale: "es", title: "x".repeat(201), slug: "" })).toEqual({
       success: false,
@@ -63,20 +79,108 @@ describe("translationStart", () => {
 describe("editorStartData", () => {
   const landing = { title: "Tiendas", slug: "tiendas", seoTitle: null, seoDescription: "Vende en línea", blocks: null, draftBlocks: null };
   const pageFields = { title: "Tiendas", slug: "tiendas", seoTitle: "", seoDescription: "Vende en línea" };
+  const published = { root: { props: {} }, content: [heroBlock] };
+  const draft = { root: { props: { title: "Tiendas nuevas" } }, content: [heroBlock, heroBlock] };
+  const unknownBlock = { root: { props: {} }, content: [{ type: "Script", props: { id: "s" } }] };
 
   it("starts from the draft, then the published blocks, then an empty page", () => {
-    const published = { root: { props: {} }, content: [heroBlock] };
-    const draft = { root: { props: { title: "Tiendas nuevas" } }, content: [heroBlock, heroBlock] };
     expect(editorStartData({ ...landing, blocks: published, draftBlocks: draft })).toEqual({
-      root: { props: { ...pageFields, title: "Tiendas nuevas" } },
-      content: [heroBlock, heroBlock],
+      data: { root: { props: { ...pageFields, title: "Tiendas nuevas" } }, content: [heroBlock, heroBlock] },
+      notice: null,
     });
-    expect(editorStartData({ ...landing, blocks: published })).toEqual({ root: { props: pageFields }, content: [heroBlock] });
-    expect(editorStartData(landing)).toEqual({ root: { props: pageFields }, content: [] });
+    expect(editorStartData({ ...landing, blocks: published })).toEqual({ data: { root: { props: pageFields }, content: [heroBlock] }, notice: null });
+    expect(editorStartData(landing)).toEqual({ data: { root: { props: pageFields }, content: [] }, notice: null });
   });
 
-  it("starts from an empty page when the stored blocks are malformed", () => {
-    expect(editorStartData({ ...landing, draftBlocks: { content: "x" } })).toEqual({ root: { props: pageFields }, content: [] });
+  it("starts from the published blocks, with a notice, when the stored draft fails validation", () => {
+    // An unknown block type, and draft page fields the schema does not know.
+    for (const invalid of [unknownBlock, { root: { props: { color: "red" } }, content: [] }]) {
+      expect(editorStartData({ ...landing, blocks: published, draftBlocks: invalid })).toEqual({
+        data: { root: { props: pageFields }, content: [heroBlock] },
+        notice: EDITOR_NOTICES.invalidDraft,
+      });
+    }
+  });
+
+  it("starts from an empty page, with a notice, when no stored page passes validation", () => {
+    expect(editorStartData({ ...landing, draftBlocks: { content: "x" } })).toEqual({
+      data: { root: { props: pageFields }, content: [] },
+      notice: EDITOR_NOTICES.invalidPage,
+    });
+    expect(editorStartData({ ...landing, blocks: unknownBlock, draftBlocks: unknownBlock })).toEqual({
+      data: { root: { props: pageFields }, content: [] },
+      notice: EDITOR_NOTICES.invalidPage,
+    });
+    expect(editorStartData({ ...landing, blocks: unknownBlock })).toEqual({
+      data: { root: { props: pageFields }, content: [] },
+      notice: EDITOR_NOTICES.invalidPage,
+    });
+  });
+
+  it("never hands unvalidated block props to the editor", () => {
+    const extra = { root: { props: {} }, content: [{ ...heroBlock, props: { ...heroBlock.props, onClick: "alert(1)" } }] };
+    expect(editorStartData({ ...landing, blocks: extra }).data.content).toEqual([]);
+  });
+});
+
+describe("hasLandingDraft", () => {
+  it("is true whenever a draft is stored, even one equal to the published page", () => {
+    const published = { root: { props: {} }, content: [heroBlock] };
+    expect(hasLandingDraft({ draftBlocks: published })).toBe(true);
+    expect(hasLandingDraft({ draftBlocks: null })).toBe(false);
+  });
+});
+
+describe("parseLandingId", () => {
+  it("accepts an id and refuses anything else", () => {
+    expect(parseLandingId("cmabc123xyz")).toBe("cmabc123xyz");
+    for (const raw of ["", "x".repeat(101), "a b", "../x", "id;drop", undefined, ["a"], 5]) {
+      expect(parseLandingId(raw), String(raw)).toBeNull();
+    }
+  });
+});
+
+describe("resolveTranslationRequest", () => {
+  const source = { id: "src1", title: "Tiendas", locale: "es" as const };
+  const find = async (id: string) => (id === source.id ? source : null);
+
+  it("is a plain new landing without ?traducir", async () => {
+    expect(await resolveTranslationRequest({ idioma: "en" }, find)).toEqual({ kind: "none" });
+  });
+
+  it("returns the source and the target language of a well-formed link", async () => {
+    expect(await resolveTranslationRequest({ traducir: "src1", idioma: "en" }, find)).toEqual({ kind: "ready", source, locale: "en" });
+  });
+
+  it("explains a missing or unknown language", async () => {
+    for (const idioma of [undefined, "", "fr"]) {
+      expect(await resolveTranslationRequest({ traducir: "src1", idioma }, find), String(idioma)).toEqual({
+        kind: "invalid",
+        message: "El enlace de traducción no indica a qué idioma traducir. Vuelve a las landings y usa «Traducir al…» de la landing.",
+      });
+    }
+  });
+
+  it("explains a target language equal to the source's", async () => {
+    expect(await resolveTranslationRequest({ traducir: "src1", idioma: "es" }, find)).toEqual({
+      kind: "invalid",
+      message: "«Tiendas» ya está en español: la traducción tiene que ser a otro idioma.",
+    });
+  });
+
+  it("explains a source that does not exist or is not a valid id, without looking up an invalid one", async () => {
+    const lookups: string[] = [];
+    const tracked = async (id: string) => {
+      lookups.push(id);
+      return find(id);
+    };
+    for (const traducir of ["missing", "", "x".repeat(500)]) {
+      expect(await resolveTranslationRequest({ traducir, idioma: "en" }, tracked), traducir).toEqual({
+        kind: "invalid",
+        message: "La landing que quieres traducir no existe. Vuelve a las landings y elige otra.",
+      });
+    }
+    expect(lookups).toEqual(["missing"]);
   });
 });
 
