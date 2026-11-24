@@ -492,3 +492,16 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - vitest 430/430 against the local DB; lint 0; typecheck 0.
     - e2e: 215 passed and 1 failed. The failure was admin-users block/unblock, where the action was still pending after 5 s. The cause was 718 accumulated e2e users in the local DB rendered on one page. They were deleted from the local DB, and the spec then passed 7/7.
   - Follow-up: e2e specs that create users never delete them, and /admin/usuarios has no pagination.
+- L53 (2026-11-24): native review of T17, 04e160d..ee4f06e.
+  - Escalated for item 4. Lineage review-18d6d6b3ed168ecb; lenses risk, resilience and reliability; consent granted.
+  - Approved and acknowledged.
+  - Advisory warnings, kept as follow-ups:
+    - A landing text prop whose whole value is a library URL also locks, and blocks the save when that image is gone.
+    - A stored reference to an already-deleted image blocks every later save of that content until it is removed. The error names the URL.
+    - A save waits on a delete's lock while R2 runs, and save transaction timeouts are not mapped.
+    - Post URL extraction is regex-based.
+    - Ingest now requires exact library URLs.
+    - A delete holds two pool connections.
+  - Suggestions:
+    - Unauthenticated ingest requests are not throttled; they are 401s before the body is read.
+    - Retry-After is always the full window.
