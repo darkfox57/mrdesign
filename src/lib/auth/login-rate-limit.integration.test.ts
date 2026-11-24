@@ -332,4 +332,87 @@ describe.skipIf(!local)("login rate limiter (Postgres)", () => {
     expect(await row(acct(namespace, "owner@x.com"))).toBeNull();
     expect(await l.consume("198.18.23.1", "owner@x.com", T0 + 1)).toEqual({ allowed: true });
   });
+
+  // Regression tests from the T16 verification: counts, refunds and cleanup running together.
+  it("never deadlocks or fails closed when crossing keys, refunds and cleanup run in parallel", async () => {
+    const { namespace, limiter: l } = limiter({ maxPerAccount: 1000, maxPerIp: 1000 });
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    await db.authThrottle.createMany({
+      data: Array.from({ length: 200 }, (_, i) => ({ key: `${namespace}:old:${i}`, failures: 3, windowStart: new Date(T0 - 2 * WINDOW), updatedAt: new Date(T0) })),
+    });
+    const emails = ["a@x.test", "b@x.test"];
+    const ips = ["2001:db8::1", "2001:db8::2"];
+    const ops: Array<Promise<unknown>> = [];
+    for (let i = 0; i < 400; i++) {
+      const email = emails[i % 2];
+      const ip = ips[Math.floor(i / 2) % 2];
+      if (i % 7 === 0) ops.push(l.cleanup(T0));
+      else if (i % 7 === 1) ops.push(l.refund(ip, email, T0, T0));
+      else ops.push(l.consume(ip, email, T0));
+    }
+
+    const results = await Promise.allSettled(ops);
+    errors.mockRestore();
+
+    expect(results.filter((r) => r.status === "rejected")).toEqual([]);
+    expect(results.filter((r) => r.status === "fulfilled" && (r.value as { unavailable?: true } | undefined)?.unavailable)).toHaveLength(0);
+    const rows = await db.authThrottle.findMany({ where: { key: { startsWith: `${namespace}:` } } });
+    for (const r of rows) expect(r.failures).toBeGreaterThanOrEqual(0);
+    expect(rows.filter((r) => r.key.startsWith(`${namespace}:old:`))).toHaveLength(0);
+  });
+
+  it("never loses a count when cleanup races with counts on an expired row", async () => {
+    const { namespace, limiter: l } = limiter({ maxPerAccount: 1000, maxPerIp: 1000 });
+    const email = "race@x.test";
+    const ip = "2001:db8::9";
+    for (let round = 0; round < 10; round++) {
+      const now = T0 + round * 3 * WINDOW;
+      await db.authThrottle.deleteMany({ where: { key: { startsWith: `${namespace}:` } } });
+      await db.authThrottle.createMany({
+        data: [acct(namespace, email), ipKey(namespace, ip)].map((key) => ({
+          key,
+          failures: 9,
+          windowStart: new Date(now - 2 * WINDOW),
+          lockedUntil: new Date(now - WINDOW),
+          updatedAt: new Date(now - WINDOW),
+        })),
+      });
+      const ops: Array<Promise<unknown>> = [];
+      for (let i = 0; i < 40; i++) {
+        ops.push(l.consume(ip, email, now));
+        if (i % 4 === 0) ops.push(l.cleanup(now));
+      }
+      await Promise.all(ops);
+
+      expect((await row(acct(namespace, email)))?.failures).toBe(40);
+      expect((await row(ipKey(namespace, ip)))?.failures).toBe(40);
+    }
+  });
+
+  it("keeps counts exact when refunds race with counts", async () => {
+    const { namespace, limiter: l } = limiter({ maxPerAccount: 1000, maxPerIp: 1000 });
+    const email = "refund@x.test";
+    const ip = "2001:db8::a";
+    await l.consume(ip, email, T0);
+    const ops: Array<Promise<unknown>> = [];
+    for (let i = 0; i < 60; i++) {
+      ops.push(i < 30 ? l.consume(ip, email, T0).then(() => l.refund(ip, email, T0, T0)) : l.consume(ip, email, T0));
+    }
+    await Promise.all(ops);
+
+    expect((await row(acct(namespace, email)))?.failures).toBe(31);
+    expect((await row(ipKey(namespace, ip)))?.failures).toBe(31);
+  });
+
+  it("keeps an address lock after every success refund", async () => {
+    const { namespace, limiter: l } = limiter({ maxPerAccount: 5, maxPerIp: 3 });
+    const ip = "2001:db8::d";
+    for (let i = 0; i < 3; i++) await l.consume(ip, `ok${i}@x.test`, T0);
+    expect((await l.consume(ip, "victim@x.test", T0 + 10)).allowed).toBe(false);
+
+    for (let i = 0; i < 3; i++) await l.recordSuccess(ip, `ok${i}@x.test`, T0, T0 + 20);
+
+    expect((await row(ipKey(namespace, ip)))?.lockedUntil?.getTime()).toBe(T0 + WINDOW);
+    expect((await l.consume(ip, "victim@x.test", T0 + 30)).allowed).toBe(false);
+  });
 });

@@ -380,3 +380,23 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - Evidence:
     - Writer: RED 13 on the old code, then GREEN 51/51 focused. vitest 386, lint 0, typecheck 0, e2e 214 passed with 0 failed.
     - Parent spot check: vitest 386/386, lint 0, typecheck 0.
+- L41 (2026-11-24): T16 independent verification: PASS, no blockers.
+  - Scope: S4, risk items 2 and 4.
+  - Attacked paths:
+    - parallel requests
+    - induced infrastructure refunds (better-auth 1.7.27 throws a 4xx for every wrong guess, so no input refunds a guess)
+    - banned users (403, stays counted)
+    - address refunds
+    - key normalization
+    - DB outage
+    - deadlocks, lost updates, counters below zero, and cleanup against live locks
+  - Four of the verifier's probes became regression tests in `login-rate-limit.integration.test.ts`:
+    - parallel mix without deadlock or fail-closed
+    - cleanup racing counts on an expired row
+    - refunds racing counts
+    - address lock kept after success refunds
+  - Advisory observations, all already present at the baseline and not fixed:
+    - a success clears an account lock that a concurrent refused attempt just reached ("success resets the account")
+    - the IPv6 per-IP cap has no /64 grouping (the account cap still binds)
+    - up to 2x the limit can pass around a window edge (L36)
+    - a banned user with the correct password costs one extra user lookup (small timing difference)
