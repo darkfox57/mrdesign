@@ -37,7 +37,11 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T5 | S4 | Auth (better-auth), proxy guard, requireSession, login/recover/reset, dashboard shell, users | inline | done | e956888 |
 | T6a | S4 | Admin inbox (mensajes): list, detail, read/unread, delete, reply by email; dashboard counts admin-only (review R1-004) | delegated (parallel unit, writer trigger a) | done | c0a25f9 |
 | T6b | S4 | Admin media library on R2: presigned upload, sha256 dedupe, alt text, admin-only delete | delegated (parallel unit, writer trigger a) | done | 948b6a8 |
-| T7 | S4, S6 | Blog: model, Tiptap editor, public blog routes, API keys and blog ingest API (moved from T6: keys only exist to publish posts) | inline | pending | |
+| T7.0 | S4, S6 | Blog foundation: Post/Category/Tag/Author/ApiKey models and migration, slugify, sanitizePostHtml, parsePostForm, coverPrefixes (R2 only), deps | inline | done | (T7.0 commit) |
+| T7a | S4 | Admin blog: list, Tiptap editor, media picker, translations, publish; register post covers in media usage checks | delegated (parallel unit) | in progress | |
+| T7b | S6 | Public blog: index, post page, category page, SEO and JSON-LD, sitemap entries, e2e seed | delegated (parallel unit) | in progress | |
+| T7c | S4 | API keys admin and blog ingest API (/api/blog) | delegated (parallel unit) | in progress | |
+| T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | inline | pending | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | inline | pending | |
 | T8 | S5 | Landing builder (Puck): model, blocks, editor, draft/publish, public route | inline | pending | |
 | T9 | S8 | Dockerfile, standalone build, deploy doc, full e2e pass | inline | pending | |
@@ -109,3 +113,18 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - The verifier's replay probe is now the regression test `e2e/admin-actions.spec.ts`: editor and anonymous replays of the inbox and media actions change nothing, and the admin replay does.
   - Evidence: vitest 86 passed and 8 skipped (integration tests skip without DATABASE_URL), lint and typecheck clean, e2e 95 passed with 0 failed.
   - Open, needs a real bucket: whether R2 returns ChecksumSHA256 on HeadObject. Editors can edit alt text (consistent with media:upload). The verifier's scratch was removed.
+- L13 (2026-11-23): Native review of T6.
+  - Scope: base e956888 to 740046d, escalated item 2, consent granted. Lenses: risk, resilience and reliability.
+  - Result: approved, acknowledged, authority burned (lineage review-e6b2ab6308f5b3ae).
+  - Non-blocking warnings, now tracked as T11:
+    - Media deletion: the row is deleted before the R2 object with no compensation or error mapping (R1, R4, R3-004). Deleting a missing image reports success (R3-007).
+    - Uploads: registration depends on HeadObject returning ChecksumSHA256, so it must be verified on a real bucket (R4, R3-001). The browser PUT has no timeout. The undocumented R2_ENDPOINT override has no allowlist.
+    - Access: updateAltText allows any role.
+    - Inputs and error screens: the media page number is not clamped (R3-002). The error boundaries use a self-declared `retry` prop instead of the documented `reset` (R3-005).
+    - Tests: the unread badge e2e is racy (R3-003).
+  - The branch-wide RDD candidate still exceeds the reviewer budget (lens_context_budget_exceeded, third time), so reviews stay per slice from the last acknowledged boundary, which is now 740046d.
+  - This log entry is uncommitted on purpose: it rides with the first T7 commit.
+- L14 (2026-11-23, user): "sigue con t7".
+  - T7 is split: the parent builds the shared foundation inline (T7.0), then three parallel writers take admin blog (T7a), public blog (T7b) and API keys plus ingest (T7c), each with disjoint surfaces. The parent owns AdminSidebar.tsx, git and the e2e seam check.
+  - The models drop legacyId and the LEGACY source, since there is no legacy blog here.
+  - Evidence: migration `blog_and_api_keys`; vitest for slugify, sanitize and post-form 21/21; typecheck clean.

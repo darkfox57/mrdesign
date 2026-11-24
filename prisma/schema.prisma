@@ -120,3 +120,97 @@ model MediaFile {
 
   @@index([createdAt])
 }
+
+// Blog: one row per locale; versions of the same post share a translationKey.
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PostSource {
+  MANUAL
+  API
+}
+
+model Author {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  bio       String?
+  avatarUrl String?
+  posts     Post[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id             String   @id @default(cuid())
+  locale         Locale
+  translationKey String   @default(cuid())
+  name           String
+  slug           String
+  description    String?
+  posts          Post[]
+  createdAt      DateTime @default(now())
+
+  @@unique([locale, slug])
+  @@unique([locale, name])
+  @@unique([translationKey, locale])
+}
+
+model Tag {
+  id             String   @id @default(cuid())
+  locale         Locale
+  translationKey String   @default(cuid())
+  name           String
+  slug           String
+  posts          Post[]
+  createdAt      DateTime @default(now())
+
+  @@unique([locale, slug])
+  @@unique([locale, name])
+  @@unique([translationKey, locale])
+}
+
+model Post {
+  id             String        @id @default(cuid())
+  locale         Locale
+  translationKey String        @default(cuid())
+  title          String
+  slug           String
+  excerpt        String
+  // Sanitized HTML. Never store unsanitized input here.
+  content        String
+  coverImageUrl  String?
+  coverImageAlt  String?
+  status         ContentStatus @default(DRAFT)
+  source         PostSource    @default(MANUAL)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  authorId       String?
+  author         Author?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  categories     Category[]
+  tags           Tag[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([locale, slug])
+  @@unique([translationKey, locale])
+  @@index([locale, status, publishedAt])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String
+  // SHA-256 of the key; the plain key is shown once and never stored.
+  keyHash    String    @unique
+  prefix     String
+  // What the ingest API does with the posts this key sends: publish them or leave them as drafts.
+  publishImmediately Boolean @default(true)
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+}
+
