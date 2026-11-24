@@ -428,3 +428,17 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - vitest 390/390 against the local DB; typecheck 0; lint 0.
     - e2e: 213 passed and 1 failed. The failure was a worker crash (0xC0000409) in the blog sitemap spec, which passed on rerun.
 - L46 (2026-11-24, user): "sube directo a main cuando termine".
+- L47 (2026-11-24): native reviews.
+  - 3853bd7..7628b5d (lineage review-63b68aec1322aa74, four lenses) and 7628b5d..1cfc146 (lineage review-845a3dc907881f30, risk lens): both approved and acknowledged.
+  - Advisory findings, non-blocking, kept as follow-ups:
+    - Refunds on non-4xx errors are unbounded. The verifier found no attacker input that reaches them (L41).
+    - Refused attempts still write a row and burn the address budget.
+    - A success over the address limit stores a lock it cannot refund.
+    - A count whose response is lost is never refunded.
+    - The success clear can leave a residual lockout.
+    - The refund is not atomic across both keys.
+    - Cleanup runs inline on the request path.
+    - The per-key limit is selected by array position.
+    - Trusted-IP guidance for a CDN is brief.
+    - The admin identifier is written in this logbook. It is also the public contact email.
+  - The selectorless STATUS still offers 3853bd7..HEAD as a fresh target. Every commit in it is covered by the two acknowledged reviews, so no third review was started.
