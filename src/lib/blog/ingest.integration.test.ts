@@ -97,7 +97,11 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     expect(post.tags.map((tag) => tag.name).sort()).toEqual([`${run} shopify`, `${run} tienda`]);
     expect(post.categories.map((category) => category.name)).toEqual([`${run} Comercio`]);
     expect((await db.apiKey.findUniqueOrThrow({ where: { id: publisher.id } })).lastUsedAt).toBeInstanceOf(Date);
-    expect(revalidatePath.mock.calls).toEqual([["/es/blog"], ["/en/blog"], [`/es/blog/${slug}`]]);
+    // The same paths the dashboard revalidates: each locale's blog route as a layout.
+    expect(revalidatePath.mock.calls).toEqual([
+      ["/es/blog", "layout"],
+      ["/en/blog", "layout"],
+    ]);
   });
 
   it("leaves the post as a draft when the key is in draft mode", async () => {
@@ -154,5 +158,60 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     const missing = await ingestPost(drafter, { content: "<p>Algo</p>", locale: "fr" });
     expect(missing).toMatchObject({ status: 400, body: { fields: { title: "Escribe el título.", description: "Escribe el resumen.", locale: "Elige un idioma." } } });
     expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("names each field that has the wrong JSON type", async () => {
+    const slug = `${run}-tipos`;
+    const result = await ingestPost(drafter, { ...body(slug), title: 123, content: true, tags: ["a", 1], categories: "Ecommerce" });
+    expect(result).toEqual({
+      status: 400,
+      body: {
+        error: "Datos inválidos.",
+        fields: {
+          title: "Tiene que ser texto.",
+          content: "Tiene que ser texto.",
+          tags: "Usa texto separado por comas o una lista de textos.",
+          categories: "Usa una lista de nombres.",
+        },
+      },
+    });
+    expect(await db.post.count({ where: { slug } })).toBe(0);
+  });
+
+  it("rejects tags and categories it would have to drop or cut, instead of storing fewer", async () => {
+    const slug = `${run}-terminos`;
+    const tooMany = Array.from({ length: 21 }, (_, index) => `${run} etiqueta ${index}`);
+    expect(await ingestPost(drafter, body(slug, { tags: tooMany }))).toEqual({
+      status: 400,
+      body: { error: "Datos inválidos.", fields: { tags: "Máximo 20 etiquetas." } },
+    });
+    expect(await ingestPost(drafter, body(slug, { tags: [`${run} buena`, " "], categories: [{ nombre: "x" }] }))).toEqual({
+      status: 400,
+      body: {
+        error: "Datos inválidos.",
+        fields: {
+          tags: "Cada etiqueta necesita un nombre con letras o números, de hasta 60 caracteres.",
+          categories: "Cada categoría necesita un nombre con letras o números, de hasta 60 caracteres.",
+        },
+      },
+    });
+    expect(await db.post.count({ where: { slug } })).toBe(0);
+    expect(await db.tag.count({ where: { name: `${run} buena` } })).toBe(0);
+  });
+
+  it("answers 400 when another request creates the same new tag at the same time", async () => {
+    const tag = { locale: "es" as const, slug: `${run}-carrera`, name: `${run} carrera` };
+    await db.tag.create({ data: tag });
+    const clash = await db.tag.create({ data: tag }).catch((error: unknown) => error);
+    const transaction = vi.spyOn(db, "$transaction").mockRejectedValueOnce(clash);
+    try {
+      const result = await ingestPost(drafter, body(`${run}-carrera`, { tags: [tag.name] }));
+      expect(result).toEqual({
+        status: 400,
+        body: { error: "Datos inválidos.", fields: { tags: "Otra petición creó las mismas etiquetas a la vez. Vuelve a intentarlo." } },
+      });
+    } finally {
+      transaction.mockRestore();
+    }
   });
 });

@@ -9,14 +9,14 @@ Conventions for the dashboard at `/admin`. It is Spanish only and lives outside 
 | `admin` | Everything, including users, API keys, messages and deleting images |
 | `editor` | Content (read, write, publish) and images (read, upload, and the alt text of the images they uploaded) |
 
-Permissions are defined in `src/lib/auth/permissions.ts`. A role missing from that file grants no access.
+Permissions are defined in `src/lib/auth/permissions.ts`. A role missing from that file grants no access. Blog and landing pages and actions check the permission they need with `requirePermission("content", ["read" | "write" | "publish"])` (`src/lib/auth/require-permission.ts`), not just a session, so a role added later without content access is turned away.
 
 `requireSession()` reads the session and the user from the database on every request (no session cookie cache), so blocking a user, changing a role or revoking sessions counts on the next request.
 
 ## Mandatory rules
 
 1. **Every dashboard page and server action calls `requireSession()` before reading or writing data.** The layout check is not enough: a page renders in parallel with its layout, and its data would leak in the redirect response.
-2. **`requireSession()` is never wrapped in `try/catch`.** It redirects by throwing, and that exception must propagate.
+2. **`requireSession()` and `requirePermission()` are never wrapped in `try/catch`.** They redirect by throwing, and that exception must propagate.
 3. **Server actions validate with zod `safeParse` and return per-field errors.** Never trust client data (ids, URLs, sizes) without checking it on the server.
 4. **After a write, revalidate the public paths that changed** (`revalidatePath` or `updateTag`).
 5. **Stored HTML goes through `sanitizePostHtml`** before it reaches the database.

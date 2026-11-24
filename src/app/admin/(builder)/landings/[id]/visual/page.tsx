@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPathname } from "@/i18n/navigation";
 import { editorStartData } from "@/lib/admin/landing-create";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/require-permission";
 import { db } from "@/lib/db";
 import { landingHref } from "@/lib/landings/routes";
 import { EditorLoader } from "./EditorLoader";
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Editor visual" };
 // root layout. Saving keeps a draft in the database; publishing makes it the landing's page.
 export default async function VisualBuilderPage({ params }: PageProps<"/admin/landings/[id]/visual">) {
   // The page checks the session itself, as every dashboard page does.
-  await requireSession();
+  await requirePermission("content", ["write"]);
   const { id } = await params;
   const landing = await db.landing.findUnique({
     where: { id },

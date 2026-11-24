@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { Prisma } from "@/generated/prisma/client";
-import { parsePostForm, type PostFormField, type PostFormInput } from "@/lib/admin/post-form";
+import { parsePostForm, postIdsSchema, type PostFormField, type PostFormInput } from "@/lib/admin/post-form";
 import { BLOG_ADMIN_PATH, publicBlogPaths } from "@/lib/admin/posts";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/require-permission";
+import { violatesUnique } from "@/lib/blog/unique-violation";
 import { db } from "@/lib/db";
 import { coverPrefixes } from "@/lib/media/cover-prefixes";
 import { listMedia } from "@/lib/media/library";
@@ -40,11 +40,13 @@ function readForm(formData: FormData): PostFormInput {
   };
 }
 
-// Creates a post (as a draft) or updates one. Admins and editors share `content: write`.
+// Creates a post (as a draft) or updates one. Needs `content: write`.
 export async function savePost(_: SavePostState, formData: FormData): Promise<SavePostState> {
-  await requireSession();
-  const postId = text(formData, "postId") || null;
+  await requirePermission("content", ["write"]);
   const values = readForm(formData);
+  const ids = postIdsSchema.safeParse({ postId: formData.get("postId") ?? "", translationOf: formData.get("translationOf") ?? "" });
+  if (!ids.success) return { error: "Acción no válida.", values };
+  const { postId } = ids.data;
 
   const existing = postId ? await db.post.findUnique({ where: { id: postId }, select: { locale: true } }) : null;
   if (postId && !existing) return { error: "El post ya no existe.", values };
@@ -56,7 +58,7 @@ export async function savePost(_: SavePostState, formData: FormData): Promise<Sa
   const { categoryIds, ...data } = parsed.data;
 
   // A new translation shares the original's translationKey; only one version per language.
-  const translationOf = postId ? null : text(formData, "translationOf") || null;
+  const translationOf = postId ? null : ids.data.translationOf;
   let translationKey: string | undefined;
   if (translationOf) {
     const source = await db.post.findUnique({ where: { id: translationOf }, select: { locale: true, translationKey: true } });
@@ -92,10 +94,8 @@ export async function savePost(_: SavePostState, formData: FormData): Promise<Sa
     }
   } catch (error) {
     // Another save took the slug, or the translation slot, between the check and the write.
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      if (JSON.stringify(error.meta ?? {}).includes("translationKey")) return { error: TRANSLATION_TAKEN, values };
-      return { fieldErrors: { slug: SLUG_TAKEN }, values };
-    }
+    if (violatesUnique(error, "Post", ["translationKey", "locale"])) return { error: TRANSLATION_TAKEN, values };
+    if (violatesUnique(error, "Post", ["locale", "slug"])) return { fieldErrors: { slug: SLUG_TAKEN }, values };
     throw error;
   }
 
@@ -108,8 +108,9 @@ export async function savePost(_: SavePostState, formData: FormData): Promise<Sa
 
 export type PickerMedia = { id: string; url: string; alt: string; originalName: string };
 
+// Reads the image library for the cover and content pickers (`media: read`).
 export async function listPickerMedia(page: number): Promise<{ items: PickerMedia[]; pages: number }> {
-  await requireSession();
+  await requirePermission("media", ["read"]);
   const safePage = Number.isInteger(page) && page > 0 ? page : 1;
   const { items, pages } = await listMedia({ page: safePage, pageSize: 24 });
   return { items: items.map(({ id, url, alt, originalName }) => ({ id, url, alt, originalName })), pages };

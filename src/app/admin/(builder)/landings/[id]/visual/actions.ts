@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { LANDINGS_ADMIN_PATH } from "@/lib/admin/landing-create";
 import { publicationChange } from "@/lib/admin/posts";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/require-permission";
 import { db } from "@/lib/db";
 import { PUBLIC_LANDING_ROUTE } from "@/lib/landings/routes";
 import { coverPrefixes } from "@/lib/media/cover-prefixes";
@@ -61,7 +61,7 @@ async function updateLanding(landingId: string, data: Prisma.LandingUpdateInput)
 // draft never moves a published landing's URL or changes its title before it is published.
 // Admins and editors both edit landings (`content: write`).
 export async function saveLandingDraft(landingId: string, data: unknown): Promise<BuilderActionState> {
-  await requireSession();
+  await requirePermission("content", ["write"]);
   const checked = await checkPage(landingId, data);
   if ("errors" in checked) return checked;
   const failed = await updateLanding(checked.id, { draftBlocks: checked.page as Prisma.InputJsonValue });
@@ -70,7 +70,7 @@ export async function saveLandingDraft(landingId: string, data: unknown): Promis
 
 // Publishes what the editor has now: it becomes the page's blocks and the draft is cleared.
 export async function publishLanding(landingId: string, data: unknown): Promise<BuilderActionState> {
-  await requireSession();
+  await requirePermission("content", ["publish"]);
   const checked = await checkPage(landingId, data);
   if ("errors" in checked) return checked;
   const failed = await updateLanding(checked.id, {
@@ -87,7 +87,7 @@ export async function publishLanding(landingId: string, data: unknown): Promise<
 }
 
 export async function discardLandingDraft(landingId: string): Promise<BuilderActionState> {
-  await requireSession();
+  await requirePermission("content", ["write"]);
   const id = landingIdSchema.safeParse(landingId);
   if (!id.success) return { errors: [GONE] };
   const failed = await updateLanding(id.data, { draftBlocks: Prisma.DbNull });

@@ -6,7 +6,8 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { LANDINGS_ADMIN_PATH, canPublishLanding, parseNewLanding, translationStart } from "@/lib/admin/landing-create";
 import { publicationChange } from "@/lib/admin/posts";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/require-permission";
+import { violatesUnique } from "@/lib/blog/unique-violation";
 import { db } from "@/lib/db";
 import { PUBLIC_LANDING_ROUTE } from "@/lib/landings/routes";
 
@@ -20,7 +21,7 @@ export type LandingPublicationState = { error?: string };
 // Admins and editors publish landings (`content: publish`). The public page renders on every
 // request; the route is revalidated anyway so no cached copy outlives an unpublish.
 export async function setLandingPublication(_: LandingPublicationState, formData: FormData): Promise<LandingPublicationState> {
-  await requireSession();
+  await requirePermission("content", ["publish"]);
   const parsed = publicationSchema.safeParse({ landingId: formData.get("landingId"), intent: formData.get("intent") });
   if (!parsed.success) return { error: "Acción no válida." };
 
@@ -42,7 +43,7 @@ export type CreateLandingState = { errors?: string[]; values?: Record<string, st
 // `translationOf`, it is a version of that landing in another language: same translationKey
 // (language switcher and hreflang), starting from a copy of its blocks.
 export async function createLanding(_: CreateLandingState, formData: FormData): Promise<CreateLandingState> {
-  await requireSession();
+  await requirePermission("content", ["write"]);
   const values = Object.fromEntries(
     ["locale", "title", "slug", "translationOf"].map((name) => {
       const value = formData.get(name);
@@ -89,7 +90,7 @@ export async function createLanding(_: CreateLandingState, formData: FormData): 
   } catch (error) {
     // Another save took the slug, or the translation slot, between the check and the write.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return { errors: [JSON.stringify(error.meta ?? {}).includes("translationKey") ? TRANSLATION_TAKEN : SLUG_TAKEN], values };
+      return { errors: [violatesUnique(error, "Landing", ["translationKey", "locale"]) ? TRANSLATION_TAKEN : SLUG_TAKEN], values };
     }
     throw error;
   }

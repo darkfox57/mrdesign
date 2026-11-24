@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { routing } from "@/i18n/routing";
+import { isLibraryUrl } from "@/lib/media/cover-prefixes";
 import { sanitizePostHtml } from "@/lib/sanitize-post-html";
 import { slugify } from "@/lib/slugify";
 
@@ -25,6 +26,11 @@ const schema = z.object({
   categoryIds: z.array(z.string().min(1)).max(10),
 });
 
+// The hidden ids of the editor form (the post being edited, the post being translated). Empty
+// means absent; anything else must look like a row id before it reaches a query.
+const rowId = z.union([z.literal(""), z.string().regex(/^[\w-]{1,100}$/)]).transform((value) => value || null);
+export const postIdsSchema = z.object({ postId: rowId, translationOf: rowId });
+
 // What arrives from the form: plain strings, validated here.
 export type PostFormInput = Record<Exclude<keyof z.input<typeof schema>, "categoryIds">, string> & { categoryIds: string[] };
 export type PostFormField = keyof PostFormInput;
@@ -40,9 +46,10 @@ const dropImagesWithoutSource = (html: string) => html.replace(/<img(?![^>]*\ssr
 // empty) and the content sanitized. The only place post HTML from the dashboard is accepted.
 // `coverPrefixes`: where a cover may come from (the R2 media library).
 // Public pages render covers with next/image, which refuses any other host and would break the page.
+// `coverOutsideLibrary`: the message for a cover from anywhere else (the ingest API words it for its clients).
 export function parsePostForm(
   input: PostFormInput,
-  { coverPrefixes }: { coverPrefixes?: string[] } = {},
+  { coverPrefixes, coverOutsideLibrary = "Elige la portada desde la biblioteca de imágenes." }: { coverPrefixes?: string[]; coverOutsideLibrary?: string } = {},
 ): { success: true; data: PostFormData } | { success: false; fieldErrors: Partial<Record<PostFormField, string>> } {
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
@@ -54,9 +61,7 @@ export function parsePostForm(
   const slug = slugify(parsed.data.slug || parsed.data.title);
   if (!slug) fieldErrors.slug = "El slug necesita letras o números.";
   const cover = parsed.data.coverImageUrl;
-  if (cover && coverPrefixes && !coverPrefixes.some((prefix) => cover.startsWith(prefix))) {
-    fieldErrors.coverImageUrl = "Elige la portada desde la biblioteca de imágenes.";
-  }
+  if (cover && coverPrefixes && !isLibraryUrl(cover, coverPrefixes)) fieldErrors.coverImageUrl = coverOutsideLibrary;
   const content = dropImagesWithoutSource(sanitizePostHtml(parsed.data.content));
   if (!hasText(content)) fieldErrors.content = "Escribe el contenido del post.";
   if (Object.keys(fieldErrors).length > 0) return { success: false, fieldErrors };

@@ -110,7 +110,11 @@ test("a valid key gets 413 over 1 MB, with or without Content-Length, and 400 fo
   const locale = await ingest(request, key, validBody(`e2e-verify-${RUN}-fr`, { locale: "fr" }));
   expect(await locale.json()).toEqual({ error: "Datos inválidos.", fields: { locale: "Elige un idioma." } });
 
-  for (const img of ["https://evil.example/media/a.png", "https://media.e2e.test.evil/test-bucket/media/a.png", "javascript:alert(1)"]) {
+  const wrongType = await ingest(request, key, validBody(`e2e-verify-${RUN}-type`, { title: 123 }));
+  expect(await wrongType.json()).toEqual({ error: "Datos inválidos.", fields: { title: "Tiene que ser texto." } });
+
+  const outsideLibrary = ["https://evil.example/media/a.png", "https://media.e2e.test.evil/test-bucket/media/a.png", "javascript:alert(1)"];
+  for (const img of [...outsideLibrary, "https://media.e2e.test/test-bucket/media/../a.png"]) {
     const cover = await ingest(request, key, validBody(`e2e-verify-${RUN}-img`, { img }));
     expect(cover.status(), img).toBe(400);
     expect(Object.keys((await cover.json()).fields)).toEqual(["img"]);

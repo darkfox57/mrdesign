@@ -1,3 +1,4 @@
+import { isLibraryUrl } from "@/lib/media/cover-prefixes";
 import { BLOCKS } from "./validate";
 
 // Images of a validated page must come from the image library in R2: the prefixes
@@ -21,6 +22,6 @@ export function collectImageUrls(blocks: readonly unknown[]): string[] {
 
 export function imageHostErrors(page: { content: readonly unknown[] }, prefixes: readonly string[]): string[] {
   return collectImageUrls(page.content)
-    .filter((url) => !prefixes.some((prefix) => url.startsWith(prefix)))
+    .filter((url) => !isLibraryUrl(url, prefixes))
     .map((url) => `Imagen ${url}: elige una imagen de la biblioteca.`);
 }

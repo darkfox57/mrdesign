@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePostForm } from "./post-form";
+import { parsePostForm, postIdsSchema } from "./post-form";
 
 const base = {
   locale: "es",
@@ -83,6 +83,33 @@ describe("cover image origin", () => {
       const parsed = parsePostForm({ ...base, coverImageUrl }, { coverPrefixes: prefixes });
       expect(!parsed.success && parsed.fieldErrors.coverImageUrl, coverImageUrl).toBe("Elige la portada desde la biblioteca de imágenes.");
     }
+  });
+
+  it("rejects a cover that walks out of the library with dot-dot segments", () => {
+    for (const coverImageUrl of ["https://img.example.com/media/../x.png", "https://img.example.com/media/%2e%2e/x.png"]) {
+      expect(parsePostForm({ ...base, coverImageUrl }, { coverPrefixes: prefixes }).success, coverImageUrl).toBe(false);
+    }
+  });
+
+  it("uses the caller's message for a cover outside the library", () => {
+    const parsed = parsePostForm({ ...base, coverImageUrl: "https://evil.example.com/a.png" }, { coverPrefixes: prefixes, coverOutsideLibrary: "Fuera." });
+    expect(!parsed.success && parsed.fieldErrors.coverImageUrl).toBe("Fuera.");
+  });
+});
+
+describe("postIdsSchema", () => {
+  it("turns empty ids into null and keeps row ids", () => {
+    expect(postIdsSchema.parse({ postId: "", translationOf: "" })).toEqual({ postId: null, translationOf: null });
+    expect(postIdsSchema.parse({ postId: "cmabc123xyz", translationOf: "e2e-post-17_a" })).toEqual({ postId: "cmabc123xyz", translationOf: "e2e-post-17_a" });
+  });
+
+  it.each([
+    ["a file", { postId: new Blob(["x"]), translationOf: "" }],
+    ["a missing field", { postId: null, translationOf: "" }],
+    ["an id with odd characters", { postId: "a' or 1=1", translationOf: "" }],
+    ["an overlong id", { postId: "", translationOf: "a".repeat(101) }],
+  ])("rejects %s", (_, input) => {
+    expect(postIdsSchema.safeParse(input).success).toBe(false);
   });
 });
 

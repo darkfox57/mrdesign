@@ -43,7 +43,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T7b | S6 | Public blog: index, post page, category page, SEO and JSON-LD, sitemap entries, e2e seed | delegated (parallel unit) | done | 83e5d4c |
 | T7c | S4 | API keys admin and blog ingest API (/api/blog) | delegated (parallel unit) | done | 8d6ef99 |
 | T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | delegated (context backstop) | done | 17fbe0e |
-| T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | inline | pending | |
+| T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | delegated (context backstop) | done, reduced scope (e2e helper refactor and media-delete race deferred) | (T12 commit) |
 | T13 | S5 | Landing follow-ups from verifier L20: count nested blocks toward the 100-block limit (reference counts top level only), path-normalize image prefix (shared with T12), zod for translationOf and params.id, catch P2025 in setLandingPublication, explicit content:write permission (shared with T12 R1); optimistic concurrency (updatedAt check) for save and publish; handle rejected editor actions in VisualEditor; one hasDraft definition; per-spec landing rows instead of shared seeded rows and whole-table fingerprints; assert each hostile payload in landings-security; explicit message when the translate params are invalid | inline | pending | |
 | T14 | S4 | Limiter design decision from verifier L25: A1 lock flooding (~2000 addresses evict a target's lock; choose: evict-expired-only + refuse new locks, or fail closed, or shared store) (A2 resolved by 0322c51); plus review L27 notes: row delete failing after the object delete, per-request session DB read cost, shared e2e helpers (createUser, client-address) | inline | pending (needs a design decision) | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | delegated (context backstop) | done | 0111320 |
@@ -248,3 +248,22 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - Recovery to successor lineage review-46d4ea1c042764d1 (scope_changed). All four lenses passed: approved, acknowledged, authority burned.
     - The remaining warnings are folded into T14.
   - The reviewed boundary is now 0322c51.
+- L28 (2026-11-24, user): asked "que tan grande es t12" and then "detenla". The writer was stopped before writing anything (tree clean).
+  - User: "sube cambios". Pushed feat/hardening.
+  - User: "sube directo a main". main fast-forwarded and pushed (c727c37..021f376).
+  - User: "continua". T12 resumed with reduced scope: the e2e helper refactor was excluded because the user stopped T12 after hearing its size, and it was the optional part.
+- L29 (2026-11-24): T12 done (26 files, +429/-106).
+  - Fixed:
+    - R1: `requirePermission` (content:read, write or publish) on every blog and landing page and action, which also covers T13's item.
+    - Ingest names wrong-typed fields.
+    - Typed cover error.
+    - `violatesUnique`: Prisma 7 with adapter-pg sends no meta.target, only `driverAdapterError.cause.constraint`, so the old substring probe likely never matched. Now used in savePost, ingest and createLanding.
+    - Tag and category clash answers 400.
+    - Terms: 400 naming the field (no silent drop or truncation), with named caps.
+    - zod ids for postId and translationOf.
+    - `isLibraryUrl`: origin plus normalized path, rejecting userinfo and %2F/%5C. Shared by covers and landing images.
+    - Single source for the revalidated blog paths.
+  - Deferred: e2e helper refactor, media-delete race (T14), and items outside the writer's surface (ingest throttling, revoke no-op, e2e base URLs and dialogs).
+  - Parent fixed a docs table broken by a paragraph inserted mid-table in docs/api-blog.md.
+  - Evidence: writer RED 24 tests and 2 suites, then GREEN. Parent spot check: vitest 276/276, lint 0, typecheck 0, e2e 201 passed with 0 failed.
+  - Contract change, item 3: ingest now answers 400 where it used to drop silently or return a generic error. Documented in docs/api-blog.md.

@@ -1,33 +1,43 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { Prisma } from "@/generated/prisma/client";
 import { getPathname } from "@/i18n/navigation";
-import { routing, type Locale } from "@/i18n/routing";
+import type { Locale } from "@/i18n/routing";
 import { parsePostForm, type PostFormField } from "@/lib/admin/post-form";
+import { publicBlogPaths } from "@/lib/admin/posts";
 import { hashApiKey } from "@/lib/api-keys";
 import { db } from "@/lib/db";
 import { coverPrefixes } from "@/lib/media/cover-prefixes";
 import { siteUrl } from "@/lib/seo/site";
 import { slugify } from "@/lib/slugify";
+import { violatesUnique } from "./unique-violation";
 
-// Body of POST /api/blog (contract in docs/api-blog.md).
+// Body of POST /api/blog (contract in docs/api-blog.md). A field of the wrong JSON type is named
+// like any other invalid field.
 const termName = z.string().trim().min(1).max(60);
-const bodySchema = z.object({
-  title: z.string().optional(),
-  slug: z.string().optional(),
-  img: z.string().optional(),
-  imgAlt: z.string().optional(),
-  description: z.string().optional(),
-  content: z.string().optional(),
-  locale: z.string().optional(),
-  seoTitle: z.string().optional(),
-  seoDescription: z.string().optional(),
-  // "a, b" or ["a", "b"].
-  tags: z.union([z.string(), z.array(z.string())]).optional(),
-  // Names, or { name }.
-  categories: z.array(z.unknown()).optional(),
-});
+const text = () => z.string("Tiene que ser texto.").optional();
+const bodySchema = z.object(
+  {
+    title: text(),
+    slug: text(),
+    img: text(),
+    imgAlt: text(),
+    description: text(),
+    content: text(),
+    locale: text(),
+    seoTitle: text(),
+    seoDescription: text(),
+    // "a, b" or ["a", "b"].
+    tags: z.union([z.string(), z.array(z.string())], "Usa texto separado por comas o una lista de textos.").optional(),
+    // Names, or { name }.
+    categories: z.array(z.unknown(), "Usa una lista de nombres.").optional(),
+  },
+  "El cuerpo tiene que ser un objeto JSON.",
+);
+
+// Limits published in docs/api-blog.md, counted after duplicates are merged.
+const MAX_CATEGORIES = 10;
+const MAX_TAGS = 20;
 
 // Errors use the API's field names, not the editor's.
 const FIELD_NAMES: Partial<Record<PostFormField, string>> = {
@@ -36,7 +46,6 @@ const FIELD_NAMES: Partial<Record<PostFormField, string>> = {
   coverImageAlt: "imgAlt",
 };
 const INVALID = "Datos inválidos.";
-const EDITOR_COVER_ERROR = "Elige la portada desde la biblioteca de imágenes.";
 const COVER_OUTSIDE_LIBRARY = "La portada tiene que estar en la biblioteca de imágenes del panel.";
 const SLUG_TAKEN = "Ya existe un post con ese slug en este idioma.";
 
@@ -53,35 +62,45 @@ export async function authenticateKey(token: string | null) {
 
 export type IngestKey = NonNullable<Awaited<ReturnType<typeof authenticateKey>>>;
 
-function terms(raw: unknown[] | string | string[] | undefined, max: number) {
-  const list = typeof raw === "string" ? raw.split(",") : (raw ?? []);
-  const names = list
-    .map((entry) => (typeof entry === "string" ? entry : typeof entry === "object" && entry && "name" in entry ? (entry as { name: unknown }).name : null))
-    .map((name) => termName.safeParse(name))
-    .flatMap((parsed) => (parsed.success ? [parsed.data] : []));
+type Terms = { terms: { slug: string; name: string }[]; error?: undefined } | { error: string };
+
+// Tags or categories, deduplicated by slug. An entry it cannot use, or more than `max`, is an error
+// for the client to fix: nothing is dropped or cut silently. In "a, b" form an empty piece (a
+// trailing comma) is not an entry.
+function terms(raw: unknown[] | string | string[] | undefined, max: number, messages: { invalid: string; tooMany: string }): Terms {
+  const list = typeof raw === "string" ? raw.split(",").filter((piece) => piece.trim()) : (raw ?? []);
   const bySlug = new Map<string, string>();
-  for (const name of names) {
-    const slug = slugify(name);
-    if (slug && !bySlug.has(slug)) bySlug.set(slug, name);
+  for (const entry of list) {
+    const name = termName.safeParse(typeof entry === "object" && entry && "name" in entry ? entry.name : entry);
+    const slug = name.success ? slugify(name.data) : "";
+    if (!name.success || !slug) return { error: messages.invalid };
+    if (!bySlug.has(slug)) bySlug.set(slug, name.data);
   }
-  return [...bySlug].slice(0, max).map(([slug, name]) => ({ slug, name }));
+  if (bySlug.size > max) return { error: messages.tooMany };
+  return { terms: [...bySlug].map(([slug, name]) => ({ slug, name })) };
 }
 
 const slugTaken = (locale: Locale, slug: string) => db.post.count({ where: { locale, slug } }).then((count) => count > 0);
-const slugError = (): IngestResult => ({ status: 400, body: { error: INVALID, fields: { slug: SLUG_TAKEN } } });
-
-// Public pages that list or show the post. The proxy rewrites unprefixed Spanish URLs to
-// /es/..., and revalidatePath needs that destination path, so the locale prefix is forced.
-function revalidateBlog(locale: Locale, slug: string) {
-  for (const each of routing.locales) revalidatePath(getPathname({ locale: each, href: "/blog", forcePrefix: true }));
-  revalidatePath(getPathname({ locale, href: { pathname: "/blog/[slug]", params: { slug } }, forcePrefix: true }));
-}
+const invalid = (fields: Record<string, string>): IngestResult => ({ status: 400, body: { error: INVALID, fields } });
+const slugError = () => invalid({ slug: SLUG_TAKEN });
 
 // `key` comes from authenticateKey: the route authenticates before it reads the body.
 export async function ingestPost(key: IngestKey, raw: unknown): Promise<IngestResult> {
   const shape = bodySchema.safeParse(raw);
-  if (!shape.success) return { status: 400, body: { error: INVALID, fields: { body: "El cuerpo tiene que ser un objeto JSON." } } };
+  if (!shape.success) {
+    const fields: Record<string, string> = {};
+    for (const issue of shape.error.issues) fields[String(issue.path[0] ?? "body")] ??= issue.message;
+    return invalid(fields);
+  }
   const body = shape.data;
+  const categories = terms(body.categories, MAX_CATEGORIES, {
+    invalid: "Cada categoría necesita un nombre con letras o números, de hasta 60 caracteres.",
+    tooMany: `Máximo ${MAX_CATEGORIES} categorías.`,
+  });
+  const tags = terms(body.tags, MAX_TAGS, {
+    invalid: "Cada etiqueta necesita un nombre con letras o números, de hasta 60 caracteres.",
+    tooMany: `Máximo ${MAX_TAGS} etiquetas.`,
+  });
 
   // Same validation and sanitizing as the dashboard editor.
   const parsed = parsePostForm(
@@ -97,24 +116,19 @@ export async function ingestPost(key: IngestKey, raw: unknown): Promise<IngestRe
       seoDescription: body.seoDescription ?? "",
       categoryIds: [],
     },
-    { coverPrefixes: coverPrefixes() },
+    { coverPrefixes: coverPrefixes(), coverOutsideLibrary: COVER_OUTSIDE_LIBRARY },
   );
-  if (!parsed.success) {
-    const fields = Object.fromEntries(
-      Object.entries(parsed.fieldErrors).map(([field, message]) => [
-        FIELD_NAMES[field as PostFormField] ?? field,
-        field === "coverImageUrl" && message === EDITOR_COVER_ERROR ? COVER_OUTSIDE_LIBRARY : message,
-      ]),
-    );
-    return { status: 400, body: { error: INVALID, fields } };
-  }
+  const fields: Record<string, string> = parsed.success
+    ? {}
+    : Object.fromEntries(Object.entries(parsed.fieldErrors).map(([field, message]) => [FIELD_NAMES[field as PostFormField] ?? field, message]));
+  if (tags.error !== undefined) fields.tags = tags.error;
+  if (categories.error !== undefined) fields.categories = categories.error;
+  if (!parsed.success || tags.error !== undefined || categories.error !== undefined) return invalid(fields);
 
   const { locale, slug, title, excerpt, content, coverImageUrl, coverImageAlt, seoTitle, seoDescription } = parsed.data;
   // A slug is never renamed behind the client's back: a clash is an error it can act on.
   if (await slugTaken(locale, slug)) return slugError();
 
-  const categories = terms(body.categories, 10);
-  const tags = terms(body.tags, 20);
   const publish = key.publishImmediately;
 
   let post;
@@ -123,14 +137,14 @@ export async function ingestPost(key: IngestKey, raw: unknown): Promise<IngestRe
       // A term matches an existing one by slug or by name: both are unique per language, and an
       // editor may have given an existing term a custom slug.
       const categoryRows = await Promise.all(
-        categories.map(
+        categories.terms.map(
           async (term) =>
             (await tx.category.findFirst({ where: { locale, OR: [{ slug: term.slug }, { name: term.name }] }, select: { id: true } })) ??
             tx.category.create({ data: { locale, ...term }, select: { id: true } }),
         ),
       );
       const tagRows = await Promise.all(
-        tags.map(
+        tags.terms.map(
           async (term) =>
             (await tx.tag.findFirst({ where: { locale, OR: [{ slug: term.slug }, { name: term.name }] }, select: { id: true } })) ??
             tx.tag.create({ data: { locale, ...term }, select: { id: true } }),
@@ -157,9 +171,11 @@ export async function ingestPost(key: IngestKey, raw: unknown): Promise<IngestRe
       });
     });
   } catch (error) {
-    // Another request took the slug between the check and the insert.
-    const clash = error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
-    if (clash && (await slugTaken(locale, slug))) return slugError();
+    // Another request took the slug, or created one of the same new terms, between the check and
+    // the insert. The whole transaction rolled back, so the client can simply retry.
+    if (violatesUnique(error, "Post", ["locale", "slug"])) return slugError();
+    if (violatesUnique(error, "Tag")) return invalid({ tags: "Otra petición creó las mismas etiquetas a la vez. Vuelve a intentarlo." });
+    if (violatesUnique(error, "Category")) return invalid({ categories: "Otra petición creó las mismas categorías a la vez. Vuelve a intentarlo." });
     throw error;
   }
 
@@ -167,11 +183,12 @@ export async function ingestPost(key: IngestKey, raw: unknown): Promise<IngestRe
   await db.apiKey.update({ where: { id: key.id }, data: { lastUsedAt: new Date() } }).catch((error: unknown) => {
     console.error("api/blog: could not record lastUsedAt", error);
   });
-  revalidateBlog(post.locale, post.slug);
+  // The same paths the dashboard revalidates after a save or a publish.
+  for (const blogPath of publicBlogPaths()) revalidatePath(blogPath, "layout");
 
   const path = getPathname({ locale: post.locale, href: { pathname: "/blog/[slug]", params: { slug: post.slug } } });
   return {
     status: 201,
-    body: { id: post.id, slug: post.slug, locale: post.locale, status: post.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT", url: `${siteUrl}${path}` },
+    body: { id: post.id, slug: post.slug, locale: post.locale, status: publish ? "PUBLISHED" : "DRAFT", url: `${siteUrl}${path}` },
   };
 }

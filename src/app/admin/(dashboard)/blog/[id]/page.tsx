@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPathname } from "@/i18n/navigation";
 import { STATUS_LABELS } from "@/lib/admin/posts";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/require-permission";
 import { db } from "@/lib/db";
 import { PostForm } from "../PostForm";
 import { PublishButton } from "../PublishButton";
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Editar post" };
 
 export default async function EditPostPage({ params }: PageProps<"/admin/blog/[id]">) {
   // The page checks the session itself: the layout's check does not stop it from rendering.
-  await requireSession();
+  await requirePermission("content", ["write"]);
   const { id } = await params;
   const [post, categories] = await Promise.all([
     db.post.findUnique({ where: { id }, include: { categories: { select: { id: true } } } }),

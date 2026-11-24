@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { routing, type Locale } from "@/i18n/routing";
 import { LOCALE_IN_SENTENCE, LOCALE_LABELS } from "@/lib/admin/posts";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/require-permission";
 import { db } from "@/lib/db";
 import { NewLandingForm } from "../NewLandingForm";
 
@@ -15,7 +15,7 @@ const isLocale = (value: string | undefined): value is Locale => routing.locales
 // another language (same translationKey, like blog translations).
 export default async function NewLandingPage({ searchParams }: PageProps<"/admin/landings/nueva">) {
   // The page checks the session itself: the layout's check does not stop it from rendering.
-  await requireSession();
+  await requirePermission("content", ["write"]);
   const params = await searchParams;
   const sourceId = one(params.traducir);
   const targetLocale = one(params.idioma);

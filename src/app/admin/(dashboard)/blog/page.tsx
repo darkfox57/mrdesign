@@ -9,7 +9,7 @@ import {
   STATUS_LABELS,
   postListFilterSchema,
 } from "@/lib/admin/posts";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/require-permission";
 import { routing } from "@/i18n/routing";
 import { db } from "@/lib/db";
 import { PublishButton } from "./PublishButton";
@@ -21,7 +21,7 @@ const dateFormat = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
 
 export default async function AdminBlogPage({ searchParams }: PageProps<"/admin/blog">) {
   // The page checks the session itself: the layout's check does not stop it from rendering.
-  await requireSession();
+  await requirePermission("content", ["read"]);
   const raw = await searchParams;
   const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
   const filter = postListFilterSchema.parse({ status: one(raw.status), locale: one(raw.locale), page: one(raw.page) });

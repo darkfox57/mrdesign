@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { imageHostErrors } from "./images";
 import { validateBuilderData } from "./validate";
 
 // Control characters and backslashes are built from char codes: editors and tooling can collapse
@@ -274,5 +275,18 @@ describe("validateBuilderData: slots, limits and shape", () => {
   it("accepts the page fields as root props and rejects unknown ones", () => {
     expect(validateBuilderData({ root: { props: { title: "T", slug: "t", seoTitle: "", seoDescription: "" } }, content: [] }).success).toBe(true);
     expect(validateBuilderData({ root: { props: { title: "T", onload: "x" } }, content: [] }).success).toBe(false);
+  });
+});
+
+describe("imageHostErrors path check", () => {
+  const prefixes = ["https://media.example.com/bucket/media/"];
+  const page = (imageUrl: string) => ({
+    content: [{ type: "TextImage", props: { id: "a", title: "", text: "", imageUrl, imageAlt: "", imageSide: "left", background: "paper" } }],
+  });
+
+  it("rejects a library URL that walks out of the prefix", () => {
+    expect(imageHostErrors(page(IMAGE), prefixes)).toEqual([]);
+    const outside = "https://media.example.com/bucket/media/../private/x.png";
+    expect(imageHostErrors(page(outside), prefixes)).toEqual([`Imagen ${outside}: elige una imagen de la biblioteca.`]);
   });
 });

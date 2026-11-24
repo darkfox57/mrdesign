@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { BLOG_ADMIN_PATH, publicBlogPaths, publicationChange, publicationSchema } from "@/lib/admin/posts";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/require-permission";
 import { db } from "@/lib/db";
 
 export type PublicationState = { ok?: string; error?: string };
 
-// Admins and editors may publish (permission `content: publish` in src/lib/auth/permissions.ts).
+// Needs `content: publish` (src/lib/auth/permissions.ts).
 export async function setPublication(_: PublicationState, formData: FormData): Promise<PublicationState> {
-  await requireSession();
+  await requirePermission("content", ["publish"]);
   const parsed = publicationSchema.safeParse({ postId: formData.get("postId"), intent: formData.get("intent") });
   if (!parsed.success) return { error: "Acción no válida." };
 

@@ -4,7 +4,7 @@ import { getPathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { LANDINGS_ADMIN_PATH } from "@/lib/admin/landing-create";
 import { LOCALE_IN_SENTENCE, LOCALE_LABELS, STATUS_LABELS } from "@/lib/admin/posts";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/require-permission";
 import { db } from "@/lib/db";
 import { landingHref } from "@/lib/landings/routes";
 import { LandingPublishButton } from "./LandingPublishButton";
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Landings" };
 
 export default async function LandingsPage() {
   // The page checks the session itself: the layout's check does not stop it from rendering.
-  await requireSession();
+  await requirePermission("content", ["read"]);
   const landings = await db.landing.findMany({
     orderBy: [{ translationKey: "asc" }, { locale: "asc" }],
     select: { id: true, title: true, slug: true, locale: true, status: true, translationKey: true, draftBlocks: true },
