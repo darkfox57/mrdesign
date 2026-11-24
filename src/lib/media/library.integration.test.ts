@@ -36,8 +36,28 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
   });
 
   afterAll(async () => {
+    await db.post.deleteMany({ where: { slug: { startsWith: `media-usage-${run}` } } });
     await db.mediaFile.deleteMany({ where: { sha256: { startsWith: run } } });
   });
+
+  async function registerImage(n: number) {
+    const sha256 = hash(n);
+    bucket.set(mediaKey(sha256, "image/png"), { size: 10, contentType: "image/png", checksumSha256: hexToBase64(sha256) });
+    return registerUpload({ sha256, contentType: "image/png", name: `usage-${n}.png` }, "user-1");
+  }
+
+  const createPost = (name: string, data: { coverImageUrl?: string; content?: string }) =>
+    db.post.create({
+      data: {
+        locale: "es",
+        title: `Post ${name} ${run}`,
+        slug: `media-usage-${run}-${name}`,
+        excerpt: "Resumen.",
+        content: data.content ?? "<p>Texto.</p>",
+        coverImageUrl: data.coverImageUrl ?? null,
+      },
+      select: { id: true, title: true },
+    });
 
   it("asks for an upload for a new image and reuses one already in the library", async () => {
     const sha256 = hash(1);
@@ -106,6 +126,30 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     await deleteMedia(media.id);
     expect(await db.mediaFile.count({ where: { id: media.id } })).toBe(0);
     expect(deleted).toEqual([mediaKey(sha256, "image/png")]);
+  });
+
+  it("refuses to delete an image a post uses as its cover or inside its content, and deletes it once no post does", async () => {
+    const cover = await registerImage(10);
+    const inline = await registerImage(11);
+    const coverPost = await createPost("cover", { coverImageUrl: cover.url });
+    const inlinePost = await createPost("inline", { content: `<p>Texto.</p><img src="${inline.url}" alt="Captura" />` });
+
+    for (const [media, post] of [
+      [cover, coverPost],
+      [inline, inlinePost],
+    ] as const) {
+      const attempt = deleteMedia(media.id);
+      await expect(attempt).rejects.toBeInstanceOf(MediaInUseError);
+      await expect(attempt).rejects.toMatchObject({ usedIn: [`Post: ${post.title}`] });
+      expect(await db.mediaFile.count({ where: { id: media.id } })).toBe(1);
+    }
+    expect(deleted).toEqual([]);
+
+    await db.post.deleteMany({ where: { id: { in: [coverPost.id, inlinePost.id] } } });
+    await deleteMedia(cover.id);
+    await deleteMedia(inline.id);
+    expect(await db.mediaFile.count({ where: { id: { in: [cover.id, inline.id] } } })).toBe(0);
+    expect(deleted).toEqual([mediaKey(hash(10), "image/png"), mediaKey(hash(11), "image/png")]);
   });
 
   it("keeps the row when R2 is not configured, so no row ever outlives its object", async () => {

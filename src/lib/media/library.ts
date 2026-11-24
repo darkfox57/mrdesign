@@ -59,9 +59,21 @@ export async function listMedia({ page, pageSize }: { page: number; pageSize: nu
 // Each check returns labels like "Post: <title>" for the places that use the image URL.
 export type MediaUsageCheck = (url: string) => Promise<string[]>;
 
-// Hook point: the blog (post covers and bodies) and the landing builder (any landing field) add
-// their checks here when they ship, so an image they use cannot be deleted. Nothing uses images yet.
-const usageChecks: MediaUsageCheck[] = [];
+// Posts that show the image as their cover or inside their body. The body is sanitized HTML,
+// where a library URL (https, hex key, no "&") is stored as it is, so a substring match finds it.
+const postUsage: MediaUsageCheck = async (url) => {
+  const posts = await db.post.findMany({
+    where: { OR: [{ coverImageUrl: url }, { content: { contains: url } }] },
+    orderBy: [{ title: "asc" }, { id: "asc" }],
+    select: { title: true },
+    take: 5,
+  });
+  return posts.map((post) => `Post: ${post.title}`);
+};
+
+// Hook point: every module that stores image URLs adds its check here, so an image it uses
+// cannot be deleted. The landing builder adds its own when it ships.
+const usageChecks: MediaUsageCheck[] = [postUsage];
 
 export async function mediaUsage(url: string) {
   const results = await Promise.all(usageChecks.map((check) => check(url)));
