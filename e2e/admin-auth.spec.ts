@@ -17,8 +17,26 @@ async function logIn(page: Page, password = E2E_ADMIN.password, next = "", email
 let addressSeq = 0;
 async function useOwnClientAddress(page: Page) {
   const n = (Date.now() + addressSeq++) % 65_536;
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": `198.18.${n >> 8}.${n & 255}` });
+  const address = `198.18.${n >> 8}.${n & 255}`;
+  await page.setExtraHTTPHeaders({ "x-forwarded-for": address });
+  return address;
 }
+
+async function sql(text: string, values: unknown[]) {
+  const client = new Client({ connectionString: E2E_DATABASE_URL });
+  await client.connect();
+  try {
+    return await client.query(text, values);
+  } finally {
+    await client.end();
+  }
+}
+
+// Login throttle rows live in the database (src/lib/auth/login-rate-limit.ts) and outlive the server,
+// so tests that lock keys on purpose delete them, and the next run starts clean.
+const throttleRow = async (key: string) =>
+  (await sql(`select failures, "lockedUntil" from "AuthThrottle" where key = $1`, [key])).rows[0] as { failures: number; lockedUntil: Date | null } | undefined;
+const dropThrottle = (keys: string[]) => sql(`delete from "AuthThrottle" where key = any($1)`, [keys]);
 
 // A fresh account per test, created by the e2e admin from the users screen.
 async function createUser(browser: Browser, role: "admin" | "editor") {
@@ -121,7 +139,7 @@ test("locks an account after repeated failed logins", async ({ page }) => {
     ]);
   };
 
-  await useOwnClientAddress(page);
+  const address = await useOwnClientAddress(page);
   await page.goto("/admin/login");
   for (let i = 0; i < 5; i++) {
     await attempt(`wrong-password-${i}`);
@@ -130,6 +148,12 @@ test("locks an account after repeated failed logins", async ({ page }) => {
 
   await attempt("wrong-password-again");
   await expect(page.locator("form").getByRole("alert")).toContainText("Demasiados intentos");
+
+  // The lock is stored in the database, so it survives a restart and holds on every instance.
+  const lock = await throttleRow(`login:acct:${email}`);
+  expect(lock?.failures).toBe(5);
+  expect(lock?.lockedUntil?.getTime()).toBeGreaterThan(Date.now());
+  await dropThrottle([`login:acct:${email}`, `login:ip:${address}`]);
 });
 
 test("a blocked user loses the dashboard on the next request", async ({ page, browser }) => {
@@ -197,6 +221,8 @@ test("a spoofed X-Forwarded-For does not unlock a locked account", async ({ brow
 
   await expect(page.locator("form").getByRole("alert")).toContainText("Demasiados intentos");
   await context.close();
+  // The forged addresses are fixed, so their counters must not carry over to the next run.
+  await dropThrottle([`login:acct:${email}`, ...Array.from({ length: 6 }, (_, i) => `login:ip:198.51.100.${i + 1}`)]);
 });
 
 test("the admin is not indexed and is not localized", async ({ request }) => {

@@ -127,8 +127,13 @@ test("reset request answers byte-identical text for a known and an unknown email
     await expect(page.getByRole("status")).toBeVisible();
     return { text: await page.locator("main").innerText(), alerts: await page.locator("main").getByRole("alert").count() };
   };
+  // Reset counters persist in the database for a window (3 requests per account), and this test
+  // asks for the shared e2e admin on every run: start and end without its counter.
+  const adminKey = `reset:acct:${E2E_ADMIN.email.toLowerCase()}`;
+  await sql(`delete from "AuthThrottle" where key = $1`, [adminKey]);
   const known = await shot(E2E_ADMIN.email);
   const unknown = await shot(`nadie-${Date.now()}@mrdesign.test`);
+  await sql(`delete from "AuthThrottle" where key = $1`, [adminKey]);
   expect(unknown).toEqual(known);
   expect(known.alerts).toBe(0);
 });

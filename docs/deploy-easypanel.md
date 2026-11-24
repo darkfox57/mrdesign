@@ -19,6 +19,8 @@ The login and password-reset rate limits count failed attempts per account and p
 
 The per-account limit does not use the address, so an account still locks after 5 failed attempts even if the address can be forged.
 
+The counters and locks are stored in Postgres (`AuthThrottle`, see `docs/admin.md`), so they survive redeploys and hold if the service runs more than one replica. Apply the `auth_throttle` migration before deploying the version that uses it.
+
 ### Build arguments
 
 | Argument | Example | Purpose |

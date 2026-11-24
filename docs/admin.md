@@ -24,6 +24,21 @@ Permissions are defined in `src/lib/auth/permissions.ts`. A role missing from th
 7. **Integration and e2e tests run only against the local Docker database**, never a shared one.
 8. **No `loading.tsx` in dashboard routes.** A loading boundary streams the page, so the status is sent before `requireSession()` redirects or `notFound()` runs: a forbidden or missing page would answer 200 instead of 307 or 404.
 
+## Login and reset throttling
+
+`src/lib/auth/login-rate-limit.ts` counts failed logins and password-reset requests per account and per client address, in the `AuthThrottle` table:
+
+| Flow | Per account | Per address | Window |
+| --- | --- | --- | --- |
+| Login (`login:` keys) | 5 failures | 20 failures | 15 min |
+| Reset request (`reset:` keys) | 3 requests | 10 requests | 15 min |
+
+- Each key counts in a fixed window that starts at its first failure. At the limit the key is locked until that window ends, and the form shows how many minutes are left. A successful login clears the account counter, not the address one.
+- Every failure is one atomic upsert per key, so parallel attempts count exactly. Locks are rows, so they survive restarts, hold across instances, and no number of other locked keys can push one out.
+- Rows whose window and lock have both ended are deleted at most every 5 minutes per process, from the failure path. There is no cron.
+- If the database cannot answer, the throttle fails closed. Login refuses the attempt with "No pudimos verificar el ingreso. Prueba de nuevo en unos minutos." A reset request sends no email but still gets the uniform "sent" answer, so it cannot reveal which accounts exist. Both cases are logged.
+- To unlock an account by hand, delete its row: `delete from "AuthThrottle" where key = 'login:acct:<email>';` (email in lower case).
+
 ## Images
 
 - `/admin/imagenes` is the R2 media library. Admins change the alt text of any image; editors only of the images they uploaded (`canEditMediaAlt` in `src/lib/media/rules.ts`). An image with no recorded uploader is admin-only.
