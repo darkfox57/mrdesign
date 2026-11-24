@@ -42,8 +42,11 @@ export async function revokeApiKey(_: RevokeKeyState, formData: FormData): Promi
   const parsed = revokeSchema.safeParse({ keyId: text(formData, "keyId") });
   if (!parsed.success) return { error: "Acción no válida." };
 
-  // Only an active key can be revoked; a revoked key stays revoked with its original date.
-  await db.apiKey.updateMany({ where: { id: parsed.data.keyId, revokedAt: null }, data: { revokedAt: new Date() } });
+  // Only an active key can be revoked; a revoked key stays revoked with its original date. No row
+  // changed means the key is missing or was already revoked (another tab or admin): say so. The list
+  // is not revalidated then, so the form, and the message with it, stays on screen.
+  const { count } = await db.apiKey.updateMany({ where: { id: parsed.data.keyId, revokedAt: null }, data: { revokedAt: new Date() } });
+  if (count === 0) return { error: "Esta key ya estaba revocada o no existe." };
   revalidatePath(KEYS_PATH);
   return {};
 }

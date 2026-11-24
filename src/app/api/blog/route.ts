@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { bearerToken } from "@/lib/api-keys";
 import { authenticateKey, ingestPost } from "@/lib/blog/ingest";
+import { INGEST_RETRY_AFTER_SECONDS, takeIngestRequest } from "@/lib/blog/ingest-rate-limit";
 
 // Blog ingest for any system holding an API key from /admin/api-keys. Contract in docs/api-blog.md.
 // Authorization: Bearer <key>; the key decides whether the post is published or left as a draft.
@@ -34,6 +35,15 @@ export async function POST(request: Request) {
   if (!key) {
     await request.body?.cancel().catch(() => {});
     return NextResponse.json({ error: "API key inválida o revocada." }, { status: 401, headers: { "WWW-Authenticate": "Bearer" } });
+  }
+
+  // Every authenticated request counts, whatever its outcome; over the limit the body is not read.
+  if (!takeIngestRequest(key.id)) {
+    await request.body?.cancel().catch(() => {});
+    return NextResponse.json(
+      { error: "Demasiadas solicitudes con esta API key. Vuelve a intentarlo más tarde." },
+      { status: 429, headers: { "Retry-After": String(INGEST_RETRY_AFTER_SECONDS) } },
+    );
   }
 
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {

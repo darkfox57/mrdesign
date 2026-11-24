@@ -127,6 +127,29 @@ test("a valid key gets 413 over 1 MB, with or without Content-Length, and 400 fo
   expect(await sql('select id from "Post" where slug like $1', [`e2e-verify-${RUN}%`])).toHaveLength(0);
 });
 
+// S9, A10: 60 requests per hour per key. Cheap requests (invalid JSON, 400) count the same as posts.
+test("a key over 60 requests in the hour gets 429 with Retry-After before the body is read; other keys are unaffected", async ({ request }) => {
+  const key = await insertKey(`Verify ${RUN} rate`);
+  const other = await insertKey(`Verify ${RUN} rate other`);
+  const notJson = (token: string, data: string | Buffer = "{") =>
+    request.post("/api/blog", { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, data });
+
+  for (let i = 0; i < 60; i++) expect((await notJson(key)).status(), `request ${i + 1}`).toBe(400);
+
+  // Oversized and invalid: a 413 or 400 would mean the body was read before the limit.
+  const limited = await notJson(key, "x".repeat(1_500_000));
+  expect(limited.status()).toBe(429);
+  expect(limited.headers()["retry-after"]).toBe("3600");
+  expect(await limited.json()).toEqual({ error: "Demasiadas solicitudes con esta API key. Vuelve a intentarlo más tarde." });
+
+  const valid = await ingest(request, key, validBody(`e2e-verify-${RUN}-rate`));
+  expect(valid.status()).toBe(429);
+  expect(await sql('select id from "Post" where slug = $1', [`e2e-verify-${RUN}-rate`])).toHaveLength(0);
+
+  expect((await notJson(other)).status()).toBe(400);
+  expect((await ingest(request, "mrd_unknown", validBody(`e2e-verify-${RUN}-rate`))).status()).toBe(401);
+});
+
 test("ingest stores sanitized HTML, keeps the response contract, and refuses a taken slug", async ({ request, page }) => {
   const key = await insertKey(`Verify ${RUN} publish`);
   const slug = `e2e-verify-${RUN}-xss`;

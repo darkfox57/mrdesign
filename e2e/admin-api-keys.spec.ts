@@ -101,6 +101,28 @@ test("a draft key creates a draft through POST /api/blog, and once revoked the A
   }
 });
 
+test("revoking a key that was already revoked tells the admin and keeps its original date", async ({ page }) => {
+  const name = `Ya revocada ${Date.now()}`;
+  await logIn(page);
+  await page.goto("/admin/api-keys");
+  await createKey(page, name, true);
+  const row = page.getByRole("row").filter({ hasText: name });
+  await expect(row.getByText("Activa", { exact: true })).toBeVisible();
+
+  try {
+    // Another tab or admin revokes it while this page still shows it as active.
+    const original = new Date("2026-01-02T03:04:05.000Z");
+    await sql('update "ApiKey" set "revokedAt" = $1 where name = $2', [original, name]);
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await row.getByRole("button", { name: `Revocar ${name}`, exact: true }).click();
+    await expect(row.getByRole("alert")).toHaveText("Esta key ya estaba revocada o no existe.");
+    expect((await storedKey(name)).revokedAt).toEqual(original);
+  } finally {
+    await sql('delete from "ApiKey" where name = $1', [name]);
+  }
+});
+
 test("the API rejects a request without a valid key", async ({ request }) => {
   const missing = await request.post("/api/blog", { data: { title: "Sin key" } });
   expect(missing.status()).toBe(401);
