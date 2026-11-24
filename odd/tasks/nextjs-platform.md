@@ -45,8 +45,8 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | inline | pending | |
 | T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | inline | pending | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | inline | pending | |
-| T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | (T8.0 commit) |
-| T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | in progress | |
+| T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
+| T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | (T8 commits) |
 | T9 | S8 | Dockerfile, standalone build, deploy doc, full e2e pass | inline | pending | |
 
 ## Log
@@ -157,3 +157,11 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - Coverage: f1f516e (foundation) and 83e5d4c (public blog) have no native review; they are covered by the independent verifier (L16) and the security e2e. The reviewed boundary is now e821a13.
 - L18 (2026-11-23, user): "sigue con t8".
   - The parent built the foundation (Landing model, migration `landings`, Puck 0.24.2; typecheck clean). The rest of T8 is one bounded writer: the builder lib, admin editor and public route are one dependent unit, and parent context is past the backstop.
+- L19 (2026-11-24): T8 writer done, inside its surface.
+  - Blocks (generic only): Hero, Cards, Faq, Columns (left and right slots for TextImage and Button), TextImage, Button, Cta. Each has strict zod schemas and named variants (background, columns, ratio, image side, button kind and alignment).
+  - Builder-only per A9. Public route /soluciones/[slug] (/en/solutions/[slug]), force-dynamic, with FAQPage and BreadcrumbList JSON-LD. Writes revalidate the route pattern `/[locale]/soluciones/[slug]` (page). A landing whose stored blocks are invalid is logged and answers 404. The media guard covers blocks and draftBlocks.
+  - Writer evidence: RED then GREEN for validate (18 failing then 37/37), landing-create (11), read-time validation (6) and media usage (1). vitest 227, lint and typecheck clean, e2e 186 passed with 0 failed (82 skipped, admin flows desktop only).
+  - Parent spot check: vitest 227/227, lint 0, typecheck 0. All changes inside the declared surface.
+  - A suspected mid-page header in the writer's screenshot was a scrolled full-page capture: a fresh capture shows the header at top 0 on both viewports.
+  - Removed the uppercase tracked eyebrow from the Hero (a generic design tell in the design plan).
+  - Commits: builder, blocks and public route first, then the admin editor.

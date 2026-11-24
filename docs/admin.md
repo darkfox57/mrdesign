@@ -22,6 +22,16 @@ Permissions are defined in `src/lib/auth/permissions.ts`. A role missing from th
 7. **Integration and e2e tests run only against the local Docker database**, never a shared one.
 8. **No `loading.tsx` in dashboard routes.** A loading boundary streams the page, so the status is sent before `requireSession()` redirects or `notFound()` runs: a forbidden or missing page would answer 200 instead of 307 or 404.
 
+## Landings
+
+Sales pages built with the Puck visual editor. Admins and editors create, edit and publish them.
+
+- `/admin/landings` lists every landing with its public address, publishes or unpublishes it, and links to the translations it lacks. `/admin/landings/nueva` creates one; `?traducir=<id>&idioma=<locale>` creates its translation, which shares the `translationKey` and starts from a copy of its blocks.
+- `/admin/landings/<id>/visual` is the full-screen editor (`(builder)` route group, no dashboard layout). "Guardar borrador" stores `draftBlocks` only; "Publicar" copies the page and its page fields (title, slug, SEO) to the landing and clears the draft; "Descartar borrador" goes back to what is published.
+- Every save is validated on the server: strict block schemas, safe links, library images only, unique slug per language. Public reads validate the stored blocks again.
+- The public page is `/soluciones/<slug>` (`/en/solutions/<slug>`), rendered on request. Writes revalidate the route pattern `/[locale]/soluciones/[slug]`.
+- Blocks and how to add one: `.claude/skills/landing-blocks/SKILL.md`.
+
 ## UI
 
 Dashboard components use the same tokens and Tailwind styles as the public site. There is no component library.
