@@ -67,8 +67,25 @@ async function captureAction(page: Page, trigger: () => Promise<void>): Promise<
   return captured!;
 }
 
-const replay = (request: APIRequestContext, action: Captured) =>
-  request.post(action.url, { headers: action.headers, data: action.body, maxRedirects: 0 });
+// A connection-level reset, never an HTTP answer: the request got no response at all.
+const CONNECTION_RESET = /ECONNRESET|socket hang up/;
+
+// Each replay opens a connection of its own ("Connection: close"). Playwright's request contexts
+// keep sockets alive, and the server closes an idle one after its keep-alive timeout (5 s, plus
+// Node's 1 s buffer); a request sent on such a socket as it closes fails with "socket hang up".
+// A reset is retried once and recorded as an annotation; any HTTP response, and every assertion
+// on what the replay changed, is left as it is. Replaying the same bytes again is safe: the
+// replays that must change nothing are checked against the database afterwards.
+async function replay(request: APIRequestContext, action: Captured) {
+  const send = () => request.post(action.url, { headers: { ...action.headers, connection: "close" }, data: action.body, maxRedirects: 0 });
+  try {
+    return await send();
+  } catch (error) {
+    if (!CONNECTION_RESET.test(String(error))) throw error;
+    test.info().annotations.push({ type: "connection reset", description: `${action.url}: ${String(error).split("\n")[0]}` });
+    return send();
+  }
+}
 
 async function insertMessage(name: string) {
   const id = `replay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

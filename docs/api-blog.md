@@ -68,10 +68,13 @@ Each tag and category name needs letters or numbers and at most 60 characters. N
 | More than 20 tags or 10 categories | `{ "tags": "Máximo 20 etiquetas." }`, `{ "categories": "Máximo 10 categorías." }` |
 | Another request created the same new tag or category at the same time | `{ "tags": "Otra petición creó las mismas etiquetas a la vez. Vuelve a intentarlo." }` (`categories` alike). Nothing was stored, so the request can be sent again. |
 | The slug is taken in that language | `{ "slug": "Ya existe un post con ese slug en este idioma." }` |
+| The cover is not an `https` URL, for example `http://…` | `{ "img": "La portada tiene que ser una URL https." }` |
 | The cover is outside the image library | `{ "img": "La portada tiene que estar en la biblioteca de imágenes del panel." }` |
 | Unknown language | `{ "locale": "Elige un idioma." }` |
 
 The body is not valid JSON: `400` with `{ "error": "El cuerpo no es JSON válido." }`.
+
+The post clashes with a stored row on a unique rule other than the ones above: `400` with `{ "error": "Otro registro ya usa alguno de estos datos. Revisa el post y vuelve a intentarlo." }` and no `fields`. Nothing was stored.
 
 `413` when the body is larger than 1 MB. The size is counted in bytes as the body arrives, with or without `Content-Length`.
 

@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 import { coverPrefixes } from "@/lib/media/cover-prefixes";
 import { siteUrl } from "@/lib/seo/site";
 import { slugify } from "@/lib/slugify";
-import { violatesUnique } from "./unique-violation";
+import { isUniqueViolation, violatesUnique } from "./unique-violation";
 
 // Body of POST /api/blog (contract in docs/api-blog.md). A field of the wrong JSON type is named
 // like any other invalid field.
@@ -48,6 +48,7 @@ const FIELD_NAMES: Partial<Record<PostFormField, string>> = {
 const INVALID = "Datos inválidos.";
 const COVER_OUTSIDE_LIBRARY = "La portada tiene que estar en la biblioteca de imágenes del panel.";
 const SLUG_TAKEN = "Ya existe un post con ese slug en este idioma.";
+const UNIQUE_CLASH = "Otro registro ya usa alguno de estos datos. Revisa el post y vuelve a intentarlo.";
 
 export type IngestResult =
   | { status: 201; body: { id: string; slug: string; locale: Locale; status: "PUBLISHED" | "DRAFT"; url: string } }
@@ -176,6 +177,9 @@ export async function ingestPost(key: IngestKey, raw: unknown): Promise<IngestRe
     if (violatesUnique(error, "Post", ["locale", "slug"])) return slugError();
     if (violatesUnique(error, "Tag")) return invalid({ tags: "Otra petición creó las mismas etiquetas a la vez. Vuelve a intentarlo." });
     if (violatesUnique(error, "Category")) return invalid({ categories: "Otra petición creó las mismas categorías a la vez. Vuelve a intentarlo." });
+    // A unique index none of the above knows (a new one, or a driver that reports it differently)
+    // is still the client's data clashing with a stored row: a 400, never a 500.
+    if (isUniqueViolation(error)) return { status: 400, body: { error: UNIQUE_CLASH } };
     throw error;
   }
 

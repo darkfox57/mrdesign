@@ -101,14 +101,14 @@ export type TranslationRequest<S extends TranslationSource> =
   | { kind: "invalid"; message: string }
   | { kind: "ready"; source: S; locale: Locale };
 
-// The ?traducir=<landing id>&idioma=<locale> of the new landing page. A link that names a source but
-// no usable language, a missing source or the source's own language is reported instead of
-// silently becoming an unrelated new landing.
+// The ?traducir=<landing id>&idioma=<locale> of the new landing page. Either parameter makes it a
+// translate link: one with no usable language, a missing source (?idioma= alone included) or the
+// source's own language is reported instead of silently becoming an unrelated new landing.
 export async function resolveTranslationRequest<S extends TranslationSource>(
   params: { traducir?: string; idioma?: string },
   findSource: (id: string) => Promise<S | null>,
 ): Promise<TranslationRequest<S>> {
-  if (params.traducir === undefined) return { kind: "none" };
+  if (params.traducir === undefined && params.idioma === undefined) return { kind: "none" };
   const locale = params.idioma;
   if (!routing.locales.includes(locale as Locale)) {
     return {

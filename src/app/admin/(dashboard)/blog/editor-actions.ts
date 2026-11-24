@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { parsePostForm, postIdsSchema, type PostFormField, type PostFormInput } from "@/lib/admin/post-form";
 import { BLOG_ADMIN_PATH, publicBlogPaths } from "@/lib/admin/posts";
 import { requirePermission } from "@/lib/auth/require-permission";
-import { violatesUnique } from "@/lib/blog/unique-violation";
+import { isUniqueViolation, violatesUnique } from "@/lib/blog/unique-violation";
 import { db } from "@/lib/db";
 import { coverPrefixes } from "@/lib/media/cover-prefixes";
 import { listMedia } from "@/lib/media/library";
@@ -19,6 +19,7 @@ export type SavePostState = {
 
 const SLUG_TAKEN = "Ya hay un post con ese slug en este idioma.";
 const TRANSLATION_TAKEN = "Este post ya tiene versión en ese idioma.";
+const UNIQUE_CLASH = "No se pudo guardar: otro registro ya usa alguno de estos datos. Revisa el formulario y vuelve a intentarlo.";
 
 const text = (formData: FormData, key: string) => {
   const value = formData.get(key);
@@ -96,6 +97,8 @@ export async function savePost(_: SavePostState, formData: FormData): Promise<Sa
     // Another save took the slug, or the translation slot, between the check and the write.
     if (violatesUnique(error, "Post", ["translationKey", "locale"])) return { error: TRANSLATION_TAKEN, values };
     if (violatesUnique(error, "Post", ["locale", "slug"])) return { fieldErrors: { slug: SLUG_TAKEN }, values };
+    // Any other unique index: still a clash with stored data, not a crash. The editor keeps what was typed.
+    if (isUniqueViolation(error)) return { error: UNIQUE_CLASH, values };
     throw error;
   }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Prisma } from "@/generated/prisma/client";
-import { violatesUnique } from "./unique-violation";
+import { isUniqueViolation, violatesUnique } from "./unique-violation";
 
 const known = (code: string, meta: Record<string, unknown>) => new Prisma.PrismaClientKnownRequestError("failed", { code, clientVersion: "7.10.1", meta });
 
@@ -29,6 +29,25 @@ describe("violatesUnique", () => {
     const fields = known("P2002", { modelName: "Post", driverAdapterError: { cause: { constraint: { fields: ["translationKey", "locale"] } } } });
     expect(violatesUnique(fields, "Post", ["translationKey", "locale"])).toBe(true);
     expect(violatesUnique(known("P2002", { modelName: "Post", target: ["locale", "slug"] }), "Post", ["locale", "slug"])).toBe(true);
+  });
+
+  it("matches the fields in any order, as a set", () => {
+    const fields = known("P2002", { modelName: "Post", driverAdapterError: { cause: { constraint: { fields: ["locale", "translationKey"] } } } });
+    expect(violatesUnique(fields, "Post", ["translationKey", "locale"])).toBe(true);
+    expect(violatesUnique(known("P2002", { modelName: "Post", target: ["slug", "locale"] }), "Post", ["locale", "slug"])).toBe(true);
+    expect(violatesUnique(adapterClash("Post", "Post_translationKey_locale_key"), "Post", ["locale", "translationKey"])).toBe(true);
+    // A set match is still exact: a subset, a superset or a repeated field is another index.
+    expect(violatesUnique(fields, "Post", ["locale"])).toBe(false);
+    expect(violatesUnique(fields, "Post", ["locale", "translationKey", "slug"])).toBe(false);
+    expect(violatesUnique(fields, "Post", ["locale", "locale"])).toBe(false);
+    expect(violatesUnique(adapterClash("Post", "Post_translationKey_locale_key"), "Post", ["locale", "slug"])).toBe(false);
+  });
+
+  it("tells a unique violation on any index or model apart from other errors", () => {
+    expect(isUniqueViolation(adapterClash("Post", "Post_something_new_key"))).toBe(true);
+    expect(isUniqueViolation(known("P2002", {}))).toBe(true);
+    expect(isUniqueViolation(known("P2025", { modelName: "Post" }))).toBe(false);
+    expect(isUniqueViolation(new Error("Unique constraint failed"))).toBe(false);
   });
 
   it("ignores other errors", () => {

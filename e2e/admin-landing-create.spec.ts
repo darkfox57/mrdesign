@@ -170,6 +170,8 @@ test("explains a translate link it cannot honour instead of showing a plain new 
     [`traducir=${source.id}&idioma=es`, `«${source.title}» ya está en español: la traducción tiene que ser a otro idioma.`],
     ["traducir=no-such-landing&idioma=en", "La landing que quieres traducir no existe."],
     [`traducir=${"x".repeat(300)}&idioma=en`, "La landing que quieres traducir no existe."],
+    // A language with no source is a broken translate link too, not a plain new landing.
+    ["idioma=en", "La landing que quieres traducir no existe."],
   ];
   for (const [search, message] of cases) {
     await page.goto(`/admin/landings/nueva?${search}`);

@@ -196,7 +196,9 @@ test.describe("editor actions", () => {
   });
 });
 
-const PREFIX = "verify-tmp";
+// The public-route rows get an id of their own per run, apart from RUN (the editor tests delete
+// `${RUN}-%` after each test), so two runs never share or delete each other's rows. afterAll removes them.
+const PREFIX = `spec-pub-${Date.now()}`;
 const faq = (answer: string) => ({ type: "Faq", props: { id: "f1", title: "FAQ", background: "paper", items: [{ question: "Q<b>?</b>", answer }] } });
 
 async function insertLanding(slug: string, locale: "es" | "en", status: "PUBLISHED" | "DRAFT", blocks: unknown, opts: { key?: string; publishedAt?: string } = {}) {
@@ -209,7 +211,6 @@ async function insertLanding(slug: string, locale: "es" | "en", status: "PUBLISH
 
 test.describe("public route", () => {
   test.beforeAll(async () => {
-    await sql(`delete from "Landing" where id like '${PREFIX}-%'`);
     await insertLanding(`${PREFIX}-xss`, "es", "PUBLISHED", {
       root: { props: {} },
       content: [hero("<img src=x onerror=window.__pwned=1>", "lead"), faq("</script><script>window.__pwned=2</script>")],

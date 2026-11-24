@@ -144,8 +144,29 @@ describe("resolveTranslationRequest", () => {
   const source = { id: "src1", title: "Tiendas", locale: "es" as const };
   const find = async (id: string) => (id === source.id ? source : null);
 
-  it("is a plain new landing without ?traducir", async () => {
-    expect(await resolveTranslationRequest({ idioma: "en" }, find)).toEqual({ kind: "none" });
+  it("is a plain new landing without ?traducir or ?idioma", async () => {
+    expect(await resolveTranslationRequest({}, find)).toEqual({ kind: "none" });
+  });
+
+  it("explains a translate link that names a language but no source, instead of showing the plain form", async () => {
+    const lookups: string[] = [];
+    const tracked = async (id: string) => {
+      lookups.push(id);
+      return find(id);
+    };
+    for (const idioma of ["en", "es"]) {
+      expect(await resolveTranslationRequest({ idioma }, tracked), idioma).toEqual({
+        kind: "invalid",
+        message: "La landing que quieres traducir no existe. Vuelve a las landings y elige otra.",
+      });
+    }
+    for (const idioma of ["", "fr"]) {
+      expect(await resolveTranslationRequest({ idioma }, tracked), idioma).toEqual({
+        kind: "invalid",
+        message: "El enlace de traducción no indica a qué idioma traducir. Vuelve a las landings y usa «Traducir al…» de la landing.",
+      });
+    }
+    expect(lookups).toEqual([]);
   });
 
   it("returns the source and the target language of a well-formed link", async () => {

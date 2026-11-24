@@ -88,10 +88,10 @@ export async function createLanding(_: CreateLandingState, formData: FormData): 
     });
     id = created.id;
   } catch (error) {
-    // Another save took the slug, or the translation slot, between the check and the write.
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return { errors: [violatesUnique(error, "Landing", ["translationKey", "locale"]) ? TRANSLATION_TAKEN : SLUG_TAKEN], values };
-    }
+    // Another save took the translation slot, or the slug, between the check and the write. Any
+    // other unique index of the landing is reported as the slug too.
+    if (violatesUnique(error, "Landing", ["translationKey", "locale"])) return { errors: [TRANSLATION_TAKEN], values };
+    if (violatesUnique(error, "Landing")) return { errors: [SLUG_TAKEN], values };
     throw error;
   }
   revalidatePath(LANDINGS_ADMIN_PATH, "layout");

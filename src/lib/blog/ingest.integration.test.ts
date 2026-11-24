@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { Prisma } from "@/generated/prisma/client";
 
 vi.mock("server-only", () => ({}));
 const revalidatePath = vi.fn();
@@ -136,6 +137,11 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
       body: { error: "Datos inválidos.", fields: { img: "La portada tiene que estar en la biblioteca de imágenes del panel." } },
     });
     expect(await db.post.count({ where: { slug: `${run}-portada-externa` } })).toBe(0);
+
+    // An http cover fails before the library check, with its own message (docs/api-blog.md).
+    const http = await ingestPost(drafter, body(`${run}-portada-http`, { img: `${COVERS.replace("https:", "http:")}/media/2026/foto.webp` }));
+    expect(http).toEqual({ status: 400, body: { error: "Datos inválidos.", fields: { img: "La portada tiene que ser una URL https." } } });
+    expect(await db.post.count({ where: { slug: `${run}-portada-http` } })).toBe(0);
   });
 
   it("rejects a slug another post of the same language already uses, and allows it in the other language", async () => {
@@ -199,19 +205,57 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     expect(await db.tag.count({ where: { name: `${run} buena` } })).toBe(0);
   });
 
-  it("answers 400 when another request creates the same new tag at the same time", async () => {
-    const tag = { locale: "es" as const, slug: `${run}-carrera`, name: `${run} carrera` };
-    await db.tag.create({ data: tag });
-    const clash = await db.tag.create({ data: tag }).catch((error: unknown) => error);
-    const transaction = vi.spyOn(db, "$transaction").mockRejectedValueOnce(clash);
+  it("answers 201 or 400 to parallel requests creating the same new tag and category, and stores each term once", async () => {
+    // Real parallel ingests through the real transaction: the requests that lose the race for a
+    // new term answer 400 and leave nothing behind, not even their own new tag.
+    for (let round = 0; round < 4; round++) {
+      const tag = `${run} paralela ${round}`;
+      const category = `${run} Paralela ${round}`;
+      const requests = [0, 1, 2, 3].map((index) => ({
+        slug: `${run}-paralela-${round}-${index}`,
+        extraTag: `${run} propia ${round} ${index}`,
+      }));
+      const results = await Promise.all(
+        requests.map(({ slug, extraTag }) => ingestPost(drafter, body(slug, { tags: [tag, extraTag], categories: [category] }))),
+      );
+
+      expect(results.some((result) => result.status === 201), `round ${round}`).toBe(true);
+      for (const [index, result] of results.entries()) {
+        const { slug, extraTag } = requests[index];
+        if (result.status === 201) {
+          expect(result.body.slug).toBe(slug);
+        } else {
+          expect([
+            { error: "Datos inválidos.", fields: { tags: "Otra petición creó las mismas etiquetas a la vez. Vuelve a intentarlo." } },
+            { error: "Datos inválidos.", fields: { categories: "Otra petición creó las mismas categorías a la vez. Vuelve a intentarlo." } },
+          ]).toContainEqual(result.body);
+        }
+        const stored = result.status === 201 ? 1 : 0;
+        expect(await db.post.count({ where: { slug } }), slug).toBe(stored);
+        expect(await db.tag.count({ where: { locale: "es", name: extraTag } }), extraTag).toBe(stored);
+      }
+      expect(await db.tag.count({ where: { locale: "es", name: tag } })).toBe(1);
+      expect(await db.category.count({ where: { locale: "es", name: category } })).toBe(1);
+    }
+  }, 60_000);
+
+  it("answers a clear 400 to a unique error on an index it does not know, and stores nothing", async () => {
+    const slug = `${run}-indice-desconocido`;
+    const unknownIndex = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+      code: "P2002",
+      clientVersion: "7.10.1",
+      meta: { modelName: "Post", driverAdapterError: { cause: { constraint: { index: "Post_externalId_key" } } } },
+    });
+    const transaction = vi.spyOn(db, "$transaction").mockRejectedValueOnce(unknownIndex);
     try {
-      const result = await ingestPost(drafter, body(`${run}-carrera`, { tags: [tag.name] }));
-      expect(result).toEqual({
+      expect(await ingestPost(drafter, body(slug))).toEqual({
         status: 400,
-        body: { error: "Datos inválidos.", fields: { tags: "Otra petición creó las mismas etiquetas a la vez. Vuelve a intentarlo." } },
+        body: { error: "Otro registro ya usa alguno de estos datos. Revisa el post y vuelve a intentarlo." },
       });
     } finally {
       transaction.mockRestore();
     }
+    expect(await db.post.count({ where: { slug } })).toBe(0);
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });
