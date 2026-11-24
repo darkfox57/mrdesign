@@ -1,11 +1,10 @@
 // @vitest-environment node
 // The throttle tables live in the local Docker database (rule 2). Every limiter here uses its own
 // namespace under RUN, so runs never collide with each other or with the app's "login"/"reset" rows.
-import { createHash } from "node:crypto";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { db } from "../db";
 import { isLocalDatabase } from "../is-local-database";
-import { createLoginRateLimiter } from "./login-rate-limit";
+import { createLoginRateLimiter, throttleKey, type ThrottleDb } from "./login-rate-limit";
 
 const local = isLocalDatabase(process.env.DATABASE_URL);
 const RUN = `t14-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -14,7 +13,7 @@ const WINDOW = 15 * MINUTE;
 const T0 = Date.UTC(2026, 10, 24, 12, 0, 0);
 
 let seq = 0;
-function limiter(options: { maxPerAccount?: number; maxPerIp?: number; cleanupEveryMs?: number } = {}) {
+function limiter(options: { maxPerAccount?: number; maxPerIp?: number; cleanupEveryMs?: number; db?: ThrottleDb } = {}) {
   const namespace = `${RUN}-${seq++}`;
   return {
     namespace,
@@ -25,14 +24,13 @@ function limiter(options: { maxPerAccount?: number; maxPerIp?: number; cleanupEv
       maxPerIp: options.maxPerIp ?? 20,
       // Cleanup only when a test asks for it, so rows stay put while a test inspects them.
       cleanupEveryMs: options.cleanupEveryMs ?? Number.POSITIVE_INFINITY,
+      db: options.db,
     }),
   };
 }
 
-// Keys keep the namespace and kind in clear text and hash the value, so their length is fixed.
-const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
-const acct = (namespace: string, email: string) => `${namespace}:acct:${sha256(email.toLowerCase())}`;
-const ipKey = (namespace: string, ip: string) => `${namespace}:ip:${sha256(ip)}`;
+const acct = (namespace: string, email: string) => throttleKey(namespace, "acct", email);
+const ipKey = (namespace: string, ip: string) => throttleKey(namespace, "ip", ip);
 const row = (key: string) => db.authThrottle.findUnique({ where: { key } });
 const allowedCount = (answers: Array<{ allowed: boolean }>) => answers.filter((a) => a.allowed).length;
 
@@ -82,6 +80,22 @@ describe.skipIf(!local)("login rate limiter (Postgres)", () => {
     expect((await l.consume(ip, "long-fresh@x.com", T0)).allowed).toBe(false);
   });
 
+  // R1/R3 (T16): the two keys were two statements, so one could keep its increment while the
+  // attempt was refused as unavailable. Five such half-counts locked an account without a guess.
+  it("counts both keys or neither: a failed address count leaves no account increment", async () => {
+    const { namespace, limiter: l } = limiter();
+    // A counter at the integer maximum makes the address increment fail ("integer out of range").
+    await db.authThrottle.create({ data: { key: ipKey(namespace, "198.18.4.1"), failures: 2_147_483_647, windowStart: new Date(T0) } });
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    for (let i = 0; i < 6; i++) expect(await l.consume("198.18.4.1", "half@x.com", T0)).toMatchObject({ allowed: false, unavailable: true });
+    expect(log).toHaveBeenCalledWith("auth throttle write failed", expect.anything());
+    log.mockRestore();
+
+    expect(await row(acct(namespace, "half@x.com"))).toBeNull();
+    expect(await l.consume("198.18.4.2", "half@x.com", T0)).toEqual({ allowed: true });
+  });
+
   it("starts a new window once the previous one has passed", async () => {
     const { namespace, limiter: l } = limiter();
     for (let i = 0; i < 5; i++) await l.consume("1.1.1.1", "a@x.com", T0);
@@ -126,15 +140,18 @@ describe.skipIf(!local)("login rate limiter (Postgres)", () => {
     expect(allowedCount(fromOneIp)).toBe(20);
   });
 
-  it("counts concurrent attempts exactly and locks exactly at the limit", async () => {
+  // R2 (T16): the lock is stored by the first refused attempt, so a stored lock and a refusal are the
+  // same thing. The attempt that uses the last slot is allowed and stores no lock.
+  it("counts concurrent attempts exactly and stores the lock with the first refusal", async () => {
     const { namespace, limiter: l } = limiter({ maxPerAccount: 40, maxPerIp: 10_000 });
     const first = await Promise.all(Array.from({ length: 39 }, () => l.consume("4.4.4.4", "race@x.com", T0)));
     expect(allowedCount(first)).toBe(39);
     expect(await row(acct(namespace, "race@x.com"))).toMatchObject({ failures: 39, lockedUntil: null });
 
     expect(await l.consume("4.4.4.4", "race@x.com", T0)).toEqual({ allowed: true });
-    expect(await row(acct(namespace, "race@x.com"))).toMatchObject({ failures: 40, lockedUntil: new Date(T0 + WINDOW) });
+    expect(await row(acct(namespace, "race@x.com"))).toMatchObject({ failures: 40, lockedUntil: null });
     expect((await l.consume("4.4.4.4", "race@x.com", T0)).allowed).toBe(false);
+    expect(await row(acct(namespace, "race@x.com"))).toMatchObject({ failures: 41, lockedUntil: new Date(T0 + WINDOW) });
 
     await Promise.all(Array.from({ length: 100 }, (_, i) => l.consume("4.4.4.4", `burst${i % 3}@x.com`, T0)));
     expect((await row(ipKey(namespace, "4.4.4.4")))?.failures).toBe(141);
@@ -231,5 +248,88 @@ describe.skipIf(!local)("login rate limiter (Postgres)", () => {
     expect(await row(`${namespace}:acct:expired2`)).not.toBeNull();
     await l.consume("8.8.8.8", "a@x.com", T0 + 5 * MINUTE);
     expect(await row(`${namespace}:acct:expired2`)).toBeNull();
+  });
+
+  // R4 (T16) repro: maxPerIp-1 failures, then a success, then again. Successes must not buy an
+  // address more failed guesses than maxPerIp per window.
+  it("caps the failed guesses of one address even when its users keep logging in", async () => {
+    const { limiter: l } = limiter({ maxPerIp: 3 });
+    let failedGuesses = 0;
+    for (let round = 0; round < 5; round++) {
+      for (let i = 0; i < 2; i++) if ((await l.consume("198.18.18.1", `guess-${round}-${i}@x.com`, T0)).allowed) failedGuesses++;
+      if ((await l.consume("198.18.18.1", "owner@x.com", T0)).allowed) await l.recordSuccess("198.18.18.1", "owner@x.com", T0);
+    }
+    expect(failedGuesses).toBeLessThanOrEqual(3);
+    expect((await l.consume("198.18.18.1", "fresh@x.com", T0)).allowed).toBe(false);
+  });
+
+  // R4 (T16): a refund gives back a slot, never a lock. Once an address has been refused in a window,
+  // successes counted earlier in that window do not lift the refusal.
+  it("keeps an address refused after the success refunds of attempts counted before the lock", async () => {
+    const { namespace, limiter: l } = limiter({ maxPerIp: 3 });
+    for (const email of ["s1@x.com", "s2@x.com", "f1@x.com"]) expect((await l.consume("198.18.19.1", email, T0)).allowed).toBe(true);
+    expect((await l.consume("198.18.19.1", "f2@x.com", T0)).allowed).toBe(false);
+    const locked = (await row(ipKey(namespace, "198.18.19.1")))?.lockedUntil;
+    expect(locked).toEqual(new Date(T0 + WINDOW));
+
+    await l.recordSuccess("198.18.19.1", "s1@x.com", T0);
+    await l.recordSuccess("198.18.19.1", "s2@x.com", T0);
+
+    expect(await row(ipKey(namespace, "198.18.19.1"))).toMatchObject({ failures: 2, lockedUntil: locked });
+    expect((await l.consume("198.18.19.1", "f3@x.com", T0)).allowed).toBe(false);
+  });
+
+  // R4 (T16, critical): an attempt whose password check failed for infrastructure reasons is given
+  // back on both keys, so outages cannot lock a valid account.
+  it("refund gives the attempt back on both keys: ten refunded attempts lock nothing", async () => {
+    const { namespace, limiter: l } = limiter();
+    for (let i = 0; i < 10; i++) {
+      expect(await l.consume("198.18.20.1", "outage@x.com", T0)).toEqual({ allowed: true });
+      await l.refund("198.18.20.1", "outage@x.com", T0);
+    }
+    expect(await row(acct(namespace, "outage@x.com"))).toMatchObject({ failures: 0, lockedUntil: null });
+    expect(await row(ipKey(namespace, "198.18.20.1"))).toMatchObject({ failures: 0, lockedUntil: null });
+    expect(await l.consume("198.18.20.1", "outage@x.com", T0)).toEqual({ allowed: true });
+  });
+
+  it("refund never takes a counter below zero, nor outside the window that counted it", async () => {
+    const { namespace, limiter: l } = limiter();
+    await l.consume("198.18.21.1", "zero@x.com", T0);
+    for (let i = 0; i < 3; i++) await l.refund("198.18.21.1", "zero@x.com", T0);
+    expect(await row(acct(namespace, "zero@x.com"))).toMatchObject({ failures: 0 });
+    expect(await row(ipKey(namespace, "198.18.21.1"))).toMatchObject({ failures: 0 });
+
+    await l.consume("198.18.21.1", "zero@x.com", T0 + WINDOW);
+    await l.refund("198.18.21.1", "zero@x.com", T0);
+    expect(await row(acct(namespace, "zero@x.com"))).toMatchObject({ failures: 1 });
+  });
+
+  it("refund never lifts a lock that real attempts reached", async () => {
+    const { namespace, limiter: l } = limiter();
+    for (let i = 0; i < 6; i++) await l.consume("198.18.22.1", "locked@x.com", T0);
+    for (let i = 0; i < 3; i++) await l.refund("198.18.22.1", "locked@x.com", T0);
+
+    expect(await row(acct(namespace, "locked@x.com"))).toMatchObject({ failures: 3, lockedUntil: new Date(T0 + WINDOW) });
+    expect((await l.consume("198.18.22.2", "locked@x.com", T0 + 1)).allowed).toBe(false);
+  });
+
+  // R3 (T16): a correct password as the 5th attempt, then the success write fails once.
+  it("leaves the account usable when the success write fails once after a correct last attempt", async () => {
+    let failing = 1;
+    const flaky = {
+      $queryRaw: db.$queryRaw.bind(db),
+      $executeRaw: db.$executeRaw.bind(db),
+      authThrottle: {
+        deleteMany: (args: Parameters<typeof db.authThrottle.deleteMany>[0]) =>
+          failing-- > 0 ? Promise.reject(new Error("Connection terminated unexpectedly")) : db.authThrottle.deleteMany(args),
+      },
+    } as unknown as ThrottleDb;
+    const { namespace, limiter: l } = limiter({ db: flaky });
+    for (let i = 0; i < 5; i++) expect((await l.consume("198.18.23.1", "owner@x.com", T0)).allowed).toBe(true);
+
+    await l.recordSuccess("198.18.23.1", "owner@x.com", T0);
+
+    expect(await row(acct(namespace, "owner@x.com"))).toBeNull();
+    expect(await l.consume("198.18.23.1", "owner@x.com", T0 + 1)).toEqual({ allowed: true });
   });
 });

@@ -240,15 +240,18 @@ model Landing {
 }
 
 // Login and password-reset throttling (src/lib/auth/login-rate-limit.ts). One row per counted key,
-// namespaced like "login:acct:<email>" or "reset:ip:<address>". Rows live in the database so locks
-// survive restarts, work across instances and are never evicted by other keys.
-// Writes go through one atomic upsert per key; expired rows are deleted opportunistically.
+// "<namespace>:acct:<sha256 of the email>" or "<namespace>:ip:<sha256 of the address>" (throttleKey).
+// Rows live in the database so locks survive restarts, work across instances and are never evicted
+// by other keys. Both keys of an attempt are counted in one statement; expired rows are deleted
+// opportunistically.
 model AuthThrottle {
   key         String    @id
-  // Failures counted in the current fixed window, which starts at its first failure.
+  // Attempts counted in the current fixed window (which starts at its first attempt), minus refunds.
+  // The column keeps its original name; the code calls it attempts.
   failures    Int
   windowStart DateTime  @db.Timestamptz(3)
-  // Set once failures reach the key's limit: attempts are refused until then (end of the window).
+  // Set by the first attempt past the key's limit: attempts are refused until then (end of the
+  // window). Refunds never clear it.
   lockedUntil DateTime? @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
 

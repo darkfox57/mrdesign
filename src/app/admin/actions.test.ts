@@ -2,10 +2,11 @@
 import { APIError } from "better-auth/api";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { signInEmail, consume, recordSuccess, redirect } = vi.hoisted(() => ({
+const { signInEmail, consume, recordSuccess, refund, redirect } = vi.hoisted(() => ({
   signInEmail: vi.fn(),
   consume: vi.fn(),
   recordSuccess: vi.fn(),
+  refund: vi.fn(),
   redirect: vi.fn((to: string) => {
     throw new Error(`NEXT_REDIRECT ${to}`);
   }),
@@ -13,10 +14,11 @@ const { signInEmail, consume, recordSuccess, redirect } = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-forwarded-for": "203.0.113.60" }) }));
-vi.mock("next/navigation", () => ({ redirect }));
+vi.mock("next/navigation", () => ({ redirect, unstable_rethrow: () => {} }));
 vi.mock("@/lib/auth", () => ({ auth: { api: { signInEmail } } }));
-// The limiter's own behaviour is pinned against Postgres in login-rate-limit.integration.test.ts.
-vi.mock("@/lib/auth/login-rate-limit", () => ({ loginRateLimiter: { consume, recordSuccess } }));
+// The limiter's own behaviour is pinned against Postgres in login-rate-limit.integration.test.ts,
+// and through this action in actions.integration.test.ts.
+vi.mock("@/lib/auth/login-rate-limit", () => ({ loginRateLimiter: { consume, recordSuccess, refund } }));
 
 const { signIn } = await import("./actions");
 
@@ -32,7 +34,41 @@ describe("signIn throttling", () => {
     vi.clearAllMocks();
     consume.mockResolvedValue({ allowed: true });
     recordSuccess.mockResolvedValue(undefined);
+    refund.mockResolvedValue(undefined);
     vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  // R4 (T16): only a 4xx APIError is a verdict on the credentials (wrong password, unknown user,
+  // banned user). Anything else judged nothing, so the counted attempt is given back.
+  it.each([
+    ["a database error", new Error("Connection terminated unexpectedly")],
+    ["a better-auth internal error", new APIError("INTERNAL_SERVER_ERROR")],
+  ])("refunds the attempt and answers 'try again' when the check fails with %s", async (_, failure) => {
+    signInEmail.mockRejectedValue(failure);
+
+    expect(await signIn({}, form())).toEqual({ error: "No pudimos verificar el ingreso. Prueba de nuevo en unos minutos.", email: "ana@mrdesign.agency" });
+    const countedAt = consume.mock.calls[0][2];
+    expect(refund).toHaveBeenCalledWith("203.0.113.60", "ana@mrdesign.agency", countedAt);
+    expect(console.error).toHaveBeenCalledWith("login check failed", failure);
+  });
+
+  it("keeps the answer when the refund itself fails, and logs it", async () => {
+    const outage = new Error("connect ECONNREFUSED 127.0.0.1:5434");
+    signInEmail.mockRejectedValue(outage);
+    refund.mockRejectedValue(outage);
+
+    expect((await signIn({}, form())).error).toBe("No pudimos verificar el ingreso. Prueba de nuevo en unos minutos.");
+    expect(console.error).toHaveBeenCalledWith("login throttle refund failed", outage);
+  });
+
+  it.each([
+    ["a wrong password or unknown user", new APIError("UNAUTHORIZED", { code: "INVALID_EMAIL_OR_PASSWORD" })],
+    ["a banned user", new APIError("FORBIDDEN", { code: "BANNED_USER" })],
+  ])("keeps the attempt counted for %s", async (_, rejection) => {
+    signInEmail.mockRejectedValue(rejection);
+
+    expect((await signIn({}, form())).error).toBe("Email o contraseña incorrectos.");
+    expect(refund).not.toHaveBeenCalled();
   });
 
   it("refuses the attempt when it cannot be counted (fail closed), without trying the password", async () => {

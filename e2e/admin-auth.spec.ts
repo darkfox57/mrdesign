@@ -1,6 +1,6 @@
-import { createHash } from "node:crypto";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { Client } from "pg";
+import { THROTTLE_NAMESPACES, throttleKey } from "../src/lib/auth/login-rate-limit";
 import { E2E_ADMIN, E2E_DATABASE_URL } from "./test-env";
 
 test.skip(({ viewport }) => (viewport?.width ?? 0) < 1024, "Admin flows run once, on desktop");
@@ -36,9 +36,8 @@ async function sql(text: string, values: unknown[]) {
 // Login throttle rows live in the database (src/lib/auth/login-rate-limit.ts) and outlive the server,
 // so tests that lock keys on purpose delete them, and the next run starts clean. Keys are the
 // namespace and kind in clear text plus the SHA-256 of the lower-cased email or the address.
-const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
-const accountKey = (email: string) => `login:acct:${sha256(email.toLowerCase())}`;
-const addressKey = (address: string) => `login:ip:${sha256(address)}`;
+const accountKey = (email: string) => throttleKey(THROTTLE_NAMESPACES.login, "acct", email);
+const addressKey = (address: string) => throttleKey(THROTTLE_NAMESPACES.login, "ip", address);
 const throttleRow = async (key: string) =>
   (await sql(`select failures, "lockedUntil" from "AuthThrottle" where key = $1`, [key])).rows[0] as { failures: number; lockedUntil: Date | null } | undefined;
 const dropThrottle = (keys: string[]) => sql(`delete from "AuthThrottle" where key = any($1)`, [keys]);
@@ -155,7 +154,8 @@ test("locks an account after repeated failed logins", async ({ page }) => {
   await expect(page.locator("form").getByRole("alert")).toContainText("Demasiados intentos");
 
   // The lock is stored in the database, so it survives a restart and holds on every instance.
-  // Attempts are counted before the password is checked, so the refused sixth one counts too.
+  // Attempts are counted before the password is checked, so the refused sixth one counts too, and it
+  // is the one that stores the lock.
   const lock = await throttleRow(accountKey(email));
   expect(lock?.failures).toBe(6);
   expect(lock?.lockedUntil?.getTime()).toBeGreaterThan(Date.now());

@@ -12,7 +12,7 @@ The site ships as a Docker image built from the repository `Dockerfile`. Next.js
 
 ### Network: only behind the Easypanel proxy
 
-The login and password-reset rate limits count failed attempts per account and per client address. The address is the **last** `X-Forwarded-For` entry (`src/lib/client-ip.ts`), which Easypanel's proxy appends to every request. That is only trustworthy while every request goes through the proxy:
+The login and password-reset rate limits count attempts per account and per client address. The address is the **last** `X-Forwarded-For` entry (`src/lib/client-ip.ts`), which Easypanel's proxy appends to every request. That is only trustworthy while every request goes through the proxy:
 
 - Publish the service through an Easypanel domain only. Do not map the container port (`3000`) to a host port, and do not open it in the firewall.
 - If another proxy or CDN goes in front of Easypanel, make sure the last entry is still the one Easypanel adds. If a hop forwards the header unchanged, a client can pick its own address and the per-IP limit stops working.
@@ -20,6 +20,8 @@ The login and password-reset rate limits count failed attempts per account and p
 The per-account limit does not use the address, so an account still locks after 5 failed attempts even if the address can be forged.
 
 The counters and locks are stored in Postgres (`AuthThrottle`, see `docs/admin.md`), so they survive redeploys and hold if the service runs more than one replica. Apply the `auth_throttle` migration before deploying the version that uses it.
+
+One-off at the deploy that introduced hashed keys (T14): rows written with the old plain-text keys are no longer read, so counters and locks live at that moment restart from zero, at most for one 15-minute window. The old rows are deleted by the regular cleanup once their window ends. Later deploys keep the key format, so locks survive them.
 
 ### Build arguments
 

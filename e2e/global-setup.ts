@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { Client } from "pg";
+import { THROTTLE_NAMESPACES } from "../src/lib/auth/login-rate-limit";
 import { isLocalDatabase } from "../src/lib/is-local-database";
 import { E2E_ADMIN, E2E_DATABASE_URL } from "./test-env";
 
@@ -11,7 +12,8 @@ async function clearAuthThrottle() {
   const client = new Client({ connectionString: E2E_DATABASE_URL });
   await client.connect();
   try {
-    await client.query(`delete from "AuthThrottle" where starts_with(key, 'login:') or starts_with(key, 'reset:')`);
+    const prefixes = Object.values(THROTTLE_NAMESPACES).map((namespace) => `${namespace}:`);
+    await client.query(`delete from "AuthThrottle" where key ^@ any($1::text[])`, [prefixes]);
   } finally {
     await client.end();
   }
