@@ -32,7 +32,7 @@ export default defineConfig({
         // Tests never send real email, even if .env has a Brevo key.
         BREVO_API_KEY: "",
         // Uploads go to the local fake bucket (e2e/fake-r2.mjs), never to the real R2.
-        R2_ENDPOINT: `http://localhost:${FAKE_R2_PORT}`,
+        R2_ENDPOINT: `http://127.0.0.1:${FAKE_R2_PORT}`,
         R2_ACCOUNT_ID: "e2e",
         R2_ACCESS_KEY_ID: "e2e",
         R2_SECRET_ACCESS_KEY: "e2e",

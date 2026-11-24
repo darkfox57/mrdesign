@@ -42,10 +42,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T7a | S4 | Admin blog: list, Tiptap editor, media picker, translations, publish; register post covers in media usage checks | delegated (parallel unit) | done | 51d243b |
 | T7b | S6 | Public blog: index, post page, category page, SEO and JSON-LD, sitemap entries, e2e seed | delegated (parallel unit) | done | 83e5d4c |
 | T7c | S4 | API keys admin and blog ingest API (/api/blog) | delegated (parallel unit) | done | 8d6ef99 |
-| T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | delegated (context backstop) | done | (T11 commit) |
+| T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | delegated (context backstop) | done | 17fbe0e |
 | T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | inline | pending | |
 | T13 | S5 | Landing follow-ups from verifier L20: count nested blocks toward the 100-block limit (reference counts top level only), path-normalize image prefix (shared with T12), zod for translationOf and params.id, catch P2025 in setLandingPublication, explicit content:write permission (shared with T12 R1); optimistic concurrency (updatedAt check) for save and publish; handle rejected editor actions in VisualEditor; one hasDraft definition; per-spec landing rows instead of shared seeded rows and whole-table fingerprints; assert each hostile payload in landings-security; explicit message when the translate params are invalid | inline | pending | |
-| T14 | S4 | Limiter design decision from verifier L25: A1 lock flooding (~2000 addresses evict a target's lock; choose: evict-expired-only + refuse new locks, or fail closed, or shared store) and A2 reset residual under partial write faults | inline | pending (needs a design decision) | |
+| T14 | S4 | Limiter design decision from verifier L25: A1 lock flooding (~2000 addresses evict a target's lock; choose: evict-expired-only + refuse new locks, or fail closed, or shared store) (A2 resolved by 0322c51); plus review L27 notes: row delete failing after the object delete, per-request session DB read cost, shared e2e helpers (createUser, client-address) | inline | pending (needs a design decision) | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | delegated (context backstop) | done | 0111320 |
 | T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
 | T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | 06435e2, 22f255d |
@@ -234,3 +234,17 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - Evidence:
     - Writer RED: 10 failing tests, then GREEN.
     - Parent spot check: vitest 246/246, lint 0, typecheck 0, e2e 200 passed with 0 failed. The writer's one worker crash in blog-security did not reproduce.
+- L27 (2026-11-24): T11 verified and T10+T11 natively reviewed.
+  - Independent verifier for T11: S4, S5 and S8 PASS, no blockers.
+    - About 40 R2_ENDPOINT tricks all fall back to the Cloudflare host.
+    - Editor alt-text replays on others' images change nothing.
+    - Delete survives an R2 outage and concurrent requests.
+    - Its probe is now the regression test `e2e/admin-alt-text.spec.ts`. playwright.config's R2_ENDPOINT is aligned to 127.0.0.1.
+  - Native review, hook candidate c727c37..17fbe0e (T10+T11, 38 files, 992 lines), consent granted, all four lenses captured. Result: correction_required on CRITICAL R1-reset-enumeration-oracle.
+    - The T10 "unavailable" reset state appears only for failures that happen for existing accounts (token write, email send), so it enumerated admin accounts.
+    - Correction plan: 60 lines.
+    - Fix 0322c51 (45 lines): uniform `{ sent: true }` with a server log. RED, then GREEN. The form-only test was removed. This reverses T10's R3-005 fix, because anti-enumeration takes precedence, and resolves T14 A2.
+    - The STATUS then asked for an untracked selection; the uncommitted spec was parked temporarily instead of inventing the schema.
+    - Recovery to successor lineage review-46d4ea1c042764d1 (scope_changed). All four lenses passed: approved, acknowledged, authority burned.
+    - The remaining warnings are folded into T14.
+  - The reviewed boundary is now 0322c51.
