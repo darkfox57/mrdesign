@@ -405,3 +405,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - Resilience: the model's safeguards rejected the reviewer twice.
   - User decision: "Dejarla abierta". The lineage stays open, as in T10.
   - DB failures, retries and fail-closed are covered by the independent verification (L41).
+- L43 (2026-11-24): native review of 3853bd7..7d787cd (the T14 correction and all of T16, 16 files, 1108 lines). Lineage review-75091d925fb9f781, offered by the stop hook. Consent granted by the user.
+  - All four lenses closed: risk, resilience, readability, reliability.
+  - Approved and acknowledged; authority burned.
+  - This supersedes the open T16 lineage (L42): the resilience lens did run on this range.
