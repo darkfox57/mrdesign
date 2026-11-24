@@ -26,18 +26,22 @@ Permissions are defined in `src/lib/auth/permissions.ts`. A role missing from th
 
 ## Login and reset throttling
 
-`src/lib/auth/login-rate-limit.ts` counts failed logins and password-reset requests per account and per client address, in the `AuthThrottle` table:
+`src/lib/auth/login-rate-limit.ts` counts login attempts and password-reset requests per account and per client address, in the `AuthThrottle` table:
 
 | Flow | Per account | Per address | Window |
 | --- | --- | --- | --- |
-| Login (`login:` keys) | 5 failures | 20 failures | 15 min |
+| Login (`login:` keys) | 5 attempts | 20 attempts | 15 min |
 | Reset request (`reset:` keys) | 3 requests | 10 requests | 15 min |
 
-- Each key counts in a fixed window that starts at its first failure. At the limit the key is locked until that window ends, and the form shows how many minutes are left. A successful login clears the account counter, not the address one.
-- Every failure is one atomic upsert per key, so parallel attempts count exactly. Locks are rows, so they survive restarts, hold across instances, and no number of other locked keys can push one out.
-- Rows whose window and lock have both ended are deleted at most every 5 minutes per process, from the failure path. There is no cron.
-- If the database cannot answer, the throttle fails closed. Login refuses the attempt with "No pudimos verificar el ingreso. Prueba de nuevo en unos minutos." A reset request sends no email but still gets the uniform "sent" answer, so it cannot reveal which accounts exist. Both cases are logged.
-- To unlock an account by hand, delete its row: `delete from "AuthThrottle" where key = 'login:acct:<email>';` (email in lower case).
+- **Attempts are counted before they are verified.** `consume` increments the account and the address in one atomic upsert per key and decides from the counts after that increment. Up to the limit the attempt goes on; past it, it is refused before the password is checked or an email is sent. This way parallel requests cannot all slip through, and a locked account cannot be probed.
+- **A successful login clears the account counter** and gives the address back the attempt it counted. The address counter is not reset, because other accounts may be under attack from it. A reset request always counts.
+- Every key counts in a fixed window that starts at its first attempt. Past the limit the key stays refused until that window ends, and the form shows how many minutes are left. Refused attempts are counted too, but they do not extend the window.
+- An attempt counts on both keys, so under parallel load a request refused by one key still uses a slot of the other. With both limits in play, fewer than the limit may get through; never more.
+- Locks are rows, so they survive restarts, hold across instances, and no number of other locked keys can push one out.
+- A key is the namespace and kind in clear text, then the SHA-256 (hex) of the lower-cased email or the address, for example `login:acct:<sha256>`. Every key has the same short length however long the email or forwarded address is, and the prefix still finds a namespace.
+- Rows whose window and lock have both ended are deleted at most every 5 minutes per process, from `consume`. There is no cron.
+- If an attempt cannot be counted, the throttle fails closed. Login refuses the attempt with "No pudimos verificar el ingreso. Prueba de nuevo en unos minutos." and does not check the password. A reset request sends no email but still gets the uniform "sent" answer, so it cannot reveal which accounts exist. Both cases are logged.
+- To unlock an account by hand, delete its row: `delete from "AuthThrottle" where key = 'login:acct:' || encode(sha256(convert_to(lower('<email>'), 'UTF8')), 'hex');`.
 
 ## Images
 

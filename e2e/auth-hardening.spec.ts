@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { Client } from "pg";
 import { E2E_ADMIN, E2E_DATABASE_URL } from "./test-env";
@@ -129,7 +130,8 @@ test("reset request answers byte-identical text for a known and an unknown email
   };
   // Reset counters persist in the database for a window (3 requests per account), and this test
   // asks for the shared e2e admin on every run: start and end without its counter.
-  const adminKey = `reset:acct:${E2E_ADMIN.email.toLowerCase()}`;
+  // Keys hash the lower-cased email (src/lib/auth/login-rate-limit.ts).
+  const adminKey = `reset:acct:${createHash("sha256").update(E2E_ADMIN.email.toLowerCase()).digest("hex")}`;
   await sql(`delete from "AuthThrottle" where key = $1`, [adminKey]);
   const known = await shot(E2E_ADMIN.email);
   const unknown = await shot(`nadie-${Date.now()}@mrdesign.test`);

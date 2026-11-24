@@ -17,18 +17,13 @@ export async function requestPasswordReset(_: RequestResetState, formData: FormD
   if (!parsed.success) return { error: "Escribe un email válido.", email };
 
   const ip = clientIp(await headers());
-  // Fails closed without changing the answer: if the counters cannot be read or written (logged by
-  // the limiter or here), no email is sent, and the visitor still gets the uniform answer below.
-  const limit = await passwordResetRateLimiter.check(ip, parsed.data);
+  // The request is counted first and only sent if it is still within the limit after its own count,
+  // so parallel requests cannot all pass. Fails closed without changing the answer: if it cannot be
+  // counted (logged by the limiter), no email is sent and the visitor gets the uniform answer below.
+  const limit = await passwordResetRateLimiter.consume(ip, parsed.data);
   if (!limit.allowed) {
     if (limit.unavailable) return { sent: true };
     return { error: `Demasiados pedidos. Prueba de nuevo en ${Math.ceil(limit.retryAfterSeconds / 60)} min.`, email };
-  }
-  try {
-    await passwordResetRateLimiter.recordFailure(ip, parsed.data);
-  } catch (error) {
-    console.error("password reset throttle write failed", error);
-    return { sent: true };
   }
 
   // better-auth creates the token and calls sendResetPassword (src/lib/auth/index.ts) only for

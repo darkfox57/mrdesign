@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { Client } from "pg";
 import { E2E_ADMIN, E2E_DATABASE_URL } from "./test-env";
@@ -33,7 +34,11 @@ async function sql(text: string, values: unknown[]) {
 }
 
 // Login throttle rows live in the database (src/lib/auth/login-rate-limit.ts) and outlive the server,
-// so tests that lock keys on purpose delete them, and the next run starts clean.
+// so tests that lock keys on purpose delete them, and the next run starts clean. Keys are the
+// namespace and kind in clear text plus the SHA-256 of the lower-cased email or the address.
+const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
+const accountKey = (email: string) => `login:acct:${sha256(email.toLowerCase())}`;
+const addressKey = (address: string) => `login:ip:${sha256(address)}`;
 const throttleRow = async (key: string) =>
   (await sql(`select failures, "lockedUntil" from "AuthThrottle" where key = $1`, [key])).rows[0] as { failures: number; lockedUntil: Date | null } | undefined;
 const dropThrottle = (keys: string[]) => sql(`delete from "AuthThrottle" where key = any($1)`, [keys]);
@@ -150,10 +155,11 @@ test("locks an account after repeated failed logins", async ({ page }) => {
   await expect(page.locator("form").getByRole("alert")).toContainText("Demasiados intentos");
 
   // The lock is stored in the database, so it survives a restart and holds on every instance.
-  const lock = await throttleRow(`login:acct:${email}`);
-  expect(lock?.failures).toBe(5);
+  // Attempts are counted before the password is checked, so the refused sixth one counts too.
+  const lock = await throttleRow(accountKey(email));
+  expect(lock?.failures).toBe(6);
   expect(lock?.lockedUntil?.getTime()).toBeGreaterThan(Date.now());
-  await dropThrottle([`login:acct:${email}`, `login:ip:${address}`]);
+  await dropThrottle([accountKey(email), addressKey(address)]);
 });
 
 test("a blocked user loses the dashboard on the next request", async ({ page, browser }) => {
@@ -222,7 +228,7 @@ test("a spoofed X-Forwarded-For does not unlock a locked account", async ({ brow
   await expect(page.locator("form").getByRole("alert")).toContainText("Demasiados intentos");
   await context.close();
   // The forged addresses are fixed, so their counters must not carry over to the next run.
-  await dropThrottle([`login:acct:${email}`, ...Array.from({ length: 6 }, (_, i) => `login:ip:198.51.100.${i + 1}`)]);
+  await dropThrottle([accountKey(email), ...Array.from({ length: 6 }, (_, i) => addressKey(`198.51.100.${i + 1}`))]);
 });
 
 test("the admin is not indexed and is not localized", async ({ request }) => {

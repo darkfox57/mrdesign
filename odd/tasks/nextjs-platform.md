@@ -45,7 +45,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | delegated (context backstop) | done | 17fbe0e |
 | T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | delegated (context backstop) | done, reduced scope (e2e helper refactor and media-delete race deferred) | d2ea08f |
 | T13 | S5 | Landing follow-ups from verifier L20: count nested blocks toward the 100-block limit (reference counts top level only), path-normalize image prefix (shared with T12), zod for translationOf and params.id, catch P2025 in setLandingPublication, explicit content:write permission (shared with T12 R1); optimistic concurrency (updatedAt check) for save and publish; handle rejected editor actions in VisualEditor; one hasDraft definition; per-spec landing rows instead of shared seeded rows and whole-table fingerprints; assert each hostile payload in landings-security; explicit message when the translate params are invalid | delegated (context backstop) | done | c885f84, 5f87f87, correction (see L31) |
-| T14 | S4 | Login and reset throttling persisted in Postgres (user decision L35): table with atomic upsert counters per account and IP key, lock until, opportunistic cleanup; replaces the in-memory maps (fixes A1 lock flooding) | delegated (context backstop) | done | (T14 commit) |
+| T14 | S4 | Login and reset throttling persisted in Postgres (user decision L35): table with atomic upsert counters per account and IP key, lock until, opportunistic cleanup; replaces the in-memory maps (fixes A1 lock flooding) | delegated (context backstop) | done | 3853bd7, correction (L37) |
 | T15 | S4 | T12 follow-ups (L30): savePost and ingest keep a generic P2002 fallback (returning the typed values) for unique errors that match no known index; order-independent field match in violatesUnique; drop the double P2002 guard in createLanding; dashboard home post counts behind content:read and stale comment; document the http-cover message; exercise the real transaction in the term clash test; T13 notes: `?idioma=` without `traducir` shows the plain form silently, landings-security public-route rows use a fixed prefix; investigate the intermittent ECONNRESET in e2e/admin-actions (editor inbox replay, full-suite only, likely keep-alive reuse) | delegated (context backstop) | done | 56baea8 |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | delegated (context backstop) | done | 0111320 |
 | T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
@@ -339,3 +339,22 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - Writer: e2e passed 3 full runs.
     - Parent spot check: vitest 362/362, lint 0, typecheck 0.
   - Deploy note: run `npm run db:deploy` before deploying this change.
+- L37 (2026-11-24): T14 verified, reviewed and corrected.
+  - Native review (lineage review-0caab46b9292834f, consent granted, all four lenses captured): approved, acknowledged. Warnings: the write path fails open, the fixed-window burst, cleanup on the request path, row growth, migration-order lockout, schema errors swallowed as "unavailable".
+  - Independent verifier: S4 FAIL on B1, a regression from T14.
+    - The reset path awaited the DB between check and recordFailure, so 30 parallel requests sent 30 emails (baseline: 3).
+    - Everything else passed: SQL safety, namespace isolation, 300-way atomic counting, A1 with 200k foreign rows, the outage and missing-table fail-closed paths, migration additivity, e2e hygiene.
+    - Notes: login had the same race before T14; keys over 2704 bytes were never counted.
+  - Correction, one batch by the same writer:
+    - `consume()` counts first, with an atomic upsert RETURNING the post-increment state for both keys, and decides after. It is used before sending a reset email and before verifying a password.
+    - A failed count write fails closed for login (no password check) and keeps the uniform answer for reset (no email).
+    - A successful login clears the account key and refunds the address's counted attempt, preserving the old IP semantics.
+    - Keys are hashed (`namespace:acct|ip:sha256`, at most 75 chars). docs/admin.md has an unlock recipe.
+    - Under parallel load, a refusal by one key still consumes the other key, so fewer than the limit may pass, never more.
+    - This also closes the review's write-path fail-open warning and the pre-existing login race.
+  - Evidence:
+    - RED on 3853bd7: limiter 20, actions 10, reset race "expected 3, got 30".
+    - GREEN: reset exactly 3 per account and 10 per address; login at most 5 password checks out of 30; long keys counted.
+    - Recheck: the reset race integration test 2/2, twice.
+    - Parent: vitest 368/368, lint 0, typecheck 0, e2e 214 passed with 0 failed.
+  - Remaining gap: the parallel-login race is proven at the limiter level against Postgres, and through the action only with an atomic fake.

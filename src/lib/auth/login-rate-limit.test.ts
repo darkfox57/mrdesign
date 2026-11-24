@@ -20,20 +20,20 @@ describe("login rate limiter when the database fails", () => {
 
   const outage = new Error("connect ECONNREFUSED 127.0.0.1:5434");
   const brokenDb = {
-    authThrottle: { findMany: vi.fn().mockRejectedValue(outage), deleteMany: vi.fn().mockRejectedValue(outage) },
+    authThrottle: { deleteMany: vi.fn().mockRejectedValue(outage) },
+    $queryRaw: vi.fn().mockRejectedValue(outage),
     $executeRaw: vi.fn().mockRejectedValue(outage),
   } as unknown as ThrottleDb;
   const limiter = createLoginRateLimiter({ namespace: "unit", windowMs: 60_000, maxPerAccount: 5, maxPerIp: 20, db: brokenDb });
 
-  it("fails closed: check refuses the attempt and logs the error", async () => {
+  it("fails closed: an attempt that cannot be counted is refused, and the error is logged", async () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    expect(await limiter.check("1.1.1.1", "a@x.com")).toEqual({ allowed: false, unavailable: true, retryAfterSeconds: 60 });
-    expect(log).toHaveBeenCalledWith("auth throttle check failed", outage);
+    expect(await limiter.consume("1.1.1.1", "a@x.com")).toEqual({ allowed: false, unavailable: true, retryAfterSeconds: 60 });
+    expect(log).toHaveBeenCalledWith("auth throttle write failed", outage);
   });
 
-  it("lets recordFailure and clear reject, so the caller decides", async () => {
-    await expect(limiter.recordFailure("1.1.1.1", "a@x.com")).rejects.toBe(outage);
-    await expect(limiter.clear("1.1.1.1", "a@x.com")).rejects.toBe(outage);
+  it("lets recordSuccess reject, so the caller decides", async () => {
+    await expect(limiter.recordSuccess("1.1.1.1", "a@x.com")).rejects.toBe(outage);
   });
 });

@@ -30,8 +30,10 @@ export async function signIn(_: SignInState, formData: FormData): Promise<SignIn
   const requestHeaders = await headers();
   const ip = clientIp(requestHeaders);
   // better-auth's rate limit does not cover auth.api calls made from server actions.
-  // The counters live in the database; if it cannot answer, the attempt is refused (fail closed).
-  const limit = await loginRateLimiter.check(ip, parsed.data.email);
+  // The attempt is counted before the password is checked, so parallel guesses cannot slip past the
+  // limit, and a locked account is never checked. If it cannot be counted, it is refused (fail closed).
+  const countedAt = Date.now();
+  const limit = await loginRateLimiter.consume(ip, parsed.data.email, countedAt);
   if (!limit.allowed) {
     if (limit.unavailable) return { error: "No pudimos verificar el ingreso. Prueba de nuevo en unos minutos.", email };
     const minutes = Math.ceil(limit.retryAfterSeconds / 60);
@@ -41,18 +43,15 @@ export async function signIn(_: SignInState, formData: FormData): Promise<SignIn
   try {
     await auth.api.signInEmail({ body: parsed.data, headers: requestHeaders });
   } catch (error) {
-    if (error instanceof APIError) {
-      // The attempt already failed: a counter write error is logged, never shown, so the answer
-      // stays the same as for any wrong password.
-      await loginRateLimiter.recordFailure(ip, parsed.data.email).catch((cause: unknown) => console.error("login throttle write failed", cause));
-      // Same message for unknown email, wrong password or banned user: do not reveal which.
-      return { error: "Email o contraseña incorrectos.", email };
-    }
+    // Same message for unknown email, wrong password or banned user: do not reveal which.
+    if (error instanceof APIError) return { error: "Email o contraseña incorrectos.", email };
     throw error;
   }
 
-  // The user is signed in: a failed reset of the counter must not block the redirect.
-  await loginRateLimiter.clear(ip, parsed.data.email).catch((cause: unknown) => console.error("login throttle clear failed", cause));
+  // The user is signed in: a failed counter write must not block the redirect.
+  await loginRateLimiter
+    .recordSuccess(ip, parsed.data.email, countedAt)
+    .catch((cause: unknown) => console.error("login throttle success write failed", cause));
   redirect(safeNext(formData.get("next")));
 }
 

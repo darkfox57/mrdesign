@@ -4,7 +4,8 @@ import { isLocalDatabase } from "../src/lib/is-local-database";
 import { E2E_ADMIN, E2E_DATABASE_URL } from "./test-env";
 
 // Login and reset throttle rows (src/lib/auth/login-rate-limit.ts) outlive the server, so a run
-// would inherit the counters and locks of the previous one. Only ever on the local database.
+// would inherit the counters and locks of the previous one. Keys keep their namespace in clear text
+// before the hashed value, so a prefix finds them. Only ever on the local database.
 async function clearAuthThrottle() {
   if (!isLocalDatabase(E2E_DATABASE_URL)) return;
   const client = new Client({ connectionString: E2E_DATABASE_URL });
