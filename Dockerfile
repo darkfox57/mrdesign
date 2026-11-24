@@ -24,7 +24,7 @@ COPY . .
 
 # Pages are rendered at build time, so the public URL used for metadata and the
 # sitemap is fixed here. Pass it in Dokploy under Environment > Build Time Arguments.
-ARG SITE_URL="https://mrdesign.agency"
+ARG SITE_URL="https://mrdesign.com.co"
 ENV SITE_URL=${SITE_URL}
 # next.config.ts builds the next/image allowlist from the bucket's public URL at build time.
 # Without it the site still works, but no image from the media library loads.

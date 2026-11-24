@@ -34,8 +34,8 @@ Set them in **Environment > Build Time Arguments**. The runtime variables below 
 
 | Argument | Example | Purpose |
 | --- | --- | --- |
-| `SITE_URL` | `https://mrdesign.agency` | Public URL used in metadata, canonical links and structured data. |
-| `R2_PUBLIC_URL` | `https://media.mrdesign.agency` | Public URL of the media bucket. `next.config.ts` builds the image allowlist from it at build time, so it must be a build argument as well as a runtime variable. |
+| `SITE_URL` | `https://mrdesign.com.co` | Public URL used in metadata, canonical links and structured data. |
+| `R2_PUBLIC_URL` | `https://media.mrdesign.com.co` | Public URL of the media bucket. `next.config.ts` builds the image allowlist from it at build time, so it must be a build argument as well as a runtime variable. |
 
 ### Runtime environment variables
 
@@ -48,8 +48,8 @@ Set them in **Environment > Environment Variables**.
 | `BETTER_AUTH_SECRET` | Signs dashboard sessions. Generate it with `openssl rand -base64 32`, one per environment. |
 | `BETTER_AUTH_URL` | Public site URL with `https://`. With `https://` the session cookie is `Secure`, and it is the base of password reset links. |
 | `BREVO_API_KEY` | Sends contact notifications and password reset emails. Without it messages are still stored, but no email goes out (an admin can still set passwords from Usuarios). |
-| `CONTACT_NOTIFY_EMAIL` | Optional. Who receives contact notifications (default `contacto@mrdesign.agency`). |
-| `CONTACT_SENDER_EMAIL` | Optional. Verified Brevo sender (default `noreply@mrdesign.agency`). |
+| `CONTACT_NOTIFY_EMAIL` | Optional. Who receives contact notifications (default `contacto@mrdesign.com.co`). |
+| `CONTACT_SENDER_EMAIL` | Optional. Verified Brevo sender (default `noreply@mrdesign.com.co`). |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Cloudflare R2 bucket for the media library. The token needs *Object Read & Write* on that bucket only. Without them the site works and the library shows a "not configured" notice. |
 | `R2_PUBLIC_URL` | Same value as the build argument. |
 | `R2_ENDPOINT` | Do not set it. It is test-only (the e2e fake bucket); only a loopback address is accepted, and any other value is ignored with a warning in the logs. |
@@ -60,7 +60,7 @@ The browser uploads straight to R2, so the bucket needs this policy (R2 → Sett
 
 ```json
 [{
-  "AllowedOrigins": ["https://mrdesign.agency", "http://localhost:3000"],
+  "AllowedOrigins": ["https://mrdesign.com.co", "http://localhost:3000"],
   "AllowedMethods": ["PUT"],
   "AllowedHeaders": ["content-type", "x-amz-checksum-sha256"],
   "MaxAgeSeconds": 3600
@@ -90,7 +90,7 @@ Run it from a checkout of the repository, not inside the container: the standalo
 ## Building the image locally
 
 ```bash
-docker build --build-arg SITE_URL=https://mrdesign.agency -t mrdesign .
+docker build --build-arg SITE_URL=https://mrdesign.com.co -t mrdesign .
 docker run --rm -p 3000:3000 \
   -e DATABASE_URL="postgresql://mrdesign:mrdesign@host.docker.internal:5434/mrdesign" \
   -e BETTER_AUTH_SECRET="local-only-secret" -e BETTER_AUTH_URL="http://localhost:3000" \

@@ -22,7 +22,7 @@ vi.mock("@/lib/auth/login-rate-limit", () => ({ loginRateLimiter: { consume, rec
 
 const { signIn } = await import("./actions");
 
-function form(email = "ana@mrdesign.agency", password = "a-password-123") {
+function form(email = "ana@mrdesign.com.co", password = "a-password-123") {
   const data = new FormData();
   data.set("email", email);
   data.set("password", password);
@@ -46,9 +46,9 @@ describe("signIn throttling", () => {
   ])("refunds the attempt and answers 'try again' when the check fails with %s", async (_, failure) => {
     signInEmail.mockRejectedValue(failure);
 
-    expect(await signIn({}, form())).toEqual({ error: "No pudimos verificar el ingreso. Prueba de nuevo en unos minutos.", email: "ana@mrdesign.agency" });
+    expect(await signIn({}, form())).toEqual({ error: "No pudimos verificar el ingreso. Prueba de nuevo en unos minutos.", email: "ana@mrdesign.com.co" });
     const countedAt = consume.mock.calls[0][2];
-    expect(refund).toHaveBeenCalledWith("203.0.113.60", "ana@mrdesign.agency", countedAt);
+    expect(refund).toHaveBeenCalledWith("203.0.113.60", "ana@mrdesign.com.co", countedAt);
     expect(console.error).toHaveBeenCalledWith("login check failed", failure);
   });
 
@@ -76,7 +76,7 @@ describe("signIn throttling", () => {
 
     expect(await signIn({}, form())).toEqual({
       error: "No pudimos verificar el ingreso. Prueba de nuevo en unos minutos.",
-      email: "ana@mrdesign.agency",
+      email: "ana@mrdesign.com.co",
     });
     expect(signInEmail).not.toHaveBeenCalled();
   });
@@ -84,17 +84,17 @@ describe("signIn throttling", () => {
   it("tells a locked visitor when to try again, without trying the password", async () => {
     consume.mockResolvedValue({ allowed: false, retryAfterSeconds: 61 });
 
-    expect(await signIn({}, form())).toEqual({ error: "Demasiados intentos. Prueba de nuevo en 2 min.", email: "ana@mrdesign.agency" });
+    expect(await signIn({}, form())).toEqual({ error: "Demasiados intentos. Prueba de nuevo en 2 min.", email: "ana@mrdesign.com.co" });
     expect(signInEmail).not.toHaveBeenCalled();
   });
 
   it("counts the attempt against the client address and the lower-cased account before checking the password", async () => {
     signInEmail.mockImplementation(async () => {
-      expect(consume).toHaveBeenCalledWith("203.0.113.60", "ana@mrdesign.agency", expect.any(Number));
+      expect(consume).toHaveBeenCalledWith("203.0.113.60", "ana@mrdesign.com.co", expect.any(Number));
       throw new APIError("UNAUTHORIZED");
     });
 
-    expect(await signIn({}, form("Ana@MRDesign.agency"))).toEqual({ error: "Email o contraseña incorrectos.", email: "Ana@MRDesign.agency" });
+    expect(await signIn({}, form("Ana@MRDesign.com.co"))).toEqual({ error: "Email o contraseña incorrectos.", email: "Ana@MRDesign.com.co" });
     expect(signInEmail).toHaveBeenCalledTimes(1);
     expect(recordSuccess).not.toHaveBeenCalled();
   });
@@ -104,7 +104,7 @@ describe("signIn throttling", () => {
 
     await expect(signIn({}, form())).rejects.toThrow("NEXT_REDIRECT /admin");
     const countedAt = consume.mock.calls[0][2];
-    expect(recordSuccess).toHaveBeenCalledWith("203.0.113.60", "ana@mrdesign.agency", countedAt);
+    expect(recordSuccess).toHaveBeenCalledWith("203.0.113.60", "ana@mrdesign.com.co", countedAt);
   });
 
   it("still redirects a signed-in user when the success cannot be recorded, and logs it", async () => {
@@ -126,7 +126,7 @@ describe("signIn throttling", () => {
       throw new APIError("UNAUTHORIZED");
     });
 
-    const answers = await Promise.all(Array.from({ length: 30 }, (_, i) => signIn({}, form("ana@mrdesign.agency", `guess-${i}`))));
+    const answers = await Promise.all(Array.from({ length: 30 }, (_, i) => signIn({}, form("ana@mrdesign.com.co", `guess-${i}`))));
 
     expect(signInEmail).toHaveBeenCalledTimes(5);
     expect(answers.filter((answer) => answer.error?.startsWith("Demasiados intentos."))).toHaveLength(25);

@@ -10,7 +10,7 @@ export type BrevoEmail = {
 };
 
 // Sends a transactional email through Brevo (BREVO_API_KEY, server-only) from the verified
-// sender (CONTACT_SENDER_EMAIL, noreply@mrdesign.agency by default). Never throws: it logs under
+// sender (CONTACT_SENDER_EMAIL, noreply@mrdesign.com.co by default). Never throws: it logs under
 // `label` and returns whether Brevo accepted the email, so callers decide what a failure means.
 export async function sendBrevoEmail(label: string, email: BrevoEmail): Promise<boolean> {
   const apiKey = process.env.BREVO_API_KEY;
@@ -25,7 +25,7 @@ export async function sendBrevoEmail(label: string, email: BrevoEmail): Promise<
       method: "POST",
       headers: { "content-type": "application/json", "api-key": apiKey },
       body: JSON.stringify({
-        sender: { email: process.env.CONTACT_SENDER_EMAIL ?? "noreply@mrdesign.agency", name: "MR Design" },
+        sender: { email: process.env.CONTACT_SENDER_EMAIL ?? "noreply@mrdesign.com.co", name: "MR Design" },
         ...email,
       }),
       signal: AbortSignal.timeout(10_000),

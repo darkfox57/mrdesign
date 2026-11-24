@@ -20,7 +20,7 @@ describe("localizeHref", () => {
   });
 
   it("leaves external links, mail links, anchors and unknown or dynamic paths untouched", () => {
-    for (const href of ["https://mrdesign.agency/x", "mailto:contacto@mrdesign.agency", "#faq", "/blog/un-post", "/ruta-que-no-existe", ""]) {
+    for (const href of ["https://mrdesign.com.co/x", "mailto:contacto@mrdesign.com.co", "#faq", "/blog/un-post", "/ruta-que-no-existe", ""]) {
       expect(localizeHref(href, "en"), href).toBe(href);
     }
   });

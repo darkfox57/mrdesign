@@ -20,19 +20,19 @@ describe("sendPasswordResetEmail", () => {
 
   it("emails the reset link to the user through Brevo", async () => {
     vi.stubEnv("BREVO_API_KEY", "test-key");
-    vi.stubEnv("BETTER_AUTH_URL", "https://mrdesign.agency");
+    vi.stubEnv("BETTER_AUTH_URL", "https://mrdesign.com.co");
     // Stubbed, so a sender configured on the machine running the tests cannot change the result.
     vi.stubEnv("CONTACT_SENDER_EMAIL", "sender@mrdesign.test");
     const body = stubBrevo();
     const { sendPasswordResetEmail } = await import("./reset-email");
 
-    await sendPasswordResetEmail({ email: "ana@mrdesign.agency", name: "Ana" }, "tok123");
+    await sendPasswordResetEmail({ email: "ana@mrdesign.com.co", name: "Ana" }, "tok123");
 
     const sent = body();
-    expect(sent.to).toEqual([{ email: "ana@mrdesign.agency", name: "Ana" }]);
+    expect(sent.to).toEqual([{ email: "ana@mrdesign.com.co", name: "Ana" }]);
     expect(sent.sender.email).toBe("sender@mrdesign.test");
     expect(sent.subject).toBe("Restablece tu contraseña del panel de MR Design");
-    expect(sent.htmlContent).toContain('href="https://mrdesign.agency/admin/restablecer?token=tok123"');
+    expect(sent.htmlContent).toContain('href="https://mrdesign.com.co/admin/restablecer?token=tok123"');
     expect(sent.htmlContent).toContain("vence en 1 hora");
   });
 
@@ -41,7 +41,7 @@ describe("sendPasswordResetEmail", () => {
     const body = stubBrevo();
     const { sendPasswordResetEmail } = await import("./reset-email");
 
-    await sendPasswordResetEmail({ email: "x@mrdesign.agency", name: '<img src=x onerror="alert(1)">' }, "t");
+    await sendPasswordResetEmail({ email: "x@mrdesign.com.co", name: '<img src=x onerror="alert(1)">' }, "t");
 
     expect(body().htmlContent).not.toContain("<img");
     expect(body().htmlContent).toContain("&lt;img");
@@ -52,7 +52,7 @@ describe("sendPasswordResetEmail", () => {
     const body = stubBrevo();
     const { sendPasswordResetEmail } = await import("./reset-email");
 
-    await sendPasswordResetEmail({ email: "x@mrdesign.agency", name: "Ana\r\nBcc: otro@evil.com" }, "t");
+    await sendPasswordResetEmail({ email: "x@mrdesign.com.co", name: "Ana\r\nBcc: otro@evil.com" }, "t");
 
     expect(body().to[0].name).toBe("Ana Bcc: otro@evil.com");
   });
@@ -64,12 +64,12 @@ describe("sendPasswordResetEmail", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     const { sendPasswordResetEmail } = await import("./reset-email");
-    await expect(sendPasswordResetEmail({ email: "x@mrdesign.agency", name: "X" }, "t")).resolves.toBeUndefined();
+    await expect(sendPasswordResetEmail({ email: "x@mrdesign.com.co", name: "X" }, "t")).resolves.toBeUndefined();
     expect(fetchMock).not.toHaveBeenCalled();
 
     vi.stubEnv("BREVO_API_KEY", "test-key");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
-    await expect(sendPasswordResetEmail({ email: "x@mrdesign.agency", name: "X" }, "t")).resolves.toBeUndefined();
+    await expect(sendPasswordResetEmail({ email: "x@mrdesign.com.co", name: "X" }, "t")).resolves.toBeUndefined();
   });
 });
 
@@ -86,7 +86,7 @@ describe("queuePasswordResetEmail", () => {
     vi.stubGlobal("fetch", fetchMock);
     const { queuePasswordResetEmail } = await import("./reset-email");
 
-    const result = queuePasswordResetEmail({ email: "ana@mrdesign.agency", name: "Ana" }, "tok");
+    const result = queuePasswordResetEmail({ email: "ana@mrdesign.com.co", name: "Ana" }, "tok");
 
     expect(result).toBeUndefined();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());

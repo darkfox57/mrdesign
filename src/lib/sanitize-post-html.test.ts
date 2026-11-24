@@ -15,8 +15,8 @@ describe("sanitizePostHtml", () => {
 
   it("drops javascript: links and keeps https ones safe", () => {
     expect(sanitizePostHtml('<a href="javascript:alert(1)">x</a>')).toBe("<a>x</a>");
-    expect(sanitizePostHtml('<a href="https://mrdesign.agency" target="_blank">x</a>')).toBe(
-      '<a href="https://mrdesign.agency" target="_blank" rel="noopener noreferrer">x</a>',
+    expect(sanitizePostHtml('<a href="https://mrdesign.com.co" target="_blank">x</a>')).toBe(
+      '<a href="https://mrdesign.com.co" target="_blank" rel="noopener noreferrer">x</a>',
     );
   });
 

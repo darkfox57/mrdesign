@@ -3,8 +3,8 @@ import { mediaRemotePatterns } from "./remote-pattern";
 
 describe("mediaRemotePatterns", () => {
   it("lets next/image load only the media folder of the public bucket host", () => {
-    expect(mediaRemotePatterns("https://img.mrdesign.agency")).toEqual([
-      { protocol: "https", hostname: "img.mrdesign.agency", pathname: "/media/**" },
+    expect(mediaRemotePatterns("https://img.mrdesign.com.co")).toEqual([
+      { protocol: "https", hostname: "img.mrdesign.com.co", pathname: "/media/**" },
     ]);
   });
 

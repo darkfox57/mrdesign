@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { canChangeAccount, newUserSchema, roleChangeSchema } from "./users";
 
 describe("newUserSchema", () => {
-  const valid = { name: "Ana Pérez", email: "Ana@Mrdesign.agency", password: "a-long-password", role: "editor" };
+  const valid = { name: "Ana Pérez", email: "Ana@Mrdesign.com.co", password: "a-long-password", role: "editor" };
 
   it("accepts a valid user and lowercases the email", () => {
     const parsed = newUserSchema.safeParse(valid);
     expect(parsed.success).toBe(true);
-    expect(parsed.data?.email).toBe("ana@mrdesign.agency");
+    expect(parsed.data?.email).toBe("ana@mrdesign.com.co");
   });
 
   it("rejects a password shorter than 12 characters", () => {

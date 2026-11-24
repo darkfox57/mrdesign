@@ -85,7 +85,7 @@ async function main() {
     body:
       "<h4>Comparativa</h4><table><thead><tr><th>Plataforma</th><th>Entrega</th></tr></thead>" +
       "<tbody><tr><td>Shopify</td><td>Dos semanas</td></tr></tbody></table>" +
-      '<p>Escríbeme en <a href="https://mrdesign.agency/contacto">contacto</a>.</p>',
+      '<p>Escríbeme en <a href="https://mrdesign.com.co/contacto">contacto</a>.</p>',
   });
 }
 

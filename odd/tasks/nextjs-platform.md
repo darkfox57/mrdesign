@@ -418,3 +418,13 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - The T14 hashed-key note is dropped: the production database started empty.
   - Production database (user-provided `.env`): all 6 migrations applied with `npm run db:deploy`, and status is up to date.
   - First admin: `contacto@mrdesign.com.co`, created at the user's request. The generated password went to a local scratch file and was never printed.
+- L45 (2026-11-24, user): "si". The public domain is mrdesign.com.co.
+  - Every mrdesign.agency reference (18 files) is replaced:
+    - defaults: SITE_URL, the BETTER_AUTH_URL fallback for reset links, the Brevo sender, and the public contact email in src/content/contact.ts
+    - docs and the CORS example
+    - test fixtures
+  - The Brevo sender noreply@mrdesign.com.co must be verified in Brevo.
+  - Evidence:
+    - vitest 390/390 against the local DB; typecheck 0; lint 0.
+    - e2e: 213 passed and 1 failed. The failure was a worker crash (0xC0000409) in the blog sitemap spec, which passed on rerun.
+- L46 (2026-11-24, user): "sube directo a main cuando termine".

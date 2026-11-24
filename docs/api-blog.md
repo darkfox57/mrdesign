@@ -47,7 +47,7 @@ Each tag and category name needs letters or numbers and at most 60 characters. N
 `201`:
 
 ```json
-{ "id": "…", "slug": "choosing-an-online-store", "locale": "en", "status": "PUBLISHED", "url": "https://mrdesign.agency/en/blog/choosing-an-online-store" }
+{ "id": "…", "slug": "choosing-an-online-store", "locale": "en", "status": "PUBLISHED", "url": "https://mrdesign.com.co/en/blog/choosing-an-online-store" }
 ```
 
 `status` is `DRAFT` when the key leaves posts as drafts. After a post is created, the blog in both languages (index, posts and category pages) is revalidated, the same as after a save in the dashboard.
@@ -81,7 +81,7 @@ The post clashes with a stored row on a unique rule other than the ones above: `
 ## Example
 
 ```bash
-curl -X POST https://mrdesign.agency/api/blog \
+curl -X POST https://mrdesign.com.co/api/blog \
   -H "Authorization: Bearer mrd_..." \
   -H "Content-Type: application/json" \
   -d '{"title":"Choosing an online store","description":"What to check before picking Shopify or PrestaShop.","content":"<p>…</p>","locale":"en","tags":"shopify, prestashop","categories":["Ecommerce"]}'

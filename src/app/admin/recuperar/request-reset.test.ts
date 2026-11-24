@@ -31,9 +31,9 @@ describe("requestPasswordReset", () => {
   it("answers the same for a known and an unknown email, counting each request", async () => {
     requestPasswordResetApi.mockResolvedValue({ status: true });
 
-    expect(await requestPasswordReset({}, form("ana@mrdesign.agency"))).toEqual(SENT);
-    expect(await requestPasswordReset({}, form("nadie@mrdesign.agency"))).toEqual(SENT);
-    expect(consume).toHaveBeenCalledWith("203.0.113.50", "nadie@mrdesign.agency");
+    expect(await requestPasswordReset({}, form("ana@mrdesign.com.co"))).toEqual(SENT);
+    expect(await requestPasswordReset({}, form("nadie@mrdesign.com.co"))).toEqual(SENT);
+    expect(consume).toHaveBeenCalledWith("203.0.113.50", "nadie@mrdesign.com.co");
   });
 
   // Some failures happen only for existing accounts (token write, email send), so a distinct answer
@@ -42,16 +42,16 @@ describe("requestPasswordReset", () => {
     const failure = new Error("connect ECONNREFUSED 127.0.0.1:5434");
     requestPasswordResetApi.mockRejectedValue(failure);
 
-    expect(await requestPasswordReset({}, form("ana@mrdesign.agency"))).toEqual(SENT);
+    expect(await requestPasswordReset({}, form("ana@mrdesign.com.co"))).toEqual(SENT);
     expect(console.error).toHaveBeenCalledWith("password reset request failed", failure);
   });
 
   it("tells a throttled visitor when to try again, without sending", async () => {
     consume.mockResolvedValue({ allowed: false, retryAfterSeconds: 61 });
 
-    expect(await requestPasswordReset({}, form("ana@mrdesign.agency"))).toEqual({
+    expect(await requestPasswordReset({}, form("ana@mrdesign.com.co"))).toEqual({
       error: "Demasiados pedidos. Prueba de nuevo en 2 min.",
-      email: "ana@mrdesign.agency",
+      email: "ana@mrdesign.com.co",
     });
     expect(requestPasswordResetApi).not.toHaveBeenCalled();
   });
@@ -60,7 +60,7 @@ describe("requestPasswordReset", () => {
   it("sends nothing but answers the same when the request cannot be counted", async () => {
     consume.mockResolvedValue({ allowed: false, unavailable: true, retryAfterSeconds: 60 });
 
-    expect(await requestPasswordReset({}, form("ana@mrdesign.agency"))).toEqual(SENT);
+    expect(await requestPasswordReset({}, form("ana@mrdesign.com.co"))).toEqual(SENT);
     expect(requestPasswordResetApi).not.toHaveBeenCalled();
   });
 });

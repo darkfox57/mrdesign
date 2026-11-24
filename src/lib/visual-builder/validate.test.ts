@@ -67,7 +67,7 @@ const blocks = {
   }),
   Cta: (): Block => ({
     type: "Cta",
-    props: { id: "cta", title: "¿Empezamos?", text: "", buttonLabel: "Escríbeme", buttonHref: "mailto:contacto@mrdesign.agency", background: "brand" },
+    props: { id: "cta", title: "¿Empezamos?", text: "", buttonLabel: "Escríbeme", buttonHref: "mailto:contacto@mrdesign.com.co", background: "brand" },
   }),
 };
 
@@ -152,7 +152,7 @@ describe("validateBuilderData: each block schema", () => {
 
 describe("validateBuilderData: links and images", () => {
   it("accepts relative, anchor, https and mailto links, and an empty one", () => {
-    for (const href of ["/contacto", "#faq", "https://mrdesign.agency", "mailto:contacto@mrdesign.agency", ""]) {
+    for (const href of ["/contacto", "#faq", "https://mrdesign.com.co", "mailto:contacto@mrdesign.com.co", ""]) {
       const button = blocks.Button();
       button.props.href = href;
       expect(validateBuilderData(page(button)).success, href).toBe(true);

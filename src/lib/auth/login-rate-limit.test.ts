@@ -20,7 +20,7 @@ describe("throttleKey", () => {
   const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 
   it("keeps the namespace and kind in clear text and hashes the lower-cased email", () => {
-    expect(throttleKey("login", "acct", "Ana@MRDesign.agency")).toBe(`login:acct:${sha256("ana@mrdesign.agency")}`);
+    expect(throttleKey("login", "acct", "Ana@MRDesign.com.co")).toBe(`login:acct:${sha256("ana@mrdesign.com.co")}`);
   });
 
   it("hashes the address as it arrives", () => {
