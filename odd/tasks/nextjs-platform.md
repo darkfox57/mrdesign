@@ -43,9 +43,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T7b | S6 | Public blog: index, post page, category page, SEO and JSON-LD, sitemap entries, e2e seed | delegated (parallel unit) | done | 83e5d4c |
 | T7c | S4 | API keys admin and blog ingest API (/api/blog) | delegated (parallel unit) | done | 8d6ef99 |
 | T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | delegated (context backstop) | done | 17fbe0e |
-| T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | delegated (context backstop) | done, reduced scope (e2e helper refactor and media-delete race deferred) | (T12 commit) |
+| T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | delegated (context backstop) | done, reduced scope (e2e helper refactor and media-delete race deferred) | d2ea08f |
 | T13 | S5 | Landing follow-ups from verifier L20: count nested blocks toward the 100-block limit (reference counts top level only), path-normalize image prefix (shared with T12), zod for translationOf and params.id, catch P2025 in setLandingPublication, explicit content:write permission (shared with T12 R1); optimistic concurrency (updatedAt check) for save and publish; handle rejected editor actions in VisualEditor; one hasDraft definition; per-spec landing rows instead of shared seeded rows and whole-table fingerprints; assert each hostile payload in landings-security; explicit message when the translate params are invalid | inline | pending | |
 | T14 | S4 | Limiter design decision from verifier L25: A1 lock flooding (~2000 addresses evict a target's lock; choose: evict-expired-only + refuse new locks, or fail closed, or shared store) (A2 resolved by 0322c51); plus review L27 notes: row delete failing after the object delete, per-request session DB read cost, shared e2e helpers (createUser, client-address) | inline | pending (needs a design decision) | |
+| T15 | S4 | T12 follow-ups (L30): savePost and ingest keep a generic P2002 fallback (returning the typed values) for unique errors that match no known index; order-independent field match in violatesUnique; drop the double P2002 guard in createLanding; dashboard home post counts behind content:read and stale comment; document the http-cover message; exercise the real transaction in the term clash test | inline | pending | |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | delegated (context backstop) | done | 0111320 |
 | T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
 | T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | 06435e2, 22f255d |
@@ -257,7 +258,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - R1: `requirePermission` (content:read, write or publish) on every blog and landing page and action, which also covers T13's item.
     - Ingest names wrong-typed fields.
     - Typed cover error.
-    - `violatesUnique`: Prisma 7 with adapter-pg sends no meta.target, only `driverAdapterError.cause.constraint`, so the old substring probe likely never matched. Now used in savePost, ingest and createLanding.
+    - `violatesUnique`: Prisma 7 with adapter-pg sends no meta.target, only `driverAdapterError.cause.constraint`, although the old substring probe did match through `originalMessage` (corrected by verifier L30). Now used in savePost, ingest and createLanding.
     - Tag and category clash answers 400.
     - Terms: 400 naming the field (no silent drop or truncation), with named caps.
     - zod ids for postId and translationOf.
@@ -267,3 +268,14 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - Parent fixed a docs table broken by a paragraph inserted mid-table in docs/api-blog.md.
   - Evidence: writer RED 24 tests and 2 suites, then GREEN. Parent spot check: vitest 276/276, lint 0, typecheck 0, e2e 201 passed with 0 failed.
   - Contract change, item 3: ingest now answers 400 where it used to drop silently or return a generic error. Documented in docs/api-blog.md.
+- L30 (2026-11-24): T12 verified and reviewed.
+  - Independent verifier: S4 and S5 PASS, no blockers.
+    - Fake roles viewer and reader are denied correctly.
+    - 160 isLibraryUrl probes rejected; stored URLs still pass.
+    - All 28 rows of the ingest 400 table match over real HTTP, and the 201 contract is unchanged.
+    - Real P2002 errors are mapped for Post, Landing, Tag and Category.
+    - Concurrency: 13x4 parallel ingests and 16 HTTP requests gave only 201 or 400, with no duplicate terms.
+    - Revalidation is immediate.
+  - The verifier's probes are kept as `src/lib/auth/require-permission.roles.test.ts`, `src/lib/blog/unique-violation.integration.test.ts` and `e2e/ingest-contract.spec.ts`: 15/15 and 5/5.
+  - Native review (lineage review-8f80a109b4c52554, consent granted, all four lenses): approved, acknowledged, authority burned. Warnings now tracked as T15. The main one: savePost no longer has a generic P2002 fallback, so an unmatched unique error becomes a 500 and the draft is lost (an edge case).
+  - The reviewed boundary is now d2ea08f.
