@@ -17,7 +17,10 @@ export default function proxy(request: NextRequest) {
     if (PUBLIC_ADMIN_PATHS.includes(pathname) || getSessionCookie(request)) return NextResponse.next();
     const login = new URL(ADMIN_LOGIN_PATH, request.url);
     login.searchParams.set("next", pathname + request.nextUrl.search);
-    return NextResponse.redirect(login);
+    // 307 keeps the method and body: a server action POST would be replayed against the login page.
+    // 303 makes the browser load the login page with a GET instead.
+    const safeMethod = request.method === "GET" || request.method === "HEAD";
+    return NextResponse.redirect(login, safeMethod ? 307 : 303);
   }
 
   return intl(request);

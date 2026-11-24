@@ -29,9 +29,9 @@ export const auth = betterAuth({
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7,
-    // The session cookie cache is re-validated against the database every minute, so a ban or
-    // role change reaches a signed-in user within a minute.
-    cookieCache: { enabled: true, maxAge: 60 },
+    // No session cookie cache: it would let a banned or demoted user keep access until it expired.
+    // The dashboard check (src/lib/auth/session.ts) also asks for a database read explicitly.
+    cookieCache: { enabled: false },
   },
   rateLimit: { enabled: true, window: 60, max: 10 },
   plugins: [

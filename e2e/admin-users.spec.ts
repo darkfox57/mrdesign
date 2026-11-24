@@ -118,7 +118,9 @@ test("a blocked user cannot log in", async ({ page, browser }) => {
   await row.getByRole("button", { name: "Bloquear a Bloqueada", exact: true }).click();
   await expect(row.getByText("Bloqueado", { exact: true })).toBeVisible();
 
-  const context = await browser.newContext();
+  // A failed login on purpose: its own client address keeps the shared 127.0.0.1 per-IP counter clean
+  // (the app trusts the last X-Forwarded-For entry, as behind the production proxy).
+  const context = await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": "198.19.0.1" } });
   const blocked = await context.newPage();
   await blocked.goto("/admin/login");
   await blocked.getByLabel("Email").fill(email);

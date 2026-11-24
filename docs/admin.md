@@ -11,6 +11,8 @@ Conventions for the dashboard at `/admin`. It is Spanish only and lives outside 
 
 Permissions are defined in `src/lib/auth/permissions.ts`. A role missing from that file grants no access.
 
+`requireSession()` reads the session and the user from the database on every request (no session cookie cache), so blocking a user, changing a role or revoking sessions counts on the next request.
+
 ## Mandatory rules
 
 1. **Every dashboard page and server action calls `requireSession()` before reading or writing data.** The layout check is not enough: a page renders in parallel with its layout, and its data would leak in the redirect response.

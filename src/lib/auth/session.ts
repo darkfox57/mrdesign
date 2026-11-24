@@ -8,8 +8,11 @@ import { validRole } from "./valid-session";
 
 export const ADMIN_LOGIN_PATH = "/admin/login";
 
-// One session lookup per request, shared by layouts, pages and actions.
-const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
+// One session lookup per request, shared by layouts, pages and actions. It skips the cookie cache
+// and reads the database, so a ban, a role change or a revoked session counts on the next request.
+const getSession = cache(async () =>
+  auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } }),
+);
 
 // The session only if it can use the dashboard: not banned and with a configured role.
 export const getDashboardSession = cache(async () => {

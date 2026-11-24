@@ -20,9 +20,9 @@ export function RequestResetForm() {
         Email
         <input name="email" type="email" autoComplete="username" required defaultValue={state.email} className="min-h-11 rounded-control border border-field px-3 font-normal" />
       </label>
-      {state.error ? (
+      {state.error || state.unavailable ? (
         <p role="alert" className="text-sm font-medium text-brand-700">
-          {state.error}
+          {state.unavailable ? "No pudimos procesar tu pedido en este momento. Prueba de nuevo en unos minutos." : state.error}
         </p>
       ) : null}
       <button

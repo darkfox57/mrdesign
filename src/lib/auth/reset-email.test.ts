@@ -21,6 +21,8 @@ describe("sendPasswordResetEmail", () => {
   it("emails the reset link to the user through Brevo", async () => {
     vi.stubEnv("BREVO_API_KEY", "test-key");
     vi.stubEnv("BETTER_AUTH_URL", "https://mrdesign.agency");
+    // Stubbed, so a sender configured on the machine running the tests cannot change the result.
+    vi.stubEnv("CONTACT_SENDER_EMAIL", "sender@mrdesign.test");
     const body = stubBrevo();
     const { sendPasswordResetEmail } = await import("./reset-email");
 
@@ -28,7 +30,7 @@ describe("sendPasswordResetEmail", () => {
 
     const sent = body();
     expect(sent.to).toEqual([{ email: "ana@mrdesign.agency", name: "Ana" }]);
-    expect(sent.sender.email).toBe("noreply@mrdesign.agency");
+    expect(sent.sender.email).toBe("sender@mrdesign.test");
     expect(sent.subject).toBe("Restablece tu contraseña del panel de MR Design");
     expect(sent.htmlContent).toContain('href="https://mrdesign.agency/admin/restablecer?token=tok123"');
     expect(sent.htmlContent).toContain("vence en 1 hora");

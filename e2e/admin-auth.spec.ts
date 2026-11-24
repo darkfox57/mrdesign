@@ -1,13 +1,40 @@
-import { expect, test, type Page } from "@playwright/test";
-import { E2E_ADMIN } from "./test-env";
+import { expect, test, type Browser, type Page } from "@playwright/test";
+import { Client } from "pg";
+import { E2E_ADMIN, E2E_DATABASE_URL } from "./test-env";
 
 test.skip(({ viewport }) => (viewport?.width ?? 0) < 1024, "Admin flows run once, on desktop");
 
-async function logIn(page: Page, password = E2E_ADMIN.password, next = "") {
+async function logIn(page: Page, password = E2E_ADMIN.password, next = "", email = E2E_ADMIN.email) {
   await page.goto(`/admin/login${next ? `?next=${encodeURIComponent(next)}` : ""}`);
-  await page.getByLabel("Email").fill(E2E_ADMIN.email);
+  await page.getByLabel("Email").fill(email);
   await page.getByLabel("Contraseña").fill(password);
   await page.getByRole("button", { name: "Ingresar" }).click();
+}
+
+// The app trusts the last X-Forwarded-For entry (in production the proxy appends it). Tests that
+// fail logins on purpose use their own address, so they never fill the per-IP counter that every
+// spec shares from 127.0.0.1.
+let addressSeq = 0;
+async function useOwnClientAddress(page: Page) {
+  const n = (Date.now() + addressSeq++) % 65_536;
+  await page.setExtraHTTPHeaders({ "x-forwarded-for": `198.18.${n >> 8}.${n & 255}` });
+}
+
+// A fresh account per test, created by the e2e admin from the users screen.
+async function createUser(browser: Browser, role: "admin" | "editor") {
+  const user = { name: `Sesion ${role} ${Date.now()}`, email: `session-${role}-${Date.now()}@mrdesign.test`, password: "session-password-123" };
+  const admin = await (await browser.newContext()).newPage();
+  await logIn(admin);
+  await expect(admin).toHaveURL(/\/admin$/);
+  await admin.goto("/admin/usuarios");
+  const form = admin.getByRole("form", { name: "Nuevo usuario" });
+  await form.getByLabel("Nombre").fill(user.name);
+  await form.getByLabel("Email").fill(user.email);
+  await form.getByLabel("Contraseña").fill(user.password);
+  await form.getByLabel("Rol").selectOption(role);
+  await form.getByRole("button", { name: "Crear usuario" }).click();
+  await expect(admin.getByRole("row").filter({ hasText: user.email })).toBeVisible();
+  return { user, admin };
 }
 
 test("redirects to the login page without a session, keeping the destination", async ({ page }) => {
@@ -26,6 +53,7 @@ test("keeps the query string of the destination through the login", async ({ pag
 });
 
 test("rejects a wrong password without revealing which field failed", async ({ page }) => {
+  await useOwnClientAddress(page);
   await logIn(page, "wrong-password-123");
 
   await expect(page.locator("form").getByRole("alert")).toHaveText("Email o contraseña incorrectos.");
@@ -93,6 +121,7 @@ test("locks an account after repeated failed logins", async ({ page }) => {
     ]);
   };
 
+  await useOwnClientAddress(page);
   await page.goto("/admin/login");
   for (let i = 0; i < 5; i++) {
     await attempt(`wrong-password-${i}`);
@@ -101,6 +130,41 @@ test("locks an account after repeated failed logins", async ({ page }) => {
 
   await attempt("wrong-password-again");
   await expect(page.locator("form").getByRole("alert")).toContainText("Demasiados intentos");
+});
+
+test("a blocked user loses the dashboard on the next request", async ({ page, browser }) => {
+  const { user, admin } = await createUser(browser, "editor");
+  await logIn(page, user.password, "", user.email);
+  await expect(page).toHaveURL(/\/admin$/);
+
+  const row = admin.getByRole("row").filter({ hasText: user.email });
+  await row.getByRole("button", { name: `Bloquear a ${user.name}`, exact: true }).click();
+  await expect(row.getByText("Bloqueado", { exact: true })).toBeVisible();
+
+  // No wait: the session check reads the database, not a cached copy in the cookie.
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/admin\/login$/);
+});
+
+test("a demoted admin loses the admin pages on the next request", async ({ page, browser }) => {
+  const { user } = await createUser(browser, "admin");
+  await logIn(page, user.password, "/admin/usuarios", user.email);
+  await expect(page.getByRole("heading", { name: "Usuarios" })).toBeVisible();
+
+  // Straight in the database, so only a fresh read of the user can notice it.
+  const client = new Client({ connectionString: E2E_DATABASE_URL });
+  await client.connect();
+  try {
+    await client.query(`update "user" set role = 'editor' where email = $1`, [user.email]);
+  } finally {
+    await client.end();
+  }
+
+  // The users page sends the now-editor to the login page, which sends a valid session on to /admin.
+  await page.goto("/admin/usuarios");
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByRole("banner").getByText("Editor", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Usuarios" })).toHaveCount(0);
 });
 
 test("the HTTP sign-in endpoint is closed: the only way in is the rate-limited form", async ({ request }) => {

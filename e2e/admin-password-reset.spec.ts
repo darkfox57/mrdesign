@@ -22,6 +22,15 @@ async function latestResetToken(email: string) {
   }
 }
 
+// The app trusts the last X-Forwarded-For entry (in production the proxy appends it). Pages that
+// fail logins or request resets use their own address, so they never fill the per-IP counters that
+// every spec shares from 127.0.0.1.
+let addressSeq = 0;
+async function useOwnClientAddress(page: Page) {
+  const n = (Date.now() + addressSeq++) % 65_536;
+  await page.setExtraHTTPHeaders({ "x-forwarded-for": `198.19.${n >> 8}.${n & 255}` });
+}
+
 async function logIn(page: Page, email: string, password: string) {
   await page.goto("/admin/login");
   await page.getByLabel("Email").fill(email);
@@ -48,6 +57,7 @@ async function createEditor(browser: Browser, tag: string) {
 test("resets a forgotten password from the email link, once", async ({ page, browser }) => {
   const { user } = await createEditor(browser, "link");
 
+  await useOwnClientAddress(page);
   await page.goto("/admin/login");
   await page.getByRole("link", { name: "¿Olvidaste tu contraseña?" }).click();
   await expect(page).toHaveURL(/\/admin\/recuperar$/);
@@ -78,6 +88,7 @@ test("resets a forgotten password from the email link, once", async ({ page, bro
 });
 
 test("answers the same for an unknown email and checks the new password", async ({ page }) => {
+  await useOwnClientAddress(page);
   await page.goto("/admin/recuperar");
   await page.getByLabel("Email").fill(`nadie-${Date.now()}@mrdesign.test`);
   await page.getByRole("button", { name: "Enviar enlace" }).click();
@@ -88,6 +99,12 @@ test("answers the same for an unknown email and checks the new password", async 
   await page.getByLabel("Repite la contraseña").fill("other");
   await page.getByRole("button", { name: "Guardar contraseña" }).click();
   await expect(page.locator("form").getByRole("alert")).toContainText("La contraseña necesita al menos 12 caracteres.");
+
+  // Long enough, but the confirmation differs.
+  await page.getByLabel("Contraseña nueva").fill("a-valid-password-1");
+  await page.getByLabel("Repite la contraseña").fill("a-valid-password-2");
+  await page.getByRole("button", { name: "Guardar contraseña" }).click();
+  await expect(page.locator("form").getByRole("alert")).toHaveText("Las contraseñas no coinciden.");
 });
 
 test("an admin sets a new password for another user", async ({ page, browser }) => {

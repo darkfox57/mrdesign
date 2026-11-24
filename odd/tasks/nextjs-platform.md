@@ -45,7 +45,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T11 | S4 | Inbox and media hardening from review L13 (alt text admin-only or owner, delete compensation and error mapping, clamp media page, error boundary `reset` prop, deterministic unread badge e2e, upload timeout, R2_ENDPOINT allowlist) | inline | pending | |
 | T12 | S4 | Blog and ingest follow-ups from verifier L16: ingest names the failing field for non-string values, transactional media delete vs post save race, validate postId/translationOf with zod, path-normalize cover prefix check; content actions check the `content:write` permission explicitly instead of session existence (R1); typed error mapping instead of message/meta substring checks (R2); report dropped or truncated terms; single source for revalidated blog paths; shared e2e helpers and per-spec slug prefixes | inline | pending | |
 | T13 | S5 | Landing follow-ups from verifier L20: count nested blocks toward the 100-block limit (reference counts top level only), path-normalize image prefix (shared with T12), zod for translationOf and params.id, catch P2025 in setLandingPublication, explicit content:write permission (shared with T12 R1); optimistic concurrency (updatedAt check) for save and publish; handle rejected editor actions in VisualEditor; one hasDraft definition; per-spec landing rows instead of shared seeded rows and whole-table fingerprints; assert each hostile payload in landings-security; explicit message when the translate params are invalid | inline | pending | |
-| T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | inline | pending | |
+| T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | delegated (context backstop) | done | (T10 commit) |
 | T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
 | T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | 06435e2, 22f255d |
 | T9 | S8 | Dockerfile (R2_PUBLIC_URL build arg), deploy doc, standalone smoke behind proxy headers, full e2e pass | inline | done | (T9 commit) |
@@ -187,3 +187,20 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - `npm run build` exits 0. BetterAuthError "default secret" lines are logged harmlessly during page data collection (documented).
   - Final full check: vitest 227/227, lint 0, typecheck 0, e2e 192 passed with 0 failed (88 skipped: admin flows run on desktop only).
   - Still needed on the user side: a real Docker build in Easypanel, BETTER_AUTH_SECRET, the R2 and Brevo keys, and testing HeadObject ChecksumSHA256 on a real bucket.
+- L23 (2026-11-24, user): "haz push a la rama principal".
+  - main was fast-forwarded to feat/nextjs-platform and pushed (0dad61b..c727c37, no force; origin/main had not moved; no tracked secrets).
+  - User queue: "sigue con t10", then "sigue con t11 cuando termine t10" and "sigue con t12 cuando termine t11". The work runs serially on branch feat/hardening.
+- L24 (2026-11-24): T10 done (one delegated writer, context backstop).
+  - Fixed:
+    - R1-001 and R3-002: fresh session reads through `disableCookieCache`, confirmed in better-auth 1.7.27, and the cookie cache is disabled.
+    - R1-002 and R3-003: separate bounded maps for counters and locks.
+    - R3-004: the retry estimate uses the latest unlock.
+    - R3-001: 303 for a cookie-less non-GET admin request.
+    - R3-005: the reset request has a generic "unavailable" state on infrastructure errors and stays anti-enumeration.
+    - R1-003: documented that the app must stay behind the proxy.
+    - R3-006: failing-login specs use their own X-Forwarded-For. The parent fixed the last shared one in admin-users.spec.
+    - R3-007, R3-009, R3-010: test additions.
+  - Skipped: R1-004 (fixed in T6), R3-008 (no longer holds), R1-005 and R1-007 (not actionable here), R3-011 and R1-006 (global-setup and playwright config, deferred).
+  - Evidence:
+    - Writer RED then GREEN: limiter 13, proxy 3, reset action and form, fresh ban and demotion e2e.
+    - Parent spot check: vitest 236/236, lint 0, typecheck 0, matcher intact, e2e 194 passed with 0 failed.
