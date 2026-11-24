@@ -17,6 +17,7 @@ export const routing = defineRouting({
     "/portafolio": { es: "/portafolio", en: "/portfolio" },
     "/blog": "/blog",
     "/blog/[slug]": "/blog/[slug]",
+    "/blog/categoria/[category]": { es: "/blog/categoria/[category]", en: "/blog/category/[category]" },
     "/contacto": { es: "/contacto", en: "/contact" },
     "/politica-de-privacidad": { es: "/politica-de-privacidad", en: "/privacy-policy" },
     "/terminos-y-condiciones": { es: "/terminos-y-condiciones", en: "/terms-and-conditions" },

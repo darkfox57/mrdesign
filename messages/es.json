@@ -118,6 +118,32 @@
       "ecommerce": "Tienda en línea"
     }
   },
+  "Blog": {
+    "metaTitle": "Blog",
+    "metaTitlePage": "Blog, página {page}",
+    "metaDescription": "Notas sobre desarrollo web, apps, plugins y tiendas en WordPress, Shopify y PrestaShop, escritas desde mi experiencia.",
+    "title": "Blog",
+    "lead": "Escribo sobre lo que aprendo construyendo sitios, apps y tiendas en línea, para que tomes mejores decisiones sobre tu proyecto.",
+    "breadcrumb": "Blog",
+    "categoriesLabel": "Categorías",
+    "allCategories": "Todas",
+    "emptyTitle": "Todavía no hay artículos publicados",
+    "emptyText": "Estoy preparando los primeros. Mientras tanto, puedes ver los servicios que ofrezco.",
+    "emptyCta": "Ver servicios",
+    "pagination": "Paginación",
+    "previous": "Más recientes",
+    "next": "Más antiguos",
+    "pageOf": "Página {page} de {pages}",
+    "categoryMetaTitlePage": "{category}, página {page}",
+    "categoryMetaDescription": "Artículos de {category} en el blog de MR Design.",
+    "backToBlog": "Volver al blog",
+    "byAuthor": "Por {author}",
+    "tagsLabel": "Etiquetas",
+    "relatedTitle": "Artículos relacionados",
+    "ctaTitle": "¿Tienes un proyecto en mente?",
+    "ctaText": "Cuéntame qué necesitas y te respondo en menos de un día hábil con los siguientes pasos.",
+    "ctaButton": "Cuéntame tu proyecto"
+  },
   "Legal": {
     "updated": "Última actualización: {date}"
   },

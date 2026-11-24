@@ -118,6 +118,32 @@
       "ecommerce": "Online store"
     }
   },
+  "Blog": {
+    "metaTitle": "Blog",
+    "metaTitlePage": "Blog, page {page}",
+    "metaDescription": "Notes on web, app and plugin development and online stores on WordPress, Shopify and PrestaShop, written from my own work.",
+    "title": "Blog",
+    "lead": "I write about what I learn building websites, apps and online stores, so you can make better decisions about your project.",
+    "breadcrumb": "Blog",
+    "categoriesLabel": "Categories",
+    "allCategories": "All",
+    "emptyTitle": "No articles published yet",
+    "emptyText": "I'm working on the first ones. In the meantime, have a look at the services I offer.",
+    "emptyCta": "See services",
+    "pagination": "Pagination",
+    "previous": "Newer",
+    "next": "Older",
+    "pageOf": "Page {page} of {pages}",
+    "categoryMetaTitlePage": "{category}, page {page}",
+    "categoryMetaDescription": "{category} articles on the MR Design blog.",
+    "backToBlog": "Back to the blog",
+    "byAuthor": "By {author}",
+    "tagsLabel": "Tags",
+    "relatedTitle": "Related articles",
+    "ctaTitle": "Have a project in mind?",
+    "ctaText": "Tell me what you need and I'll reply within one business day with the next steps.",
+    "ctaButton": "Tell me about your project"
+  },
   "Legal": {
     "updated": "Last updated: {date}"
   },
