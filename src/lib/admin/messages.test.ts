@@ -106,10 +106,10 @@ describe("messagePreview", () => {
 describe("replyHref", () => {
   it("writes to the sender with a subject in their language", () => {
     expect(replyHref("ana@example.com", "es")).toBe(
-      "mailto:ana@example.com?subject=Re%3A%20tu%20mensaje%20a%20MR%20Design",
+      "mailto:ana@example.com?subject=Re%3A%20tu%20mensaje%20a%20Mr.%20Design",
     );
     expect(replyHref("ana@example.com", "en")).toBe(
-      "mailto:ana@example.com?subject=Re%3A%20your%20message%20to%20MR%20Design",
+      "mailto:ana@example.com?subject=Re%3A%20your%20message%20to%20Mr.%20Design",
     );
   });
 

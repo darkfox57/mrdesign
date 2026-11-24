@@ -4,7 +4,7 @@ import "../globals.css";
 
 // Root layout for the dashboard. It lives outside [locale]: the admin UI is Spanish only.
 export const metadata: Metadata = {
-  title: { default: "Panel", template: "%s | Panel MR Design" },
+  title: { default: "Panel", template: "%s | Panel Mr. Design" },
   robots: { index: false, follow: false },
 };
 

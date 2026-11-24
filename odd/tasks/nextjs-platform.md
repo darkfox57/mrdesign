@@ -442,3 +442,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - Trusted-IP guidance for a CDN is brief.
     - The admin identifier is written in this logbook. It is also the public contact email.
   - The selectorless STATUS still offers 3853bd7..HEAD as a fresh target. Every commit in it is covered by the two acknowledged reviews, so no third review was started.
+- L48 (2026-11-24, user): "el nombre de la marca es Mr. Design".
+  - "MR Design" is replaced by "Mr. Design" in 20 files: UI strings (es/en), metadata, JSON-LD, emails, legal pages, the logo label, the footer, CLAUDE.md and tests, including the URL-encoded mailto subjects.
+  - Email fixtures such as Ana@MRDesign.com.co are left as they are (case tests).
+  - The production admin's display name is still "MR Design"; the user can change it in Usuarios.
+  - Evidence:
+    - vitest 390/390 against the local DB; typecheck 0; lint 0.
+    - e2e: 212 passed and 2 failed, both worker crashes (0xC0000409) that passed on rerun.

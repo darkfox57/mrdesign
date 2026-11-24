@@ -31,7 +31,7 @@ describe("sendPasswordResetEmail", () => {
     const sent = body();
     expect(sent.to).toEqual([{ email: "ana@mrdesign.com.co", name: "Ana" }]);
     expect(sent.sender.email).toBe("sender@mrdesign.test");
-    expect(sent.subject).toBe("Restablece tu contraseña del panel de MR Design");
+    expect(sent.subject).toBe("Restablece tu contraseña del panel de Mr. Design");
     expect(sent.htmlContent).toContain('href="https://mrdesign.com.co/admin/restablecer?token=tok123"');
     expect(sent.htmlContent).toContain("vence en 1 hora");
   });

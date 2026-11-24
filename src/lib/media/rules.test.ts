@@ -53,7 +53,7 @@ describe("altTextSchema", () => {
   });
 
   it("accepts a trimmed description up to 300 characters", () => {
-    expect(altTextSchema.safeParse({ mediaId: "m1", alt: "  Logo de MR Design  " }).data?.alt).toBe("Logo de MR Design");
+    expect(altTextSchema.safeParse({ mediaId: "m1", alt: "  Logo de Mr. Design  " }).data?.alt).toBe("Logo de Mr. Design");
     const parsed = altTextSchema.safeParse({ mediaId: "m1", alt: "a".repeat(301) });
     expect(parsed.error?.issues[0]?.message).toBe("Máximo 300 caracteres.");
   });

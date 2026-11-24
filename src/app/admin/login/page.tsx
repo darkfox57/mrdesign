@@ -17,7 +17,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/admin/logi
       <div className="w-full max-w-sm rounded-card border border-line bg-white p-8 shadow-sm">
         <Logo className="h-14 text-brand-600" />
         <h1 className="text-title mt-6 text-ink">Iniciar sesión</h1>
-        <p className="mt-1 text-sm text-graphite">Panel de administración de MR Design.</p>
+        <p className="mt-1 text-sm text-graphite">Panel de administración de Mr. Design.</p>
         <LoginForm next={typeof next === "string" ? next : undefined} />
         <Link href="/admin/recuperar" className="mt-4 inline-block text-sm font-medium text-brand-700 underline underline-offset-2">
           ¿Olvidaste tu contraseña?

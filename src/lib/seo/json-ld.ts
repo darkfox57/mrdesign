@@ -5,7 +5,7 @@ export const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
   "@id": `${siteUrl}/#business`,
-  name: "MR Design",
+  name: "Mr. Design",
   url: siteUrl,
   email: contact.email,
   telephone: contact.phone,

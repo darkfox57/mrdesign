@@ -79,7 +79,7 @@ export async function SiteFooter() {
       </div>
       <div className="border-t border-ink-line">
         <p className="site-container py-6 text-sm text-on-ink-muted">
-          © {year} MR Design. {t("rights")}
+          © {year} Mr. Design. {t("rights")}
         </p>
       </div>
     </footer>

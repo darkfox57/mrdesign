@@ -1,6 +1,6 @@
-# MR Design platform
+# Mr. Design platform
 
-Public site and admin for MR Design, an independent development service (websites, apps, plugins, WordPress, Shopify, PrestaShop). The development standard mirrors `datilab-web`.
+Public site and admin for Mr. Design, an independent development service (websites, apps, plugins, WordPress, Shopify, PrestaShop). The development standard mirrors `datilab-web`.
 
 ## Stack
 

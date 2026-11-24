@@ -57,7 +57,7 @@ test("lists a new message as unread, opens it and marks it read and unread again
   // The reply subject follows the language the visitor used on the site.
   await expect(page.getByRole("link", { name: "Responder por email" })).toHaveAttribute(
     "href",
-    `mailto:${email}?subject=Re%3A%20your%20message%20to%20MR%20Design`,
+    `mailto:${email}?subject=Re%3A%20your%20message%20to%20Mr.%20Design`,
   );
 
   await page.getByRole("button", { name: "Marcar como leído" }).click();
@@ -86,7 +86,7 @@ test("names the other project type and the Spanish site", async ({ page }) => {
   await expect(page.getByText("Español", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Responder por email" })).toHaveAttribute(
     "href",
-    `mailto:${email}?subject=Re%3A%20tu%20mensaje%20a%20MR%20Design`,
+    `mailto:${email}?subject=Re%3A%20tu%20mensaje%20a%20Mr.%20Design`,
   );
 });
 

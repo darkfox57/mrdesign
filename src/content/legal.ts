@@ -10,13 +10,13 @@ const UPDATED = "2026-11-23";
 export const privacyPolicy: Record<Locale, LegalDocument> = {
   es: {
     title: "Política de privacidad",
-    description: "Cómo MR Design recoge, usa y protege los datos personales que envías por este sitio.",
+    description: "Cómo Mr. Design recoge, usa y protege los datos personales que envías por este sitio.",
     updated: UPDATED,
     sections: [
       {
         title: "Responsable del tratamiento",
         paragraphs: [
-          `MR Design, con domicilio en ${contact.city}, Colombia, es responsable de los datos personales que recibe por este sitio. Puedes escribir a ${contact.email} para cualquier asunto relacionado con tus datos.`,
+          `Mr. Design, con domicilio en ${contact.city}, Colombia, es responsable de los datos personales que recibe por este sitio. Puedes escribir a ${contact.email} para cualquier asunto relacionado con tus datos.`,
         ],
       },
       {
@@ -54,13 +54,13 @@ export const privacyPolicy: Record<Locale, LegalDocument> = {
   },
   en: {
     title: "Privacy policy",
-    description: "How MR Design collects, uses and protects the personal data you send through this site.",
+    description: "How Mr. Design collects, uses and protects the personal data you send through this site.",
     updated: UPDATED,
     sections: [
       {
         title: "Data controller",
         paragraphs: [
-          `MR Design, based in ${contact.city}, Colombia, is responsible for the personal data received through this site. Write to ${contact.email} about anything related to your data.`,
+          `Mr. Design, based in ${contact.city}, Colombia, is responsible for the personal data received through this site. Write to ${contact.email} about anything related to your data.`,
         ],
       },
       {
@@ -101,13 +101,13 @@ export const privacyPolicy: Record<Locale, LegalDocument> = {
 export const termsAndConditions: Record<Locale, LegalDocument> = {
   es: {
     title: "Términos y condiciones",
-    description: "Condiciones de uso del sitio web de MR Design.",
+    description: "Condiciones de uso del sitio web de Mr. Design.",
     updated: UPDATED,
     sections: [
       {
         title: "Uso del sitio",
         paragraphs: [
-          "Este sitio presenta los servicios de desarrollo de MR Design. Puedes navegarlo y usar el formulario de contacto libremente, siempre que no lo uses para enviar spam ni contenido ilegal.",
+          "Este sitio presenta los servicios de desarrollo de Mr. Design. Puedes navegarlo y usar el formulario de contacto libremente, siempre que no lo uses para enviar spam ni contenido ilegal.",
         ],
       },
       {
@@ -119,7 +119,7 @@ export const termsAndConditions: Record<Locale, LegalDocument> = {
       {
         title: "Propiedad intelectual",
         paragraphs: [
-          "Los textos, el diseño y el código de este sitio pertenecen a MR Design. Las marcas y las imágenes de los proyectos del portafolio pertenecen a sus respectivos dueños y se muestran como referencia del trabajo realizado.",
+          "Los textos, el diseño y el código de este sitio pertenecen a Mr. Design. Las marcas y las imágenes de los proyectos del portafolio pertenecen a sus respectivos dueños y se muestran como referencia del trabajo realizado.",
         ],
       },
       {
@@ -130,13 +130,13 @@ export const termsAndConditions: Record<Locale, LegalDocument> = {
   },
   en: {
     title: "Terms and conditions",
-    description: "Terms of use of the MR Design website.",
+    description: "Terms of use of the Mr. Design website.",
     updated: UPDATED,
     sections: [
       {
         title: "Use of the site",
         paragraphs: [
-          "This site presents MR Design's development services. You may browse it and use the contact form freely, as long as you do not use it to send spam or illegal content.",
+          "This site presents Mr. Design's development services. You may browse it and use the contact form freely, as long as you do not use it to send spam or illegal content.",
         ],
       },
       {
@@ -148,7 +148,7 @@ export const termsAndConditions: Record<Locale, LegalDocument> = {
       {
         title: "Intellectual property",
         paragraphs: [
-          "The text, design and code of this site belong to MR Design. The brands and images of portfolio projects belong to their respective owners and are shown as a reference of the work done.",
+          "The text, design and code of this site belong to Mr. Design. The brands and images of portfolio projects belong to their respective owners and are shown as a reference of the work done.",
         ],
       },
       {

@@ -7,8 +7,8 @@ type LogoProps = {
   decorative?: boolean;
 };
 
-// The handwritten MR Design signature. It is a CSS mask, so its color follows `text-*` utilities.
-export function Logo({ className, label = "MR Design", decorative = false }: LogoProps) {
+// The handwritten Mr. Design signature. It is a CSS mask, so its color follows `text-*` utilities.
+export function Logo({ className, label = "Mr. Design", decorative = false }: LogoProps) {
   const a11y = decorative ? { "aria-hidden": true } : { role: "img", "aria-label": label };
   return <span {...a11y} className={cn("signature inline-block h-10", className)} />;
 }

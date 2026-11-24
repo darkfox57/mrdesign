@@ -1,12 +1,12 @@
 {
   "Metadata": {
-    "title": "MR Design: desarrollo web, apps y tiendas en línea",
+    "title": "Mr. Design: desarrollo web, apps y tiendas en línea",
     "description": "Desarrollo independiente de sitios web, aplicaciones, plugins y tiendas en WordPress, Shopify y PrestaShop. Desde Bogotá para clientes en cualquier país."
   },
   "Nav": {
     "label": "Navegación principal",
     "skip": "Saltar al contenido",
-    "home": "MR Design, inicio",
+    "home": "Mr. Design, inicio",
     "services": "Servicios",
     "portfolio": "Portafolio",
     "blog": "Blog",
@@ -110,7 +110,7 @@
   },
   "Portfolio": {
     "metaTitle": "Portafolio",
-    "metaDescription": "Sitios web y tiendas en línea desarrollados por MR Design.",
+    "metaDescription": "Sitios web y tiendas en línea desarrollados por Mr. Design.",
     "title": "Portafolio",
     "lead": "Sitios y tiendas en línea para marcas de moda, deporte, salud visual y consumo.",
     "tags": {
@@ -135,7 +135,7 @@
     "next": "Más antiguos",
     "pageOf": "Página {page} de {pages}",
     "categoryMetaTitlePage": "{category}, página {page}",
-    "categoryMetaDescription": "Artículos de {category} en el blog de MR Design.",
+    "categoryMetaDescription": "Artículos de {category} en el blog de Mr. Design.",
     "backToBlog": "Volver al blog",
     "byAuthor": "Por {author}",
     "tagsLabel": "Etiquetas",

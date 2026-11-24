@@ -28,8 +28,8 @@ export function messagePreview(text: string) {
 }
 
 const REPLY_SUBJECTS: Record<Locale, string> = {
-  es: "Re: tu mensaje a MR Design",
-  en: "Re: your message to MR Design",
+  es: "Re: tu mensaje a Mr. Design",
+  en: "Re: your message to Mr. Design",
 };
 
 // Encoded so nothing in the address can add mail headers; the @ stays readable for every mail client.

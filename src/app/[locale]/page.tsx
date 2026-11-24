@@ -16,7 +16,7 @@ type Item = { title: string; text: string };
 export async function generateMetadata(): Promise<Metadata> {
   const [t, meta, locale] = await Promise.all([getTranslations("Home"), getTranslations("Metadata"), getLocale()]);
   return {
-    title: { absolute: `MR Design: ${t("metaTitle")}` },
+    title: { absolute: `Mr. Design: ${t("metaTitle")}` },
     description: meta("description"),
     alternates: sameRouteAlternates(locale as Locale, "/"),
   };

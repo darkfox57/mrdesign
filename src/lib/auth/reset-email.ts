@@ -13,10 +13,10 @@ export async function sendPasswordResetEmail(user: { email: string; name: string
   await sendBrevoEmail("password reset email", {
     // The display name goes into a header-like field: no control characters there.
     to: [{ email: user.email, name: user.name.replace(/[\u0000-\u001f\u007f]+/g, " ").trim() }],
-    subject: "Restablece tu contraseña del panel de MR Design",
+    subject: "Restablece tu contraseña del panel de Mr. Design",
     htmlContent: [
       `<p>Hola, ${name}:</p>`,
-      "<p>Pediste restablecer tu contraseña del panel de MR Design. Elige una nueva desde este enlace:</p>",
+      "<p>Pediste restablecer tu contraseña del panel de Mr. Design. Elige una nueva desde este enlace:</p>",
       `<p><a href="${escapeHtml(link)}">Restablecer la contraseña</a></p>`,
       `<p>El enlace vence en ${RESET_TOKEN_SECONDS / 3600} hora y sirve una sola vez. Si no lo pediste, ignora este email: tu contraseña no cambia.</p>`,
     ].join("\n"),

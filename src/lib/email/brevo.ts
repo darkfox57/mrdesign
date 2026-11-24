@@ -25,7 +25,7 @@ export async function sendBrevoEmail(label: string, email: BrevoEmail): Promise<
       method: "POST",
       headers: { "content-type": "application/json", "api-key": apiKey },
       body: JSON.stringify({
-        sender: { email: process.env.CONTACT_SENDER_EMAIL ?? "noreply@mrdesign.com.co", name: "MR Design" },
+        sender: { email: process.env.CONTACT_SENDER_EMAIL ?? "noreply@mrdesign.com.co", name: "Mr. Design" },
         ...email,
       }),
       signal: AbortSignal.timeout(10_000),
