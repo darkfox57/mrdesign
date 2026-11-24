@@ -7,21 +7,36 @@ vi.mock("server-only", () => ({}));
 const steps: string[] = [];
 const rows = new Map<string, { key: string; url: string }>();
 
-vi.mock("../db", () => ({
-  db: {
-    mediaFile: {
-      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => rows.get(where.id) ?? null),
-      deleteMany: vi.fn(async ({ where }: { where: { id: string } }) => {
-        steps.push(`row:${where.id}`);
-        return { count: rows.delete(where.id) ? 1 : 0 };
-      }),
-      delete: vi.fn(async ({ where }: { where: { id: string } }) => {
-        steps.push(`row:${where.id}`);
-        rows.delete(where.id);
-      }),
-    },
-  },
-}));
+vi.mock("../db", () => {
+  const mediaFile = {
+    findUnique: vi.fn(async ({ where }: { where: { id: string } }) => rows.get(where.id) ?? null),
+    deleteMany: vi.fn(async ({ where }: { where: { id: string } }) => {
+      steps.push(`row:${where.id}`);
+      return { count: rows.delete(where.id) ? 1 : 0 };
+    }),
+    delete: vi.fn(async ({ where }: { where: { id: string } }) => {
+      steps.push(`row:${where.id}`);
+      rows.delete(where.id);
+    }),
+  };
+  // The row lock of deleteMedia: answers the row while it exists.
+  const tx = {
+    mediaFile,
+    $queryRaw: vi.fn(async (_: TemplateStringsArray, id: string) => (rows.has(id) ? [{ id }] : [])),
+  };
+  // A failed transaction rolls back: the row is restored as it was.
+  const $transaction = vi.fn(async (run: (client: typeof tx) => Promise<unknown>) => {
+    const before = new Map(rows);
+    try {
+      return await run(tx);
+    } catch (error) {
+      rows.clear();
+      for (const [id, row] of before) rows.set(id, row);
+      throw error;
+    }
+  });
+  return { db: { mediaFile, $transaction } };
+});
 
 vi.mock("./r2", () => ({
   deleteObject: vi.fn(async (key: string) => {

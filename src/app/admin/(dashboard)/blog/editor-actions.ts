@@ -9,6 +9,7 @@ import { isUniqueViolation, violatesUnique } from "@/lib/blog/unique-violation";
 import { db } from "@/lib/db";
 import { coverPrefixes } from "@/lib/media/cover-prefixes";
 import { listMedia } from "@/lib/media/library";
+import { MediaMissingError, postHtmlUrls, withLibraryImages } from "@/lib/media/references";
 
 export type SavePostState = {
   ok?: string;
@@ -19,6 +20,8 @@ export type SavePostState = {
 
 const SLUG_TAKEN = "Ya hay un post con ese slug en este idioma.";
 const TRANSLATION_TAKEN = "Este post ya tiene versión en ese idioma.";
+const COVER_MISSING = "La portada no está en la biblioteca de imágenes: puede que la hayan borrado. Elige otra.";
+const imageMissing = (url: string) => `La imagen ${url} no está en la biblioteca de imágenes: puede que la hayan borrado. Quítala o elige otra.`;
 const UNIQUE_CLASH = "No se pudo guardar: otro registro ya usa alguno de estos datos. Revisa el formulario y vuelve a intentarlo.";
 
 const text = (formData: FormData, key: string) => {
@@ -39,6 +42,15 @@ function readForm(formData: FormData): PostFormInput {
     seoDescription: text(formData, "seoDescription"),
     categoryIds: formData.getAll("categoryIds").filter((value): value is string => typeof value === "string"),
   };
+}
+
+// A library image the post uses is not in the library: the field that holds it is named.
+function missingImageErrors(missing: string[], cover: string | null, contentUrls: string[]): SavePostState["fieldErrors"] {
+  const fieldErrors: NonNullable<SavePostState["fieldErrors"]> = {};
+  if (cover && missing.includes(cover)) fieldErrors.coverImageUrl = COVER_MISSING;
+  const inContent = missing.filter((url) => contentUrls.includes(url));
+  if (inContent.length > 0) fieldErrors.content = inContent.map(imageMissing).join(" ");
+  return fieldErrors;
 }
 
 // Creates a post (as a draft) or updates one. Needs `content: write`.
@@ -82,18 +94,23 @@ export async function savePost(_: SavePostState, formData: FormData): Promise<Sa
   // Only categories of the post's language count; anything else in the form is ignored.
   const categories = await db.category.findMany({ where: { id: { in: categoryIds }, locale: data.locale }, select: { id: true } });
 
+  // The library images the post uses are locked with the write, so one deleted meanwhile refuses
+  // the save instead of leaving the post pointing at it (src/lib/media/references.ts).
+  const contentUrls = postHtmlUrls(data.content);
   let savedId: string;
   try {
-    if (postId) {
-      await db.post.update({ where: { id: postId }, data: { ...data, categories: { set: categories } } });
-      savedId = postId;
-    } else {
-      const created = await db.post.create({
+    savedId = await withLibraryImages([data.coverImageUrl, ...contentUrls], coverPrefixes(), async (tx) => {
+      if (postId) {
+        await tx.post.update({ where: { id: postId }, data: { ...data, categories: { set: categories } } });
+        return postId;
+      }
+      const created = await tx.post.create({
         data: { ...data, ...(translationKey ? { translationKey } : {}), status: "DRAFT", source: "MANUAL", categories: { connect: categories } },
       });
-      savedId = created.id;
-    }
+      return created.id;
+    });
   } catch (error) {
+    if (error instanceof MediaMissingError) return { fieldErrors: missingImageErrors(error.urls, data.coverImageUrl, contentUrls), values };
     // Another save took the slug, or the translation slot, between the check and the write.
     if (violatesUnique(error, "Post", ["translationKey", "locale"])) return { error: TRANSLATION_TAKEN, values };
     if (violatesUnique(error, "Post", ["locale", "slug"])) return { fieldErrors: { slug: SLUG_TAKEN }, values };

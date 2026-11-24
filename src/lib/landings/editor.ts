@@ -3,7 +3,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { canPublishLanding, parseLandingId } from "@/lib/admin/landing-create";
 import { publicationChange } from "@/lib/admin/posts";
 import { db } from "@/lib/db";
-import { imageHostErrors } from "@/lib/visual-builder/images";
+import { MediaMissingError, withLibraryImages } from "@/lib/media/references";
+import { collectImageUrls, imageHostErrors } from "@/lib/visual-builder/images";
 import { parsePageFields, type LandingPageColumns } from "@/lib/visual-builder/page-fields";
 import { validateBuilderData, type BuilderPage } from "@/lib/visual-builder/validate";
 
@@ -20,6 +21,8 @@ export const LANDING_CONFLICT = "Alguien más guardó esta landing mientras la e
 export const LANDING_SLUG_TAKEN = "Slug: otra landing de este idioma ya lo usa.";
 const NO_PAGE = "Esta landing todavía no tiene página. Ármala y publícala desde el editor visual.";
 const ARCHIVED = "Esta landing está archivada: no se publica ni se despublica desde la lista.";
+
+export const landingImageMissing = (url: string) => `Imagen ${url}: no está en la biblioteca (puede que la hayan borrado). Elige otra.`;
 
 export type EditorWrite = { ok: true; version: string } | { ok: false; errors: string[] };
 
@@ -53,15 +56,26 @@ async function checkPage(id: string, data: unknown, imagePrefixes: readonly stri
 // The conditional write: one UPDATE ... WHERE id AND updatedAt, atomic in the database, so of two
 // writes with the same version only the first matches. The new version is always later than the
 // one it replaces, even for two writes within the same millisecond.
-async function writeIfUnchanged(id: string, version: Date, data: Prisma.LandingUpdateManyMutationInput): Promise<EditorWrite> {
+// `images`: the library images the written page uses. Their rows are locked in the same
+// transaction as the write, so an image deleted meanwhile refuses the write instead of leaving the
+// landing pointing at it (src/lib/media/references.ts).
+async function writeIfUnchanged(
+  id: string,
+  version: Date,
+  data: Prisma.LandingUpdateManyMutationInput,
+  images: { urls: string[]; prefixes: readonly string[] } = { urls: [], prefixes: [] },
+): Promise<EditorWrite> {
   let rows: { updatedAt: Date }[];
   try {
-    rows = await db.landing.updateManyAndReturn({
-      where: { id, updatedAt: version },
-      data: { ...data, updatedAt: nextVersion(version) },
-      select: { updatedAt: true },
-    });
+    rows = await withLibraryImages(images.urls, images.prefixes, (tx) =>
+      tx.landing.updateManyAndReturn({
+        where: { id, updatedAt: version },
+        data: { ...data, updatedAt: nextVersion(version) },
+        select: { updatedAt: true },
+      }),
+    );
   } catch (error) {
+    if (error instanceof MediaMissingError) return { ok: false, errors: error.urls.map(landingImageMissing) };
     // Another save took the slug between the check and the write.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return { ok: false, errors: [LANDING_SLUG_TAKEN] };
     throw error;
@@ -84,6 +98,8 @@ async function target(rawId: unknown, rawVersion: unknown): Promise<Target> {
   return { errors: [exists ? LANDING_CONFLICT : LANDING_GONE] };
 }
 
+const pageImages = (page: BuilderPage, prefixes: readonly string[]) => ({ urls: collectImageUrls(page.content), prefixes });
+
 // Saves the draft only: nothing the public page uses changes. The page fields (title, slug, SEO)
 // travel inside the draft (its root props) and reach the landing's columns only on publish, so a
 // draft never moves a published landing's URL or changes its title before it is published.
@@ -92,7 +108,7 @@ export async function saveDraft(rawId: unknown, rawVersion: unknown, data: unkno
   if ("errors" in to) return { ok: false, errors: to.errors };
   const checked = await checkPage(to.id, data, imagePrefixes);
   if ("errors" in checked) return { ok: false, errors: checked.errors };
-  return writeIfUnchanged(to.id, to.version, { draftBlocks: checked.page as Prisma.InputJsonValue });
+  return writeIfUnchanged(to.id, to.version, { draftBlocks: checked.page as Prisma.InputJsonValue }, pageImages(checked.page, imagePrefixes));
 }
 
 // Publishes what the editor has now: it becomes the page's blocks and the draft is cleared.
@@ -107,7 +123,7 @@ export async function publishPage(rawId: unknown, rawVersion: unknown, data: unk
     draftBlocks: Prisma.DbNull,
     // Same rule as posts: a first publish stamps today's date, later ones keep it.
     ...publicationChange("publish", checked.publishedAt),
-  });
+  }, pageImages(checked.page, imagePrefixes));
 }
 
 export async function discardDraft(rawId: unknown, rawVersion: unknown): Promise<EditorWrite> {

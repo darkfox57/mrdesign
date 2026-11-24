@@ -10,8 +10,13 @@ import { violatesUnique } from "@/lib/blog/unique-violation";
 import { db } from "@/lib/db";
 import { LANDING_SLUG_TAKEN as SLUG_TAKEN, changePublication } from "@/lib/landings/editor";
 import { PUBLIC_LANDING_ROUTE } from "@/lib/landings/routes";
+import { coverPrefixes } from "@/lib/media/cover-prefixes";
+import { MediaMissingError, withLibraryImages } from "@/lib/media/references";
+import { collectImageUrls } from "@/lib/visual-builder/images";
 
 const TRANSLATION_TAKEN = "Esa landing ya tiene versión en ese idioma.";
+const copiedImageMissing = (url: string) =>
+  `Imagen ${url}: la landing original la usa, pero no está en la biblioteca (puede que la hayan borrado). Quítala de la original o elige otra.`;
 
 const publicationSchema = z.object({
   landingId: z.string().refine((value) => parseLandingId(value) !== null),
@@ -53,7 +58,7 @@ export async function createLanding(_: CreateLandingState, formData: FormData): 
   if (!parsed.success) return { errors: parsed.errors, values };
   const { locale, title, slug } = parsed.data;
 
-  let translation: { translationKey: string; draftBlocks: Prisma.InputJsonValue } | null = null;
+  let translation: { translationKey: string; draftBlocks: Prisma.InputJsonValue; imageUrls: string[] } | null = null;
   if (values.translationOf) {
     const sourceId = parseLandingId(values.translationOf);
     if (!sourceId) return { errors: ["La landing original ya no existe."], values };
@@ -68,7 +73,12 @@ export async function createLanding(_: CreateLandingState, formData: FormData): 
       select: { id: true },
     });
     if (sibling) return { errors: [TRANSLATION_TAKEN], values };
-    translation = { translationKey: source.translationKey, draftBlocks: translationStart(source) as unknown as Prisma.InputJsonValue };
+    const start = translationStart(source);
+    translation = {
+      translationKey: source.translationKey,
+      draftBlocks: start as unknown as Prisma.InputJsonValue,
+      imageUrls: collectImageUrls(start.content),
+    };
   }
 
   const taken = await db.landing.findUnique({ where: { locale_slug: { locale, slug } }, select: { id: true } });
@@ -76,18 +86,23 @@ export async function createLanding(_: CreateLandingState, formData: FormData): 
 
   let id: string;
   try {
-    const created = await db.landing.create({
-      data: {
-        locale,
-        title,
-        slug,
-        status: "DRAFT",
-        ...(translation ? { translationKey: translation.translationKey, draftBlocks: translation.draftBlocks } : {}),
-      },
-      select: { id: true },
-    });
+    // The copied blocks' library images are locked with the insert, so one deleted meanwhile
+    // refuses the copy instead of leaving the new landing pointing at it (src/lib/media/references.ts).
+    const created = await withLibraryImages(translation?.imageUrls ?? [], coverPrefixes(), (tx) =>
+      tx.landing.create({
+        data: {
+          locale,
+          title,
+          slug,
+          status: "DRAFT",
+          ...(translation ? { translationKey: translation.translationKey, draftBlocks: translation.draftBlocks } : {}),
+        },
+        select: { id: true },
+      }),
+    );
     id = created.id;
   } catch (error) {
+    if (error instanceof MediaMissingError) return { errors: error.urls.map(copiedImageMissing), values };
     // Another save took the translation slot, or the slug, between the check and the write. Any
     // other unique index of the landing is reported as the slug too.
     if (violatesUnique(error, "Landing", ["translationKey", "locale"])) return { errors: [TRANSLATION_TAKEN], values };

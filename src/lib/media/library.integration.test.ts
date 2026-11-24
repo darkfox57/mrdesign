@@ -20,8 +20,20 @@ vi.mock("./r2", () => ({
 
 const { db } = await import("../db");
 const { isLocalDatabase } = await import("../is-local-database");
-const { MediaInUseError, MediaNotFoundError, MediaStorageError, UploadVerificationError, deleteMedia, listMedia, registerUpload, requestUpload, updateMediaAlt } =
-  await import("./library");
+const {
+  MediaInUseError,
+  MediaNotFoundError,
+  MediaStorageError,
+  UploadVerificationError,
+  deleteMedia,
+  listMedia,
+  mediaUsage,
+  registerUpload,
+  requestUpload,
+  updateMediaAlt,
+} = await import("./library");
+const { withLibraryImages } = await import("./references");
+const { saveDraft } = await import("../landings/editor");
 const { hexToBase64, mediaKey } = await import("./rules");
 const { R2NotConfiguredError, deleteObject, isR2Configured } = await import("./r2");
 
@@ -215,6 +227,71 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     expect(await db.mediaFile.findUnique({ where: { id: media.id }, select: { alt: true, originalName: true } })).toEqual({
       alt: "",
       originalName: "usage-14.png",
+    });
+  });
+
+  describe("a delete and a save of the same image at the same time", () => {
+    const prefixes = ["https://img.test/media/"];
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const outcome = (promise: Promise<unknown>) => promise.then(() => "done" as const, (error: unknown) => error);
+    const landingPage = (slug: string, imageUrl: string) => ({
+      root: { props: { title: "Landing", slug } },
+      content: [{ type: "TextImage", props: { id: "ti", title: "T", text: "", imageUrl, imageAlt: "A", imageSide: "right", background: "paper" } }],
+    });
+
+    async function emptyLanding(name: string) {
+      const slug = `media-usage-${run}-${name}`;
+      const row = await db.landing.create({ data: { locale: "es", slug, title: `Landing ${name} ${run}` }, select: { id: true, updatedAt: true } });
+      return { id: row.id, version: row.updatedAt.toISOString(), slug };
+    }
+
+    it("refuses the save when it commits while the delete checks the usage, so nothing points at the deleted image", async () => {
+      const media = await registerImage(20);
+      const landing = await emptyLanding("carrera");
+      let save: Promise<unknown> = Promise.resolve();
+      // The usage as it was when the check read it; the save runs before the check answers: the
+      // window between checking and deleting.
+      const usageThenSave = async (url: string) => {
+        const before = await mediaUsage(url);
+        save = saveDraft(landing.id, landing.version, landingPage(landing.slug, url), prefixes);
+        await sleep(300);
+        return before;
+      };
+
+      expect(await outcome(deleteMedia(media.id, usageThenSave))).toBe("done");
+      expect(await save).toEqual({ ok: false, errors: [expect.stringContaining("no está en la biblioteca")] });
+      expect(await db.mediaFile.count({ where: { id: media.id } })).toBe(0);
+      expect(deleted).toEqual([mediaKey(hash(20), "image/png")]);
+      expect((await db.landing.findUniqueOrThrow({ where: { id: landing.id } })).draftBlocks).toBeNull();
+    });
+
+    it("makes the delete wait for a save holding the image, then refuses it as in use", async () => {
+      const media = await registerImage(21);
+      const landing = await emptyLanding("guardando");
+      let deletion: Promise<unknown> = Promise.resolve();
+      await withLibraryImages([media.url], prefixes, async (tx) => {
+        await tx.landing.update({ where: { id: landing.id }, data: { draftBlocks: landingPage(landing.slug, media.url) } });
+        deletion = outcome(deleteMedia(media.id));
+        await sleep(300);
+      });
+
+      const refused = await deletion;
+      expect(refused).toBeInstanceOf(MediaInUseError);
+      expect(refused).toMatchObject({ usedIn: [`Landing: Landing guardando ${run}`] });
+      expect(await db.mediaFile.count({ where: { id: media.id } })).toBe(1);
+      expect(deleted).toEqual([]);
+    });
+
+    it("lets two deletes of the same image both succeed, as before", async () => {
+      const media = await registerImage(22);
+      // The first one takes its time, so the second finds the row before it goes.
+      const slowUsage = async (url: string) => {
+        await sleep(300);
+        return mediaUsage(url);
+      };
+      expect(await Promise.all([outcome(deleteMedia(media.id, slowUsage)), outcome(deleteMedia(media.id))])).toEqual(["done", "done"]);
+      expect(await db.mediaFile.count({ where: { id: media.id } })).toBe(0);
+      expect(deleted).toContain(mediaKey(hash(22), "image/png"));
     });
   });
 

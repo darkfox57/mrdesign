@@ -18,17 +18,37 @@ vi.mock("@/i18n/navigation", () => ({
 
 const COVERS = "https://img.ingest.test";
 process.env.R2_PUBLIC_URL = COVERS;
+// In-memory stand-in for R2, for the delete in the race test.
+const deletedObjects: string[] = [];
+vi.mock("../media/r2", () => ({
+  deleteObject: vi.fn(async (key: string) => {
+    deletedObjects.push(key);
+  }),
+  isR2Configured: () => true,
+  R2NotConfiguredError: class R2NotConfiguredError extends Error {},
+}));
 
 const { db } = await import("../db");
 const { isLocalDatabase } = await import("../is-local-database");
 const { generateApiKey } = await import("../api-keys");
 const { siteUrl } = await import("../seo/site");
 const { authenticateKey, ingestPost } = await import("./ingest");
+const { deleteMedia, mediaUsage } = await import("../media/library");
 
 // These tests create and delete rows: they only run against a local database (docker compose).
 const runAgainstDatabase = isLocalDatabase(process.env.DATABASE_URL);
 const title = runAgainstDatabase ? "blog ingest" : "blog ingest (skipped: DATABASE_URL is not the local docker database, see .env.example)";
 const run = `ingest-${Date.now()}`;
+// Library rows: hex hashes that start with this run, so the cleanup finds them.
+const mediaRun = Date.now().toString(16).padStart(12, "0");
+const hash = (n: number) => `${mediaRun}${n.toString(16).padStart(52, "0")}`.slice(0, 64);
+const libraryImage = (n: number, key = `media/${hash(n)}.png`) =>
+  db.mediaFile.create({
+    data: { sha256: hash(n), key, url: `${COVERS}/${key}`, contentType: "image/png", size: 10, originalName: `${n}.png` },
+    select: { id: true, url: true },
+  });
+const MISSING_COVER = "La portada no está en la biblioteca de imágenes del panel: puede que la hayan borrado.";
+const missingImage = (url: string) => `La imagen ${url} no está en la biblioteca de imágenes del panel: puede que la hayan borrado.`;
 
 async function newKey(options: { publishImmediately: boolean; revoked?: boolean }) {
   const { key, prefix, keyHash } = generateApiKey();
@@ -70,6 +90,7 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     await db.category.deleteMany({ where: { slug: { startsWith: run } } });
     await db.tag.deleteMany({ where: { slug: { startsWith: run } } });
     await db.apiKey.deleteMany({ where: { name: { startsWith: run } } });
+    await db.mediaFile.deleteMany({ where: { sha256: { startsWith: mediaRun } } });
   });
 
   describe("authenticateKey", () => {
@@ -128,7 +149,8 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
   });
 
   it("accepts a cover from the image library and rejects one from anywhere else", async () => {
-    const inside = await ingestPost(drafter, body(`${run}-portada`, { img: `${COVERS}/media/2026/foto.webp`, imgAlt: "Una tienda" }));
+    const cover = await libraryImage(1, "media/2026/foto.webp");
+    const inside = await ingestPost(drafter, body(`${run}-portada`, { img: cover.url, imgAlt: "Una tienda" }));
     expect(inside.status).toBe(201);
 
     const outside = await ingestPost(drafter, body(`${run}-portada-externa`, { img: "https://example.com/foto.webp" }));
@@ -142,6 +164,44 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     const http = await ingestPost(drafter, body(`${run}-portada-http`, { img: `${COVERS.replace("https:", "http:")}/media/2026/foto.webp` }));
     expect(http).toEqual({ status: 400, body: { error: "Datos inválidos.", fields: { img: "La portada tiene que ser una URL https." } } });
     expect(await db.post.count({ where: { slug: `${run}-portada-http` } })).toBe(0);
+  });
+
+  it("answers 400 naming img or content for a library image that is not in the library, and stores nothing", async () => {
+    const gone = `${COVERS}/media/${hash(2)}.png`;
+    expect(await ingestPost(drafter, body(`${run}-portada-borrada`, { img: gone }))).toEqual({
+      status: 400,
+      body: { error: "Datos inválidos.", fields: { img: MISSING_COVER } },
+    });
+    expect(await ingestPost(drafter, body(`${run}-imagen-borrada`, { content: `<p>Hola.</p><img src="${gone}" alt="x">` }))).toEqual({
+      status: 400,
+      body: { error: "Datos inválidos.", fields: { content: missingImage(gone) } },
+    });
+    expect(await db.post.count({ where: { slug: { in: [`${run}-portada-borrada`, `${run}-imagen-borrada`] } } })).toBe(0);
+  });
+
+  it("keeps accepting content images and links from outside the library, and library images that exist", async () => {
+    const media = await libraryImage(3);
+    const content = `<p>Hola.</p><img src="https://example.com/a.png" alt="x"><a href="https://example.com/">enlace</a><img src="${media.url}" alt="y">`;
+    const result = await ingestPost(drafter, body(`${run}-imagenes`, { content }));
+    expect(result.status).toBe(201);
+    expect((await db.post.findUniqueOrThrow({ where: { locale_slug: { locale: "es", slug: `${run}-imagenes` } } })).content).toContain(media.url);
+  });
+
+  it("never stores a post pointing at an image whose delete went through at the same time", async () => {
+    const media = await libraryImage(4);
+    let ingest: Promise<unknown> = Promise.resolve();
+    // The usage as the delete's check read it; the request runs before the check answers.
+    const usageThenIngest = async (url: string) => {
+      const before = await mediaUsage(url);
+      ingest = ingestPost(drafter, body(`${run}-carrera`, { img: url }));
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      return before;
+    };
+
+    await deleteMedia(media.id, usageThenIngest);
+    expect(await ingest).toEqual({ status: 400, body: { error: "Datos inválidos.", fields: { img: MISSING_COVER } } });
+    expect(await db.mediaFile.count({ where: { id: media.id } })).toBe(0);
+    expect(await db.post.count({ where: { slug: `${run}-carrera` } })).toBe(0);
   });
 
   it("rejects a slug another post of the same language already uses, and allows it in the other language", async () => {

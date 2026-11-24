@@ -53,7 +53,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T14 | S4 | Login and reset throttling persisted in Postgres (user decision L35): table with atomic upsert counters per account and IP key, lock until, opportunistic cleanup; replaces the in-memory maps (fixes A1 lock flooding) | delegated (context backstop) | done | 3853bd7, correction (L37) |
 | T15 | S4 | T12 follow-ups (L30): savePost and ingest keep a generic P2002 fallback (returning the typed values) for unique errors that match no known index; order-independent field match in violatesUnique; drop the double P2002 guard in createLanding; dashboard home post counts behind content:read and stale comment; document the http-cover message; exercise the real transaction in the term clash test; T13 notes: `?idioma=` without `traducir` shows the plain form silently, landings-security public-route rows use a fixed prefix; investigate the intermittent ECONNRESET in e2e/admin-actions (editor inbox replay, full-suite only, likely keep-alive reuse) | delegated (context backstop) | done | 56baea8 |
 | T16 | S4 | Throttle follow-ups from review L38: count both keys in one transaction; refund the counted attempt when the password check fails for infrastructure (non-APIError); the success refund must never release an address lock already reached; a failed success write must not leave a valid login locked; guard rows[0] inside the fail-closed path; one key-derivation helper shared with tests; rename failures to attempts | delegated (context backstop) | done | (T16 commit) |
-| T17 | S4, S9 | Pending fixes from L17/L29: (a) media delete vs save race: an image cannot be deleted while a post or landing save that references it commits, and a save cannot reference an image whose delete committed; (b) ingest API: per-key request limit with 429 + Retry-After; revoking a key that is missing or already revoked tells the admin instead of silently succeeding | delegated, two parallel writers (context backstop + two independent units with disjoint surfaces) | in progress | |
+| T17 | S4, S9 | Pending fixes from L17/L29: (a) media delete vs save race: an image cannot be deleted while a post or landing save that references it commits, and a save cannot reference an image whose delete committed; (b) ingest API: per-key request limit with 429 + Retry-After; revoking a key that is missing or already revoked tells the admin instead of silently succeeding | delegated, two parallel writers (context backstop + two independent units with disjoint surfaces) | done | (T17 commits) |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | delegated (context backstop) | done | 0111320 |
 | T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
 | T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | 06435e2, 22f255d |
@@ -463,3 +463,18 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - The page title says "Mr. Design", and the canonical URL and sitemap use mrdesign.com.co.
 - L50 (2026-11-24, user): "si". T17 was opened for the media-delete race (pending since L17 and T12) plus ingest throttling and the revoke no-op (deferred in L29).
   - Two writers run in parallel with disjoint surfaces.
+- L51 (2026-11-24): T17 done (two parallel writers). The user said "sube directo a main cuando termine".
+  - (b) Ingest limit:
+    - `src/lib/blog/ingest-rate-limit.ts` (60 per hour per key; reuses `createWindowRateLimiter`, in memory, per container).
+    - `/api/blog` answers 429 with `Retry-After: 3600` (the whole window: the limiter cannot tell when the oldest count expires). This runs after the 401 check and before the body is read.
+    - `revokeApiKey` returns "Esta key ya estaba revocada o no existe." when nothing changed.
+  - (a) Media race:
+    - `src/lib/media/references.ts` locks the MediaFile rows of the library URLs a save references (FOR KEY SHARE, by id) in the save's transaction, and refuses missing ones with `MediaMissingError`.
+    - `deleteMedia` locks its row FOR UPDATE, re-checks usage and deletes the R2 object and then the row in one transaction (30 s timeout).
+    - Wired into the post editor, ingest, landing draft and publish, and landing translation creation.
+    - Ingest contract change: a library cover or content URL must be the exact URL of an existing image, so variants answer 400 naming the field (docs/api-blog.md, e2e/ingest-contract.spec.ts).
+    - Writer surface extended once by the parent to editor-actions.ts, e2e/ingest-contract.spec.ts and docs/api-blog.md (same objective; unit (b) had finished).
+  - Evidence:
+    - Writers' RED: (b) 8 tests failed on the old code; (a) the races are deterministic and failed on the old code for every path.
+    - Parent: vitest 422/422 against the local DB; lint 0; typecheck 0; e2e 216 passed and 0 failed.
+  - Residual risk: an R2 delete hanging past 30 s may remove the object while the row rolls back. Deleting again finishes the job.

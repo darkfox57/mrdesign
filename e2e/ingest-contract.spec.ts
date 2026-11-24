@@ -5,6 +5,7 @@ import { E2E_DATABASE_URL } from "./test-env";
 
 // TEMPORARY verifier probe (T12): the docs/api-blog.md 400 table over real HTTP, the 201 contract,
 // cover path normalization through the API, concurrent new terms, and immediate public visibility.
+// Since T17 a library image must be the exact URL of a MediaFile row: the probe inserts its own.
 test.skip(({ viewport }) => (viewport?.width ?? 0) < 1024, "API probes run once, on desktop");
 
 const RUN = `${Date.now()}`;
@@ -33,6 +34,24 @@ async function insertKey(publish: boolean) {
   return key;
 }
 
+// A library image of this run: a MediaFile row whose exact URL the API accepts.
+async function insertMedia(name: string) {
+  const sha = createHash("sha256").update(`${RUN}-${name}`).digest("hex");
+  const url = `${LIB}${sha}.png`;
+  await sql('insert into "MediaFile" (id, sha256, key, url, "contentType", size, "originalName") values ($1, $2, $3, $4, $5, $6, $7)', [
+    `vfy12-media-${RUN}-${name}`,
+    sha,
+    `media/${sha}.png`,
+    url,
+    "image/png",
+    10,
+    `vfy12-${RUN}-${name}.png`,
+  ]);
+  return url;
+}
+
+const COVER_MISSING = "La portada no está en la biblioteca de imágenes del panel: puede que la hayan borrado.";
+
 const ingest = (request: APIRequestContext, key: string, data: unknown) =>
   request.post("/api/blog", { headers: { Authorization: `Bearer ${key}` }, data, maxRedirects: 0 });
 
@@ -58,6 +77,7 @@ test.afterAll(async () => {
   await sql('delete from "Tag" where name like $1', [`vfy12 ${RUN}%`]);
   await sql('delete from "Category" where name like $1', [`vfy12 ${RUN}%`]);
   await sql('delete from "ApiKey" where name like $1', [`Vfy12 ${RUN}%`]);
+  await sql('delete from "MediaFile" where "originalName" like $1', [`vfy12-${RUN}-%`]);
 });
 
 test("every row of the 400 table, exact bodies, nothing stored", async ({ request }) => {
@@ -92,6 +112,12 @@ test("every row of the 400 table, exact bodies, nothing stored", async ({ reques
     ["11 categories", valid(`${P}-a`, { categories: Array.from({ length: 11 }, (_, i) => `vfy12 ${RUN} c${i}`) }), { categories: "Máximo 10 categorías." }],
     ["unknown locale", valid(`${P}-a`, { locale: "fr" }), { locale: "Elige un idioma." }],
     ["cover outside", valid(`${P}-a`, { img: "https://evil.example/a.png" }), { img: "La portada tiene que estar en la biblioteca de imágenes del panel." }],
+    ["cover not in the library", valid(`${P}-a`, { img: `${LIB}${"0".repeat(64)}.png` }), { img: COVER_MISSING }],
+    [
+      "content image not in the library",
+      valid(`${P}-a`, { content: `<p>Hola.</p><img src="${LIB}${"0".repeat(64)}.png" alt="x">` }),
+      { content: `La imagen ${LIB}${"0".repeat(64)}.png no está en la biblioteca de imágenes del panel: puede que la hayan borrado.` },
+    ],
     [
       "several at once",
       valid(`${P}-a`, { tags: Array.from({ length: 21 }, (_, i) => `vfy12 ${RUN} t${i}`), categories: [""], img: "https://evil.example/a.png" }),
@@ -116,8 +142,7 @@ test("every row of the 400 table, exact bodies, nothing stored", async ({ reques
 
 test("201 contract: shape, dedupe, trailing comma, 20 tags and 10 categories, library cover", async ({ request }) => {
   const key = await insertKey(false);
-  const media = await sql('select url from "MediaFile" limit 1');
-  const cover = media[0]?.url ?? `${LIB}x.png`;
+  const cover = await insertMedia("contract");
   const slug = `${P}-ok`;
   const tags = [...Array.from({ length: 20 }, (_, i) => `vfy12 ${RUN} t${i}`), `VFY12 ${RUN} T0`];
   const categories = [...Array.from({ length: 10 }, (_, i) => `vfy12 ${RUN} c${i}`), { name: `vfy12 ${RUN} c0` }];
@@ -157,10 +182,17 @@ test("cover path tricks through the API answer 400 img", async ({ request }) => 
     expect.soft(await response.json(), img).toEqual({ error: "Datos inválidos.", fields: { img: "La portada tiene que estar en la biblioteca de imágenes del panel." } });
   }
   expect(await snapshot()).toEqual(before);
-  for (const [i, img] of [`HTTPS://MEDIA.E2E.TEST/test-bucket/media/a.png`, `${LIB}a.png?v=1`, `${LIB}sub/../a.png`].entries()) {
-    const response = await ingest(request, key, valid(`${P}-okimg${i}`, { img }));
-    expect.soft(response.status(), img).toBe(201);
+  // Inside the library path but not an image's exact URL: the cover check passes, the library has no such row.
+  const exact = await insertMedia("tricks");
+  const variants = [exact.replace("https://media.e2e.test", "HTTPS://MEDIA.E2E.TEST"), `${exact}?v=1`, exact.replace("/media/", "/media/sub/../")];
+  for (const img of variants) {
+    const response = await ingest(request, key, valid(`${P}-variant`, { img }));
+    expect.soft(response.status(), img).toBe(400);
+    expect.soft(await response.json(), img).toEqual({ error: "Datos inválidos.", fields: { img: COVER_MISSING } });
   }
+  expect(await snapshot()).toEqual(before);
+  const accepted = await ingest(request, key, valid(`${P}-okimg`, { img: exact }));
+  expect(accepted.status()).toBe(201);
 });
 
 test("concurrent identical new tag over HTTP: 201 or 400, never 500", async ({ request }) => {

@@ -121,22 +121,34 @@ export class MediaNotFoundError extends Error {}
 // R2 could not delete the object (outage, revoked token, network). The row is kept, so deleting again finishes the job.
 export class MediaStorageError extends Error {}
 
+// The delete holds the row's lock while it calls R2, so it gets more than Prisma's 5 s default.
+const DELETE_TRANSACTION = { maxWait: 10_000, timeout: 30_000 };
+
 // `usage` exists for the tests; callers keep the default.
+//
+// Against a content save that references the image (./references.ts): the row is locked FOR
+// UPDATE before the usage check, so a save holding it (FOR KEY SHARE) finishes first and the check
+// sees it, and a save arriving later waits and then finds the row gone. Either the delete is
+// refused as in use or the save is refused; never both succeed.
 export async function deleteMedia(id: string, usage: MediaUsageCheck = mediaUsage) {
   const media = await db.mediaFile.findUnique({ where: { id }, select: { key: true, url: true } });
   if (!media) throw new MediaNotFoundError("The image no longer exists.");
   // Checked before touching anything: without R2 the object cannot be deleted.
   if (!isR2Configured()) throw new R2NotConfiguredError("R2 is not configured.");
-  const usedIn = await usage(media.url);
-  if (usedIn.length > 0) throw new MediaInUseError(usedIn);
-  // Object first, row after. An R2 delete is idempotent, so whichever step fails, the row still
-  // holds the key and deleting again completes it. Row first would lose the row's metadata and
-  // leave an object nothing points to.
-  try {
-    await deleteObject(media.key);
-  } catch (cause) {
-    throw new MediaStorageError(`R2 could not delete ${media.key}.`, { cause });
-  }
-  // deleteMany: a concurrent delete of the same image is not an error.
-  await db.mediaFile.deleteMany({ where: { id } });
+  await db.$transaction(async (tx) => {
+    const locked = await tx.$queryRaw<{ id: string }[]>`select id from "MediaFile" where id = ${id} for update`;
+    // A concurrent delete of the same image finished first: not an error.
+    if (locked.length === 0) return;
+    const usedIn = await usage(media.url);
+    if (usedIn.length > 0) throw new MediaInUseError(usedIn);
+    // Object first, row after. An R2 delete is idempotent, so whichever step fails (R2, or the
+    // commit after it), the row still holds the key and deleting again completes it. Row first
+    // would lose the row's metadata and leave an object nothing points to.
+    try {
+      await deleteObject(media.key);
+    } catch (cause) {
+      throw new MediaStorageError(`R2 could not delete ${media.key}.`, { cause });
+    }
+    await tx.mediaFile.delete({ where: { id } });
+  }, DELETE_TRANSACTION);
 }

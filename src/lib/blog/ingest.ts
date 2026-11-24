@@ -8,6 +8,7 @@ import { publicBlogPaths } from "@/lib/admin/posts";
 import { hashApiKey } from "@/lib/api-keys";
 import { db } from "@/lib/db";
 import { coverPrefixes } from "@/lib/media/cover-prefixes";
+import { MediaMissingError, lockLibraryImages, postHtmlUrls } from "@/lib/media/references";
 import { siteUrl } from "@/lib/seo/site";
 import { slugify } from "@/lib/slugify";
 import { isUniqueViolation, violatesUnique } from "./unique-violation";
@@ -47,6 +48,8 @@ const FIELD_NAMES: Partial<Record<PostFormField, string>> = {
 };
 const INVALID = "Datos inválidos.";
 const COVER_OUTSIDE_LIBRARY = "La portada tiene que estar en la biblioteca de imágenes del panel.";
+const COVER_MISSING = "La portada no está en la biblioteca de imágenes del panel: puede que la hayan borrado.";
+const imageMissing = (url: string) => `La imagen ${url} no está en la biblioteca de imágenes del panel: puede que la hayan borrado.`;
 const SLUG_TAKEN = "Ya existe un post con ese slug en este idioma.";
 const UNIQUE_CLASH = "Otro registro ya usa alguno de estos datos. Revisa el post y vuelve a intentarlo.";
 
@@ -84,6 +87,15 @@ function terms(raw: unknown[] | string | string[] | undefined, max: number, mess
 const slugTaken = (locale: Locale, slug: string) => db.post.count({ where: { locale, slug } }).then((count) => count > 0);
 const invalid = (fields: Record<string, string>): IngestResult => ({ status: 400, body: { error: INVALID, fields } });
 const slugError = () => invalid({ slug: SLUG_TAKEN });
+
+// A library image the post uses is not in the library: the field that holds it is named.
+function missingImages(missing: string[], cover: string | null, contentUrls: string[]): IngestResult {
+  const fields: Record<string, string> = {};
+  if (cover && missing.includes(cover)) fields.img = COVER_MISSING;
+  const inContent = missing.filter((url) => contentUrls.includes(url));
+  if (inContent.length > 0) fields.content = inContent.map(imageMissing).join(" ");
+  return invalid(fields);
+}
 
 // `key` comes from authenticateKey: the route authenticates before it reads the body.
 export async function ingestPost(key: IngestKey, raw: unknown): Promise<IngestResult> {
@@ -131,10 +143,15 @@ export async function ingestPost(key: IngestKey, raw: unknown): Promise<IngestRe
   if (await slugTaken(locale, slug)) return slugError();
 
   const publish = key.publishImmediately;
+  const prefixes = coverPrefixes();
+  const contentUrls = postHtmlUrls(content);
 
   let post;
   try {
     post = await db.$transaction(async (tx) => {
+      // First, before any other write: the library images the post uses stay until it commits, or
+      // the request fails if one was deleted (src/lib/media/references.ts).
+      await lockLibraryImages(tx, [coverImageUrl, ...contentUrls], prefixes);
       // A term matches an existing one by slug or by name: both are unique per language, and an
       // editor may have given an existing term a custom slug.
       const categoryRows = await Promise.all(
@@ -172,6 +189,7 @@ export async function ingestPost(key: IngestKey, raw: unknown): Promise<IngestRe
       });
     });
   } catch (error) {
+    if (error instanceof MediaMissingError) return missingImages(error.urls, coverImageUrl, contentUrls);
     // Another request took the slug, or created one of the same new terms, between the check and
     // the insert. The whole transaction rolled back, so the client can simply retry.
     if (violatesUnique(error, "Post", ["locale", "slug"])) return slugError();

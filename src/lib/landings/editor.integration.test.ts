@@ -16,6 +16,15 @@ const title = runAgainstDatabase
 const button = (label: string) => ({ type: "Button", props: { id: "b", label, href: "/contacto", variant: "primary", align: "left" } });
 const page = (label: string, slug = `${run}-landing`) => ({ root: { props: { title: "Landing", slug } }, content: [button(label)] });
 
+// Library rows for the image tests: hex hashes that start with this run, so the cleanup finds them.
+const mediaRun = Date.now().toString(16).padStart(12, "0");
+const hash = (n: number) => `${mediaRun}${n.toString(16).padStart(52, "0")}`.slice(0, 64);
+const libraryImage = (n: number) =>
+  db.mediaFile.create({
+    data: { sha256: hash(n), key: `media/${hash(n)}.png`, url: `${PREFIXES[0]}${hash(n)}.png`, contentType: "image/png", size: 10, originalName: `${n}.png` },
+    select: { url: true },
+  });
+
 type Row = { id: string; updatedAt: Date };
 let landing: Row;
 let counter = 0;
@@ -43,6 +52,7 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
 
   afterAll(async () => {
     await db.landing.deleteMany({ where: { slug: { startsWith: run } } });
+    await db.mediaFile.deleteMany({ where: { sha256: { startsWith: mediaRun } } });
     await db.$disconnect();
   });
 
@@ -118,6 +128,36 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
       expect(await saveDraft(landing.id, bad, ownPage("X"), PREFIXES), String(bad)).toEqual({ ok: false, errors: [LANDING_CONFLICT] });
     }
     expect((await stored(landing.id)).draftBlocks).toBeNull();
+  });
+
+  describe("library images", () => {
+    const imagePage = (imageUrl: string) => ({
+      root: { props: { title: "Landing", slug: `${run}-${counter}` } },
+      content: [{ type: "TextImage", props: { id: "ti", title: "T", text: "", imageUrl, imageAlt: "A", imageSide: "right", background: "paper" } }],
+    });
+
+    it("refuses a draft or a publish that uses an image no longer in the library, and writes nothing", async () => {
+      const gone = `${PREFIXES[0]}${hash(1)}.png`;
+      for (const write of [saveDraft, publishPage]) {
+        expect(await write(landing.id, version(), imagePage(gone), PREFIXES), write.name).toEqual({
+          ok: false,
+          errors: [`Imagen ${gone}: no está en la biblioteca (puede que la hayan borrado). Elige otra.`],
+        });
+      }
+      const row = await stored(landing.id);
+      expect(row.updatedAt).toEqual(landing.updatedAt);
+      expect(label(row.blocks)).toBe("Publicado");
+      expect(row.draftBlocks).toBeNull();
+    });
+
+    it("saves and publishes a page whose images are in the library, as before", async () => {
+      const media = await libraryImage(2);
+      const saved = await saveDraft(landing.id, version(), imagePage(media.url), PREFIXES);
+      expect(saved.ok).toBe(true);
+      if (!saved.ok) return;
+      expect((await publishPage(landing.id, saved.version, imagePage(media.url), PREFIXES)).ok).toBe(true);
+      expect(JSON.stringify((await stored(landing.id)).blocks)).toContain(media.url);
+    });
   });
 
   it("answers that the landing is gone for a deleted or malformed id", async () => {
