@@ -18,8 +18,8 @@ Before writing Next.js code, read the relevant guide in `node_modules/next/dist/
 | e2e (builds and serves on 3100) | `npm run test:e2e` |
 | Lint and types | `npm run lint` and `npm run typecheck` |
 | Migrations | `npm run db:migrate` (dev), `npm run db:deploy` (prod) |
-| First admin | `npm run admin:create` (see `docs/deploy-easypanel.md`) |
-| Deploy | Docker image on Easypanel: `docs/deploy-easypanel.md` |
+| First admin | `npm run admin:create` (see `docs/deploy-dokploy.md`) |
+| Deploy | Docker image on Dokploy: `docs/deploy-dokploy.md` |
 
 ## Architecture
 

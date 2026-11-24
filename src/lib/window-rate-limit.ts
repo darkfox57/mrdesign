@@ -1,5 +1,5 @@
 // Fixed-window counter per key (for example, per client IP). In memory: enough for the single
-// Easypanel container; use a shared store if the app scales out.
+// Dokploy container; use a shared store if the app scales out.
 type Options = { windowMs: number; max: number; maxKeys?: number };
 
 export function createWindowRateLimiter({ windowMs, max, maxKeys = 10_000 }: Options) {

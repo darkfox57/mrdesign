@@ -409,3 +409,12 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - All four lenses closed: risk, resilience, readability, reliability.
   - Approved and acknowledged; authority burned.
   - This supersedes the open T16 lineage (L42): the resilience lens did run on this range.
+- L44 (2026-11-24, user): "esto va para hacer deploy en dokploy no en easypanel".
+  - The deploy guide is renamed to `docs/deploy-dokploy.md` and rewritten from the Dokploy docs, read 2026-11-24:
+    - Application settings: the Dockerfile build type fields, a domain with container port 3000 and Let's Encrypt, build-time arguments vs environment variables.
+    - Traefik trust model: the last X-Forwarded-For entry; no published ports; do not set notAppendXForwardedFor; trustedIPs if a CDN sits in front.
+    - Migrations: Run Command cannot apply them, because the image has no Prisma CLI.
+  - CLAUDE.md, the Dockerfile, next.config.ts, client-ip.ts and window-rate-limit.ts now name Dokploy; the code changes are comment-only.
+  - The T14 hashed-key note is dropped: the production database started empty.
+  - Production database (user-provided `.env`): all 6 migrations applied with `npm run db:deploy`, and status is up to date.
+  - First admin: `contacto@mrdesign.com.co`, created at the user's request. The generated password went to a local scratch file and was never printed.

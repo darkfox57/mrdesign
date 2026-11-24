@@ -1,29 +1,36 @@
-# Deploying on Easypanel
+# Deploying on Dokploy
 
-The site ships as a Docker image built from the repository `Dockerfile`. Next.js produces a self-contained server (`output: "standalone"`) that runs with `node server.js`.
+The site ships as a Docker image built from the repository `Dockerfile`, deployed as a Dokploy **Application**. Next.js produces a self-contained server (`output: "standalone"`) that runs with `node server.js`.
 
-## Service settings
+## Application settings
 
-| Field | Value |
-| --- | --- |
-| Source | This GitHub repository, branch `main` |
-| Build | Dockerfile (`./Dockerfile`) |
-| Port | `3000` |
+| Where | Field | Value |
+| --- | --- | --- |
+| General | Provider | This GitHub repository, branch `main` |
+| General | Build Type | Dockerfile |
+| General | Dockerfile Path | `Dockerfile` |
+| General | Docker Context Path | `.` |
+| General | Docker Build Stage | leave empty (the last stage is the runtime image) |
+| General | Auto Deploy | optional: redeploys on every push to `main` |
+| Domains | Host | the public domain |
+| Domains | Container Port | `3000` |
+| Domains | HTTPS / Certificate | on, `letsencrypt` |
 
-### Network: only behind the Easypanel proxy
+### Network: only behind Dokploy's Traefik
 
-The login and password-reset rate limits count attempts per account and per client address. The address is the **last** `X-Forwarded-For` entry (`src/lib/client-ip.ts`), which Easypanel's proxy appends to every request. That is only trustworthy while every request goes through the proxy:
+The login and password-reset rate limits count attempts per account and per client address. The address is the **last** `X-Forwarded-For` entry (`src/lib/client-ip.ts`), which Traefik appends to every request (its `forwardedHeaders.notAppendXForwardedFor` option is off by default). That is only trustworthy while every request goes through Traefik:
 
-- Publish the service through an Easypanel domain only. Do not map the container port (`3000`) to a host port, and do not open it in the firewall.
-- If another proxy or CDN goes in front of Easypanel, make sure the last entry is still the one Easypanel adds. If a hop forwards the header unchanged, a client can pick its own address and the per-IP limit stops working.
+- Publish the application through a Dokploy domain only. Leave **Advanced > Ports** empty: a published port exposes the container directly (`your-ip:port`), bypassing Traefik. Do not open `3000` in the firewall.
+- Do not set `notAppendXForwardedFor` in Dokploy's Traefik configuration.
+- If a CDN or another proxy goes in front of Dokploy (Cloudflare, for example), the last entry becomes that proxy's address and every visitor shares one per-IP counter. In that case configure Traefik's `forwardedHeaders.trustedIPs` with the CDN ranges, or adapt `clientIp` to the CDN's own header.
 
 The per-account limit does not use the address, so an account still locks after 5 failed attempts even if the address can be forged.
 
 The counters and locks are stored in Postgres (`AuthThrottle`, see `docs/admin.md`), so they survive redeploys and hold if the service runs more than one replica. Apply the `auth_throttle` migration before deploying the version that uses it.
 
-One-off at the deploy that introduced hashed keys (T14): rows written with the old plain-text keys are no longer read, so counters and locks live at that moment restart from zero, at most for one 15-minute window. The old rows are deleted by the regular cleanup once their window ends. Later deploys keep the key format, so locks survive them.
-
 ### Build arguments
+
+Set them in **Environment > Build Time Arguments**. The runtime variables below are a separate list: set the shared ones (`SITE_URL`, `R2_PUBLIC_URL`) in both places.
 
 | Argument | Example | Purpose |
 | --- | --- | --- |
@@ -31,6 +38,8 @@ One-off at the deploy that introduced hashed keys (T14): rows written with the o
 | `R2_PUBLIC_URL` | `https://media.mrdesign.agency` | Public URL of the media bucket. `next.config.ts` builds the image allowlist from it at build time, so it must be a build argument as well as a runtime variable. |
 
 ### Runtime environment variables
+
+Set them in **Environment > Environment Variables**.
 
 | Variable | Purpose |
 | --- | --- |
@@ -62,7 +71,7 @@ Before the first launch, upload one image from the dashboard and confirm it regi
 
 ## Database migrations
 
-The image does not run migrations on start. Before deploying a change that adds migrations, apply them to the production database from a checkout of the repository:
+The image does not run migrations on start, and it has no Prisma CLI, so Dokploy's **Advanced > Run Command** cannot apply them. Before deploying a change that adds migrations, apply them to the production database from a checkout of the repository:
 
 ```bash
 DATABASE_URL="..." npm run db:deploy
@@ -94,11 +103,11 @@ During `npm run build` you will see `BetterAuthError: You are using the default 
 
 ### Antivirus HTTPS scanning
 
-Antivirus web shields that intercept HTTPS (Avast, for example) sign connections with their own root certificate, which containers do not trust. The build then fails at `apk add` with `TLS: server certificate not trusted`. Easypanel is not affected. To build locally, pause the HTTPS scanning or exclude `dl-cdn.alpinelinux.org` and `registry.npmjs.org`.
+Antivirus web shields that intercept HTTPS (Avast, for example) sign connections with their own root certificate, which containers do not trust. The build then fails at `apk add` with `TLS: server certificate not trusted`. Builds on the Dokploy server are not affected. To build locally, pause the HTTPS scanning or exclude `dl-cdn.alpinelinux.org` and `registry.npmjs.org`.
 
 ## Verified locally
 
-The standalone server was run the way the image runs it (`node server.js`, `HOSTNAME=0.0.0.0`, `public` and `.next/static` copied next to it), behind proxy headers like Easypanel's (`Host`, `X-Forwarded-Host`, `X-Forwarded-Proto: https`):
+The standalone server was run the way the image runs it (`node server.js`, `HOSTNAME=0.0.0.0`, `public` and `.next/static` copied next to it), behind proxy headers like Traefik's (`Host`, `X-Forwarded-Host`, `X-Forwarded-Proto: https`):
 
 - `/`, `/en`, services, portfolio, contact, blog and the sitemap answer 200; `/es` redirects to `/`; an unknown landing answers 404.
 - `/admin` redirects to the login, `POST /api/blog` without a key answers 401, and static files under `/brand` answer 200.

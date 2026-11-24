@@ -5,7 +5,7 @@ import { mediaRemotePatterns } from "./src/lib/media/remote-pattern";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  // Self-contained server for the Docker image deployed on Easypanel (see Dockerfile).
+  // Self-contained server for the Docker image deployed on Dokploy (see Dockerfile).
   output: "standalone",
   poweredByHeader: false,
   // Images uploaded from the dashboard to R2: only the media folder of R2_PUBLIC_URL, which must

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Production image for Easypanel. npm, Node 24 and a Prisma client
+# Production image for Dokploy (Dockerfile build type). npm, Node 24 and a Prisma client
 # generated into src/generated (bundled by Next).
 
 # ---- Base ----
@@ -23,7 +23,7 @@ COPY --from=deps /app/src/generated ./src/generated
 COPY . .
 
 # Pages are rendered at build time, so the public URL used for metadata and the
-# sitemap is fixed here. Pass it as a build argument in Easypanel.
+# sitemap is fixed here. Pass it in Dokploy under Environment > Build Time Arguments.
 ARG SITE_URL="https://mrdesign.agency"
 ENV SITE_URL=${SITE_URL}
 # next.config.ts builds the next/image allowlist from the bucket's public URL at build time.
@@ -53,5 +53,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# DATABASE_URL is read at runtime; set it in Easypanel's environment, never in the image.
+# DATABASE_URL is read at runtime; set it in Dokploy's environment variables, never in the image.
 CMD ["node", "server.js"]
