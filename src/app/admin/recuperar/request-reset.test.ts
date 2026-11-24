@@ -34,15 +34,14 @@ describe("requestPasswordReset", () => {
     expect(await requestPasswordReset({}, form("nadie@mrdesign.agency"))).toEqual(SENT);
   });
 
-  it("logs an infrastructure failure and asks to try again later, without saying whether the account exists", async () => {
+  // Some failures happen only for existing accounts (token write, email send), so a distinct answer
+  // would reveal which accounts exist. Failures are logged on the server and the answer stays the same.
+  it("logs a failure but answers exactly like a successful request", async () => {
     const requestPasswordReset = await loadAction();
     const failure = new Error("connect ECONNREFUSED 127.0.0.1:5434");
     requestPasswordResetApi.mockRejectedValue(failure);
 
-    const state = await requestPasswordReset({}, form("ana@mrdesign.agency"));
-
-    expect(state).toEqual({ unavailable: true, email: "ana@mrdesign.agency" });
-    expect(state.sent).toBeUndefined();
+    expect(await requestPasswordReset({}, form("ana@mrdesign.agency"))).toEqual(SENT);
     expect(console.error).toHaveBeenCalledWith("password reset request failed", failure);
   });
 });

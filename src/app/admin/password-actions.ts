@@ -8,8 +8,7 @@ import { auth } from "@/lib/auth";
 import { passwordResetRateLimiter } from "@/lib/auth/login-rate-limit";
 import { clientIp } from "@/lib/client-ip";
 
-// `unavailable`: the request could not be processed (the form shows a try-again-later message).
-export type RequestResetState = { sent?: boolean; unavailable?: boolean; error?: string; email?: string };
+export type RequestResetState = { sent?: boolean; error?: string; email?: string };
 
 // Always the same answer, registered or not: the form must not reveal which emails have accounts.
 export async function requestPasswordReset(_: RequestResetState, formData: FormData): Promise<RequestResetState> {
@@ -24,15 +23,13 @@ export async function requestPasswordReset(_: RequestResetState, formData: FormD
   }
   passwordResetRateLimiter.recordFailure(ip, parsed.data);
 
-  // better-auth creates the token and calls sendResetPassword (src/lib/auth/index.ts). It answers
-  // the same for unknown emails and never waits for the email, so a throw here is an infrastructure
-  // failure (database, configuration). Say so instead of claiming the link was sent; the answer is
-  // the same for every email, so it tells nothing about the account.
+  // better-auth creates the token and calls sendResetPassword (src/lib/auth/index.ts) only for
+  // existing accounts, so a failure there would happen only for them. A distinct answer would reveal
+  // which accounts exist: failures are logged on the server and the visitor gets the same answer.
   try {
     await auth.api.requestPasswordReset({ body: { email: parsed.data } });
   } catch (error) {
     console.error("password reset request failed", error);
-    return { unavailable: true, email };
   }
   return { sent: true };
 }
