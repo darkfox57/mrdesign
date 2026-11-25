@@ -1,6 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 // Homepage design (T18, S10): sections, interactive selectors, FAQ, motion fallbacks and layout.
+// Content still pending the client (SHOW_PENDING_CONTENT = false) is not rendered: no cases section,
+// no "[...]" placeholders, no "Pendiente de decisión" card.
 const headings = {
   es: {
     path: "/",
@@ -8,7 +10,6 @@ const headings = {
     h2: [
       "¿Te suena alguno de estos problemas?",
       "Seis líneas de trabajo. Un mismo criterio.",
-      "Trabajo real, contado con datos verificables.",
       "Por fases, con entregas que puedes ver.",
       "Primero el problema. Después la tecnología.",
       "Un estudio independiente. La persona con la que hablas es la que construye.",
@@ -22,7 +23,6 @@ const headings = {
     h2: [
       "Does any of these problems sound familiar?",
       "Six lines of work. One standard.",
-      "Real work, told with verifiable data.",
       "In phases, with deliveries you can see.",
       "The problem first. Then the technology.",
       "An independent studio. The person you talk to is the one who builds.",
@@ -100,32 +100,9 @@ test("the services selector switches the panel by click and keyboard", async ({ 
   await evolution.focus();
   await page.keyboard.press("Space");
   await expect(evolution).toHaveAttribute("aria-pressed", "true");
-  await expect(panel).toContainText("[Confirmar alcance de soporte]");
-});
-
-test("the cases browser switches case and part by click and keyboard", async ({ page }) => {
-  await page.goto("/");
-  const cases = page.getByRole("group", { name: "Casos de estudio" });
-  const parts = page.getByRole("group", { name: "Partes del caso" });
-  const body = page.locator("[data-case-body]");
-  await expect(body).toHaveAttribute("aria-live", "polite");
-  await expect(body).toContainText("Vender llantas online");
-
-  await cases.getByRole("button", { name: /LlantaMarket/ }).click();
-  await expect(cases.getByRole("button", { name: /LlantaMarket/ })).toHaveAttribute("aria-pressed", "true");
-  await expect(cases.getByRole("button", { name: /Llantas y Tires/ })).toHaveAttribute("aria-pressed", "false");
-  await expect(body).toContainText("Lanzar una plataforma de llantas sin empezar desde cero.");
-
-  const solution = parts.getByRole("button", { name: "Solución" });
-  await solution.focus();
-  await page.keyboard.press("Enter");
-  await expect(solution).toHaveAttribute("aria-pressed", "true");
-  await expect(body).toContainText("Una base existente, adaptada a una nueva operación.");
-  await expect(body).toContainText("[Confirmar métrica]");
-
-  // A new case starts again from its first part.
-  await cases.getByRole("button", { name: /Llantas y Tires/ }).click();
-  await expect(parts.getByRole("button", { name: "Reto" })).toHaveAttribute("aria-pressed", "true");
+  // The deliverable that waits for the support scope is left out whole, the others stay.
+  await expect(panel).toContainText("Entregas periódicas de mejoras");
+  await expect(panel).not.toContainText("Monitoreo y corrección de errores");
 });
 
 test("FAQ answers expand and collapse and stay in the page", async ({ page }) => {
@@ -133,8 +110,8 @@ test("FAQ answers expand and collapse and stay in the page", async ({ page }) =>
   const firstAnswer = page.getByText(/Si tu proyecto no encaja con lo que hago/);
   await expect(firstAnswer).toBeVisible();
 
-  const question = page.getByText("¿Cuánto tiempo toma un proyecto?", { exact: true });
-  const answer = page.getByText(/Por eso empiezo con un diagnóstico/);
+  const question = page.getByText("¿Todo se construye a la medida?", { exact: true });
+  const answer = page.getByText(/Construir de más también es un costo/);
   await expect(answer).toHaveCount(1);
   await expect(answer).toBeHidden();
   await question.click();
@@ -206,11 +183,37 @@ test("no horizontal overflow at 390 px, also with panels open", async ({ page })
   }
   await page.goto("/");
   await page.getByRole("group", { name: "Servicios" }).getByRole("button", { name: /Tiendas y comercio/ }).click();
-  await page.getByRole("group", { name: "Casos de estudio" }).getByRole("button", { name: /LlantaMarket/ }).click();
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
   // The home root clips overflow, so also check that no panel is wider than the screen.
   const widest = await page
-    .locator("[data-problem-panel], [data-service-panel], [data-stagebox], #contacto form")
+    .locator("[data-problem-panel], [data-service-panel], #contacto form")
     .evaluateAll((nodes) => Math.max(...nodes.map((node) => node.getBoundingClientRect().right)));
   expect(widest).toBeLessThanOrEqual(390);
+});
+
+test.describe("pending content stays hidden", () => {
+  const placeholder = /\[[^\]]+\]/;
+
+  for (const path of ["/", "/en", "/servicios", "/en/services"]) {
+    test(`${path} shows no placeholder and no pending tag`, async ({ page }) => {
+      await page.goto(path);
+      const text = await page.locator("body").innerText();
+      expect(text).not.toMatch(placeholder);
+      expect(text).not.toMatch(/Pendiente de decisión|Pending decision/i);
+    });
+  }
+
+  for (const path of ["/", "/en"]) {
+    test(`${path} hides the cases and numbers its sections without gaps`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.locator("#casos")).toHaveCount(0);
+      await expect(page.locator('a[href$="#casos"]')).toHaveCount(0);
+      const numbers = await page
+        .locator("main section p")
+        .evaluateAll((nodes) =>
+          nodes.map((node) => /^(\d{2}) — /.exec(node.textContent?.trim() ?? "")?.[1]).filter((value) => value !== undefined),
+        );
+      expect(numbers).toEqual(["01", "02", "03", "04", "05", "06"]);
+    });
+  }
 });

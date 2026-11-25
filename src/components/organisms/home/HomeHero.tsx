@@ -1,7 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { buttonBase, buttonSizes, buttonVariants } from "@/components/atoms/ButtonLink";
 import { Eyebrow } from "@/components/atoms/Eyebrow";
-import { audiences, heroLayers } from "@/content/home";
+import { audiences, heroLayers, SHOW_CASES } from "@/content/home";
 import type { Locale } from "@/i18n/routing";
 import { cn } from "@/lib/cn";
 import { HeroLayers } from "./HeroLayers";
@@ -64,12 +64,14 @@ export async function HomeHero() {
                   →
                 </span>
               </a>
-              <a
-                href="#casos"
-                className={cn(buttonBase, buttonSizes.lg, buttonVariants.secondary, "flex-1 basis-full md:flex-none md:basis-auto")}
-              >
-                {t("ctaCases")}
-              </a>
+              {SHOW_CASES ? (
+                <a
+                  href="#casos"
+                  className={cn(buttonBase, buttonSizes.lg, buttonVariants.secondary, "flex-1 basis-full md:flex-none md:basis-auto")}
+                >
+                  {t("ctaCases")}
+                </a>
+              ) : null}
             </div>
           </div>
 

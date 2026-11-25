@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Logo } from "@/components/atoms/Logo";
 import { Pending } from "@/components/atoms/Pending";
 import { contact } from "@/content/contact";
+import { SHOW_PENDING_CONTENT } from "@/content/home";
 import { Link } from "@/i18n/navigation";
 
 const linkClass = "inline-flex min-h-11 items-center no-underline transition-colors hover:text-on-ink";
@@ -60,7 +61,14 @@ export async function SiteFooter() {
       <div className="border-t border-ink-line">
         <div className="site-container flex flex-wrap items-center justify-between gap-x-10 gap-y-2 py-5">
           <p>
-            © {year} Mr. Design · <Pending>{t("legalNamePending")}</Pending>
+            © {year} Mr. Design
+            {/* The legal name and tax ID are still missing (SHOW_PENDING_CONTENT). */}
+            {SHOW_PENDING_CONTENT ? (
+              <>
+                {" · "}
+                <Pending>{t("legalNamePending")}</Pending>
+              </>
+            ) : null}
           </p>
           <nav aria-label={t("legal")}>
             <ul className="flex flex-wrap gap-x-5">

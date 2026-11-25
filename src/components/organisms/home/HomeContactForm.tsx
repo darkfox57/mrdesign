@@ -18,15 +18,16 @@ const fieldClass =
 const labelClass = "mb-2.5 block text-sm font-semibold";
 
 // "Enviar otro mensaje" starts a fresh form: a new key gives the action a new, idle state.
-export function HomeContactForm({ needs }: { needs: Need[] }) {
+// showPending: whether the placeholder about the response time is published (SHOW_PENDING_CONTENT).
+export function HomeContactForm({ needs, showPending }: { needs: Need[]; showPending: boolean }) {
   const [round, setRound] = useState(0);
-  return <ContactRound key={round} needs={needs} onAgain={() => setRound(round + 1)} />;
+  return <ContactRound key={round} needs={needs} showPending={showPending} onAgain={() => setRound(round + 1)} />;
 }
 
 // Posts to the same server action as the contact page (validation, rate limit and storage live
 // there). The needs map to its single project type; without JavaScript the form still posts,
 // with "other" as the project type.
-function ContactRound({ needs, onAgain }: { needs: Need[]; onAgain: () => void }) {
+function ContactRound({ needs, showPending, onAgain }: { needs: Need[]; showPending: boolean; onAgain: () => void }) {
   const t = useTranslations("Home.contact");
   const contact = useTranslations("Contact");
   const locale = useLocale();
@@ -40,7 +41,13 @@ function ContactRound({ needs, onAgain }: { needs: Need[]; onAgain: () => void }
         <p className="mono-label text-brand-500">{t("success.label")}</p>
         <p className="font-display-tight text-4xl">{t("success.title")}</p>
         <p className="text-on-ink-muted">
-          {t("success.text")} <Pending>{t("success.pending")}</Pending>
+          {t("success.text")}
+          {showPending ? (
+            <>
+              {" "}
+              <Pending>{t("success.pending")}</Pending>
+            </>
+          ) : null}
         </p>
         <button
           type="button"

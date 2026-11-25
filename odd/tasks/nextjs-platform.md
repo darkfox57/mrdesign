@@ -539,3 +539,10 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
   - Inclusive plurals are kept: "definimos juntos", "Hablemos", and the visitor's own "tenemos tienda online" placeholder.
   - The rest of the site was already singular.
   - Evidence: vitest 437/437; lint 0; typecheck 0; home, smoke and public-pages e2e 75 passed and 0 failed. The FAQ expectations were updated after a first RED on the old answers.
+- L57 (2026-11-24, user): "oculta lo pendiente y sube a main".
+  - `SHOW_PENDING_CONTENT = false` in src/content/home.ts. Every unit carrying a placeholder is left out of the DOM, and the content stays in the code.
+  - Hidden: the Cases section and the hero's "Ver casos" button; the founder card; the collaborators sentence and "Capacidad honesta"; process notes; the support-scope deliverable; the technology-list paragraph; 4 FAQ entries; the contact response time; the applied AI card; "[Razón social / NIT]" in the footer.
+  - Section numbers are computed from the visible sections (01–06).
+  - Evidence:
+    - e2e checks: no "[…]" text and no "Pendiente" on /, /en, /servicios and /en/services; no #casos; numbers 01–06. RED: 8 failed before the change.
+    - vitest 443/443; lint 0; typecheck 0; e2e home, smoke and public-pages 85 passed.

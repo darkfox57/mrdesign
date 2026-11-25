@@ -52,7 +52,7 @@
       "hubCrm": "CRM"
     },
     "problems": {
-      "eyebrow": "01 — The starting point",
+      "eyebrow": "{number} — The starting point",
       "title": "Does any of these problems sound familiar?",
       "lead": "Pick one and see how I would approach it. I talk about possible results, not promised ones: they depend on each business and are measured from the start.",
       "listLabel": "Common problems",
@@ -63,7 +63,7 @@
       "seeHow": "See how it works →"
     },
     "services": {
-      "eyebrow": "02 — Services",
+      "eyebrow": "{number} — Services",
       "title": "Six lines of work. One standard.",
       "lead": "You can start with one and add others when the business calls for it. They all share the same way of working: an assessment, phases and deliveries you can review.",
       "tabsLabel": "Services",
@@ -81,7 +81,7 @@
       }
     },
     "cases": {
-      "eyebrow": "03 — Cases",
+      "eyebrow": "{number} — Cases",
       "title": "Real work, told with verifiable data.",
       "lead": "For each project I show the challenge, the solution and only the results the client has confirmed. What is still missing is marked.",
       "pickerLabel": "Case studies",
@@ -112,7 +112,7 @@
       "brandPending": "[Authorization pending]"
     },
     "process": {
-      "eyebrow": "04 — How I work",
+      "eyebrow": "{number} — How I work",
       "title": "In phases, with deliveries you can see.",
       "lead": "Every phase ends with something concrete. That way you decide with information instead of promises, and you can change course before investing in the next one.",
       "receives": "You get",
@@ -120,7 +120,7 @@
       "notePending": "[Confirm commercial terms: payment method, warranty, support]"
     },
     "criteria": {
-      "eyebrow": "05 — Technical judgment",
+      "eyebrow": "{number} — Technical judgment",
       "title": "The problem first. Then the technology.",
       "lead": "I do not start with a favorite tool. I start with what your business needs and choose the simplest option that solves it well and can be maintained.",
       "tableLabel": "How I choose the technology",
@@ -135,13 +135,14 @@
       "photoPending": "[Founder photo]",
       "namePending": "[Founder name]",
       "role": "Founder · Engineer responsible for every project",
-      "eyebrow": "06 — About Mr. Design",
+      "eyebrow": "{number} — About Mr. Design",
       "title": "An independent studio. The person you talk to is the one who builds.",
-      "body": "Mr. Design is not a big agency and does not pretend to be one. The person who listens to you in the first meeting is the one who designs the architecture, writes the code and answers when something needs attention. When a project needs other specialties, I work with collaborators openly and you know who is involved.",
+      "body": "Mr. Design is not a big agency and does not pretend to be one. The person who listens to you in the first meeting is the one who designs the architecture, writes the code and answers when something needs attention.",
+      "bodyCollaborators": "When a project needs other specialties, I work with collaborators openly and you know who is involved.",
       "bodyPending": "[Confirm network of collaborators and specialties]"
     },
     "faq": {
-      "eyebrow": "07 — Frequently asked questions",
+      "eyebrow": "{number} — Frequently asked questions",
       "title": "What people usually ask me before starting.",
       "notHere": "Is your question not here?",
       "write": "Write to me"

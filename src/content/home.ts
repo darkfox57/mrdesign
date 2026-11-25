@@ -3,14 +3,24 @@ import type { ServiceId } from "./services";
 
 // Structured content of the homepage (design S10 in odd/tasks/nextjs-platform.md). Short labels and
 // headings live in messages/*.json under "Home"; lists that the sections iterate live here.
-// Text in square brackets is pending the client's data or authorization (A13): keep it visible
-// until the real content arrives, and never replace it with invented numbers or quotes.
+// Text in square brackets is pending the client's data or authorization (A13). Never replace it
+// with invented numbers or quotes: fill in the real content, then drop the brackets.
 
 type Localized<T> = Record<Locale, T>;
 type Text = Localized<string>;
 
-// The applied AI card is optional in the design ("pending decision"). Set to false to hide it.
-export const SHOW_APPLIED_AI = true;
+// Whether content still waiting for the client is published. With false (production until the data
+// arrives), every unit that carries a placeholder is left out of the page: the whole sentence, list
+// item, card, FAQ entry or section, never just the bracketed token. The content stays here so it can
+// be shown again by setting this to true. Placeholders in messages/*.json follow the same switch.
+export const SHOW_PENDING_CONTENT: boolean = false;
+
+// Both client cases wait for written authorization (name, screenshots, link, metrics), so the whole
+// cases section, and every link to it, follows the pending switch.
+export const SHOW_CASES: boolean = SHOW_PENDING_CONTENT;
+
+// The applied AI card is optional in the design and still a pending decision ("Pendiente de decisión").
+export const SHOW_APPLIED_AI: boolean = SHOW_PENDING_CONTENT;
 
 export type HeroLayer = { name: Text; description: Text };
 

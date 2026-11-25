@@ -52,7 +52,7 @@
       "hubCrm": "CRM"
     },
     "problems": {
-      "eyebrow": "01 — El punto de partida",
+      "eyebrow": "{number} — El punto de partida",
       "title": "¿Te suena alguno de estos problemas?",
       "lead": "Elige uno y mira cómo lo abordaría. Hablo de resultados posibles, no prometidos: dependen de cada negocio y se miden desde el inicio.",
       "listLabel": "Problemas frecuentes",
@@ -63,7 +63,7 @@
       "seeHow": "Ver cómo funciona →"
     },
     "services": {
-      "eyebrow": "02 — Servicios",
+      "eyebrow": "{number} — Servicios",
       "title": "Seis líneas de trabajo. Un mismo criterio.",
       "lead": "Puedes empezar por una y sumar otras cuando el negocio lo pida. Todas comparten la misma forma de trabajar: diagnóstico, fases y entregas que puedes revisar.",
       "tabsLabel": "Servicios",
@@ -81,7 +81,7 @@
       }
     },
     "cases": {
-      "eyebrow": "03 — Casos",
+      "eyebrow": "{number} — Casos",
       "title": "Trabajo real, contado con datos verificables.",
       "lead": "Para cada proyecto muestro el reto, la solución y solo los resultados que el cliente haya confirmado. Lo que aún falta está marcado.",
       "pickerLabel": "Casos de estudio",
@@ -112,7 +112,7 @@
       "brandPending": "[Autorización pendiente]"
     },
     "process": {
-      "eyebrow": "04 — Cómo trabajo",
+      "eyebrow": "{number} — Cómo trabajo",
       "title": "Por fases, con entregas que puedes ver.",
       "lead": "Cada fase termina con algo concreto. Así decides con información y no con promesas, y puedes ajustar el rumbo antes de invertir en la siguiente.",
       "receives": "Recibes",
@@ -120,7 +120,7 @@
       "notePending": "[Confirmar condiciones comerciales: forma de pago, garantía, soporte]"
     },
     "criteria": {
-      "eyebrow": "05 — Criterio técnico",
+      "eyebrow": "{number} — Criterio técnico",
       "title": "Primero el problema. Después la tecnología.",
       "lead": "No empiezo con una herramienta favorita. Empiezo con lo que tu negocio necesita y elijo la opción más simple que lo resuelva bien y se pueda mantener.",
       "tableLabel": "Cómo elijo la tecnología",
@@ -135,13 +135,14 @@
       "photoPending": "[Foto del fundador]",
       "namePending": "[Nombre del fundador]",
       "role": "Fundador · Ingeniero responsable de cada proyecto",
-      "eyebrow": "06 — Sobre Mr. Design",
+      "eyebrow": "{number} — Sobre Mr. Design",
       "title": "Un estudio independiente. La persona con la que hablas es la que construye.",
-      "body": "Mr. Design no es una agencia grande y no pretende parecerlo. Quien te escucha en la primera reunión es quien diseña la arquitectura, escribe el código y responde cuando algo necesita atención. Cuando un proyecto necesita otras especialidades, trabajo con colaboradores de forma explícita y sabes quién participa.",
+      "body": "Mr. Design no es una agencia grande y no pretende parecerlo. Quien te escucha en la primera reunión es quien diseña la arquitectura, escribe el código y responde cuando algo necesita atención.",
+      "bodyCollaborators": "Cuando un proyecto necesita otras especialidades, trabajo con colaboradores de forma explícita y sabes quién participa.",
       "bodyPending": "[Confirmar red de colaboradores y especialidades]"
     },
     "faq": {
-      "eyebrow": "07 — Preguntas frecuentes",
+      "eyebrow": "{number} — Preguntas frecuentes",
       "title": "Lo que suelen preguntarme antes de empezar.",
       "notHere": "¿Tu pregunta no está aquí?",
       "write": "Escríbeme"

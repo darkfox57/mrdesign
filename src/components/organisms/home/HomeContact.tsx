@@ -2,7 +2,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Eyebrow } from "@/components/atoms/Eyebrow";
 import { Pending } from "@/components/atoms/Pending";
 import { contact } from "@/content/contact";
-import { contactNeeds } from "@/content/home";
+import { contactNeeds, SHOW_PENDING_CONTENT } from "@/content/home";
 import type { Locale } from "@/i18n/routing";
 import { HomeContactForm } from "./HomeContactForm";
 
@@ -36,13 +36,15 @@ export async function HomeContact() {
                 {contact.phone}
               </a>
             </span>
-            <span>
-              {t("responseTime")} <Pending>{t("confirm")}</Pending>
-            </span>
+            {SHOW_PENDING_CONTENT ? (
+              <span>
+                {t("responseTime")} <Pending>{t("confirm")}</Pending>
+              </span>
+            ) : null}
           </div>
         </div>
         <div data-reveal="">
-          <HomeContactForm needs={contactNeeds.map((need) => ({ id: need.id, label: need.label[locale] }))} />
+          <HomeContactForm showPending={SHOW_PENDING_CONTENT} needs={contactNeeds.map((need) => ({ id: need.id, label: need.label[locale] }))} />
         </div>
       </div>
     </section>
