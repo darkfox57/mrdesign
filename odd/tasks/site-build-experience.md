@@ -20,7 +20,7 @@ Concept prototype: https://claude.ai/artifact/Qr3txUKigWzghPKHV6B5sw (`Main.dc.h
 | ID | Specs | Task | Route | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | T1 | S2 | `Case` model and migration, `/admin/casos` module, import of portfolio projects as drafts | delegated (context backstop) | done (64015a6, review approved) | Verifier: 2 findings confirmed and fixed test-first (5 RED, then GREEN). Parent: vitest 486/486, lint 0, typecheck 0. Writer: e2e cases, landing editor and builder 11/11. |
-| T2 | S2, S6 | Public case pages `/portafolio/[slug]` (`/en/portfolio/[slug]`, see L10), CreativeWork JSON-LD, sitemap, `/portafolio` lists published cases | delegated (context backstop) | in progress | |
+| T2 | S2, S6 | Public case pages `/portafolio/[slug]` (`/en/portfolio/[slug]`, see L10), CreativeWork JSON-LD, sitemap, `/portafolio` lists published cases | delegated (context backstop) | done | Writer: vitest 510, lint 0, typecheck 0, e2e cases+admin 19/19, public specs 133/133 + security 15/15. Verifier: 1 finding, fixed (L11). Parent: vitest 512/512. |
 | T3 | S3, S4, S6 | Build-stage motion system: reusable stage, X-ray mode, GSAP scroll reveals, no-JS content | inline | pending | |
 | T4 | S3, S4, S5, S7, S8 | New home page from the prototype | inline | pending | |
 | T5 | S1, S3, S5, S6 | Eight line-of-work pages, each with its own build stage, summary, deliverables, comparison, FAQ, cases, related lines; Service, FAQPage, BreadcrumbList JSON-LD | inline or parallel writers | pending | |
@@ -71,3 +71,10 @@ Route notes: T1 Risk names item 1 (new migration), so its commit gets an indepen
       - import swallows unique errors
       - list filter parse
 - L10 (2026-11-25, decision): case detail pages live under the portfolio index, at `/portafolio/[slug]` (`/en/portfolio/[slug]`), not `/casos/[slug]`. One hierarchy for breadcrumbs and SEO, and the existing `/portafolio` URL is kept. The index lists published cases and keeps the current project grid while none are published.
+- L11 (2026-11-25): T2 delivered by a writer.
+  - **Public visibility:** a case is public when it is PUBLISHED, `clientAuthorized` is true and `publishedAt` is not in the future.
+  - **Language switcher:** a slug from the other language redirects to that case's translation, or to the index when there is none.
+  - **Revalidation:** the index and every detail page refresh together, because `/portafolio` is revalidated as a layout.
+  - **Line labels:** they live in messages, and a test pins their keys to `CASE_LINES`.
+  - **Verification:** visibility, SEO and regression lenses, each refuted. The visibility and SEO lenses found nothing; a datePublished suggestion was refuted.
+  - **Confirmed (minor):** `/portafolio` became `force-dynamic`, so a database outage would make it fail where it used to serve the static grid. Fixed inline, test-first: `casesOrEmpty` reports the error and falls back to the grid.

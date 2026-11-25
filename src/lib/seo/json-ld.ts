@@ -56,6 +56,38 @@ export function blogPostingJsonLd({ title, description, url, locale, publishedAt
   };
 }
 
+type CaseStudyJsonLd = {
+  title: string;
+  summary: string;
+  url: string;
+  locale: string;
+  image: string | null;
+  // Localized line-of-work labels.
+  lines: string[];
+  stack: string[];
+  year: number | null;
+};
+
+// A success case: the work the business made. Lines and stack become its keywords; the lines are
+// also its topics. Fields the case does not have are left out.
+export function caseStudyJsonLd({ title, summary, url, locale, image, lines, stack, year }: CaseStudyJsonLd) {
+  const keywords = [...lines, ...stack];
+  return {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: title,
+    description: summary,
+    url: `${siteUrl}${url}`,
+    mainEntityOfPage: `${siteUrl}${url}`,
+    inLanguage: locale,
+    ...(image ? { image: image.startsWith("/") ? `${siteUrl}${image}` : image } : {}),
+    ...(keywords.length > 0 ? { keywords: keywords.join(", ") } : {}),
+    ...(lines.length > 0 ? { about: lines.map((name) => ({ "@type": "Thing", name })) } : {}),
+    ...(year ? { dateCreated: String(year) } : {}),
+    creator: { "@id": organizationJsonLd["@id"] },
+  };
+}
+
 export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
   return {
     "@context": "https://schema.org",

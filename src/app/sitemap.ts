@@ -3,11 +3,12 @@ import { services } from "@/content/services";
 import { getPathname } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { sitemapBlogEntries } from "@/lib/blog/posts";
+import { sitemapPublicCases } from "@/lib/cases/public";
 import { sitemapLandings } from "@/lib/landings/landings";
 import { landingHref } from "@/lib/landings/routes";
 import { siteUrl } from "@/lib/seo/site";
 
-// Posts and landings come from the database, which the Docker build cannot reach: render on request.
+// Posts, landings and cases come from the database, which the Docker build cannot reach: render on request.
 export const dynamic = "force-dynamic";
 
 type Href = Parameters<typeof getPathname>[0]["href"];
@@ -56,7 +57,7 @@ function byTranslation<T extends { locale: Locale; translationKey: string; updat
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [{ posts, categories }, landings] = await Promise.all([sitemapBlogEntries(), sitemapLandings()]);
+  const [{ posts, categories }, landings, cases] = await Promise.all([sitemapBlogEntries(), sitemapLandings(), sitemapPublicCases()]);
 
   return [
     ...STATIC_PAGES.map((href) => entry(() => href)),
@@ -71,6 +72,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       params: { category: category.slug },
     })).flatMap((group) => versionEntries(group.versions)),
     ...byTranslation(landings, (landing) => landingHref(landing.slug)).flatMap((group) =>
+      versionEntries(group.versions, group.lastModified),
+    ),
+    ...byTranslation(cases, (item) => ({ pathname: "/portafolio/[slug]", params: { slug: item.slug } })).flatMap((group) =>
       versionEntries(group.versions, group.lastModified),
     ),
   ];

@@ -15,6 +15,8 @@ export const routing = defineRouting({
     "/servicios": { es: "/servicios", en: "/services" },
     "/servicios/[service]": { es: "/servicios/[service]", en: "/services/[service]" },
     "/portafolio": { es: "/portafolio", en: "/portfolio" },
+    // Success cases (src/lib/cases), under the portfolio index.
+    "/portafolio/[slug]": { es: "/portafolio/[slug]", en: "/portfolio/[slug]" },
     "/blog": "/blog",
     "/blog/[slug]": "/blog/[slug]",
     "/blog/categoria/[category]": { es: "/blog/categoria/[category]", en: "/blog/category/[category]" },

@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { caseFormInputFromFormData, caseIdsSchema, casePublicationSchema, type CaseFieldErrors, type CaseFormInput } from "@/lib/admin/case-form";
-import { CASES_ADMIN_PATH, publicCasePaths, saveCase, setCasePublication } from "@/lib/admin/cases";
+import { CASES_ADMIN_PATH, saveCase, setCasePublication } from "@/lib/admin/cases";
 import { requirePermission } from "@/lib/auth/require-permission";
+import { publicCasePaths } from "@/lib/cases/paths";
 import { coverPrefixes } from "@/lib/media/cover-prefixes";
 
 export type SaveCaseState = {
@@ -18,7 +19,8 @@ export type CasePublicationState = { ok?: string; error?: string };
 
 function revalidateCases() {
   revalidatePath(CASES_ADMIN_PATH, "layout");
-  for (const path of publicCasePaths()) revalidatePath(path, "page");
+  // The home page, the portfolio index and every case page, old slugs included (publicCasePaths).
+  for (const { path, type } of publicCasePaths()) revalidatePath(path, type);
 }
 
 // Creates a case (as a draft) or updates one; "Guardar y publicar" also publishes it.

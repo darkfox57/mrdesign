@@ -200,6 +200,39 @@
     "tags": {
       "web": "Sitio web",
       "ecommerce": "Tienda en línea"
+    },
+    "lines": {
+      "websites": "Sitios web a la medida",
+      "funnels": "Landing pages y embudos",
+      "shopify": "Tiendas Shopify",
+      "prestashop": "Tiendas PrestaShop",
+      "wordpress": "WordPress",
+      "apps": "Aplicaciones web y móviles",
+      "evolution": "Evolución de plataformas",
+      "plugins": "Plugins e integraciones"
+    },
+    "case": {
+      "breadcrumbHome": "Inicio",
+      "backToPortfolio": "Volver al portafolio",
+      "eyebrow": "Caso de éxito",
+      "factsLabel": "Datos del proyecto",
+      "client": "Cliente",
+      "lines": "Líneas de trabajo",
+      "year": "Año",
+      "storyTitle": "Del reto al resultado",
+      "challengeTitle": "El reto",
+      "solutionTitle": "La solución",
+      "resultTitle": "El resultado",
+      "metricsTitle": "Cifras del proyecto",
+      "metricSource": "Cómo se verifica",
+      "stackTitle": "Con qué lo construí",
+      "galleryTitle": "Galería",
+      "website": "Ver el sitio en vivo",
+      "newTab": "(se abre en otra pestaña)",
+      "relatedTitle": "Otros casos de la misma línea",
+      "ctaTitle": "¿Quieres un proyecto así?",
+      "ctaText": "Cuéntame qué necesitas y te respondo en menos de un día hábil con los siguientes pasos.",
+      "ctaButton": "Cuéntame tu proyecto"
     }
   },
   "Blog": {

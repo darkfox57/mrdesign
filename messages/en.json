@@ -200,6 +200,39 @@
     "tags": {
       "web": "Website",
       "ecommerce": "Online store"
+    },
+    "lines": {
+      "websites": "Custom websites",
+      "funnels": "Landing pages and funnels",
+      "shopify": "Shopify stores",
+      "prestashop": "PrestaShop stores",
+      "wordpress": "WordPress",
+      "apps": "Web and mobile apps",
+      "evolution": "Platform evolution",
+      "plugins": "Plugins and integrations"
+    },
+    "case": {
+      "breadcrumbHome": "Home",
+      "backToPortfolio": "Back to the portfolio",
+      "eyebrow": "Success case",
+      "factsLabel": "Project details",
+      "client": "Client",
+      "lines": "Lines of work",
+      "year": "Year",
+      "storyTitle": "From challenge to result",
+      "challengeTitle": "The challenge",
+      "solutionTitle": "The solution",
+      "resultTitle": "The result",
+      "metricsTitle": "Project figures",
+      "metricSource": "How it is verified",
+      "stackTitle": "What I built it with",
+      "galleryTitle": "Gallery",
+      "website": "See the live site",
+      "newTab": "(opens in a new tab)",
+      "relatedTitle": "More cases in the same line of work",
+      "ctaTitle": "Want a project like this?",
+      "ctaText": "Tell me what you need and I'll reply within one business day with the next steps.",
+      "ctaButton": "Tell me about your project"
     }
   },
   "Blog": {

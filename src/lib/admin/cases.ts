@@ -1,5 +1,5 @@
 import "server-only";
-import { routing, type Locale } from "@/i18n/routing";
+import type { Locale } from "@/i18n/routing";
 import { publicationChange } from "@/lib/admin/posts";
 import { isUniqueViolation, violatesUnique } from "@/lib/blog/unique-violation";
 import { db } from "@/lib/db";
@@ -17,13 +17,6 @@ const CHANGED_MEANWHILE = "El caso cambió mientras lo editabas. Recarga la pág
 const COVER_MISSING = "La portada no está en la biblioteca de imágenes: puede que la hayan borrado. Elige otra.";
 const galleryMissing = (urls: string[]) =>
   `${urls.length === 1 ? "Una imagen" : "Varias imágenes"} de la galería no está${urls.length === 1 ? "" : "n"} en la biblioteca: puede que la hayan borrado. Quítala${urls.length === 1 ? "" : "s"} o elige otra${urls.length === 1 ? "" : "s"}.`;
-
-// The public pages that show cases, as the routes the proxy rewrites to (every locale carries its
-// prefix, Spanish too; see publicBlogPaths). Today the home page and the portfolio; the case pages
-// join when they ship.
-export function publicCasePaths() {
-  return routing.locales.flatMap((locale) => [`/${locale}`, `/${locale}/portafolio`]);
-}
 
 export type SaveCaseResult =
   | { ok: true; id: string; created: boolean }
