@@ -14,7 +14,8 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "menu": "Menu",
-    "close": "Close"
+    "close": "Close",
+    "xray": "X-ray"
   },
   "Language": {
     "label": "Language",
@@ -36,128 +37,129 @@
   "Home": {
     "metaTitle": "Web, app and online store development",
     "hero": {
-      "eyebrow": "Independent software and digital product studio",
-      "line1": "Software that",
-      "line2": "<hl>works</hl> for",
-      "line3": "your business.",
-      "sub": "I design, build and evolve websites, online stores, platforms and integrations for companies that need to run better, sell online or launch something new. <strong>You talk directly to the engineer who builds your project.</strong>",
+      "eyebrow": "Independent development · websites, stores, apps and plugins",
+      "title": "Watch how your next <accent>sale</accent> gets built.",
+      "sub": "I design and code custom websites, online stores and applications. What you see assembling here is the real order I work in: structure, content, commerce, forms and launch.",
       "ctaPrimary": "Tell me about your project",
-      "ctaCases": "See cases",
-      "layersLabel": "The layers of a digital product",
-      "audienceLabel": "Who I work for",
-      "hubApi": "API",
-      "hubPayments": "Payments",
-      "hubInventory": "Inventory",
-      "hubErp": "ERP",
-      "hubCrm": "CRM"
+      "ctaLines": "See the lines of work",
+      "xrayHint": "Turn on X-ray at the top and see the skeleton of any page.",
+      "stage": {
+        "rail": "Build stages",
+        "log": "Build log",
+        "play": "Play",
+        "pause": "Pause"
+      }
     },
     "problems": {
       "eyebrow": "{number} — The starting point",
       "title": "Does any of these problems sound familiar?",
-      "lead": "Pick one and see how I would approach it. I talk about possible results, not promised ones: they depend on each business and are measured from the start.",
+      "lead": "Tell me where you are, pick a problem and see how I would approach it. I talk about possible results, not promised ones: they depend on each business and are measured from the start.",
+      "audienceLabel": "Where are you?",
+      "audiences": {
+        "starting": "I am just starting",
+        "existing": "I already run a business"
+      },
       "listLabel": "Common problems",
+      "tags": {
+        "idea": "idea",
+        "started": "under way",
+        "open": "open",
+        "solved": "solved"
+      },
+      "issueStarting": "project #{number} · from scratch",
+      "issueExisting": "issue #{number} · {count} pieces",
+      "statusOpenStarting": "idea · does not exist yet",
+      "statusDoneStarting": "under way · how it would start",
+      "statusOpenExisting": "open · how it works today",
+      "statusDoneExisting": "solved · how it would end up",
+      "whereYouAre": "Where you are",
       "problem": "Problem",
       "solution": "How I approach it",
       "result": "Possible result",
-      "serviceLine": "Service line:",
-      "seeHow": "See how it works →"
+      "line": "Line: {line} →",
+      "replay": "Watch the fix again"
     },
-    "services": {
-      "eyebrow": "{number} — Services",
-      "title": "Six lines of work. One standard.",
-      "lead": "You can start with one and add others when the business calls for it. They all share the same way of working: an assessment, phases and deliveries you can review.",
-      "tabsLabel": "Services",
-      "counter": "{number} / {total} · {kind}",
-      "when": "When it makes sense",
-      "deliverables": "Typical deliverables",
-      "flowTitle": "How a project of this kind flows",
-      "flowLabel": "Flow: {nodes}",
-      "ai": {
-        "tag": "Pending decision",
-        "title": "AI applied to processes",
-        "optional": "(optional)",
-        "text": "Assistants, information sorting or AI automations in tasks where a mistake can be spotted and corrected. Publish only if it is confirmed as a service.",
-        "note": "Not a confirmed service"
+    "pieces": {
+      "eyebrow": "{number} — The pieces",
+      "title": "Every piece is designed so someone buys, writes or comes back.",
+      "lead": "These are not screenshots: you can use them. Add the chair to the cart, fill in the form, build an article. And if you want to see how they are made, ask each one for its skeleton.",
+      "skeleton": "Show skeleton",
+      "finished": "Show finished",
+      "product": {
+        "title": "Product page",
+        "description": "Variants, quantities and photos that load fast.",
+        "variant": "Wood: {name}",
+        "quantity": "Quantity:",
+        "less": "Remove one",
+        "more": "Add one",
+        "add": "Add to cart"
+      },
+      "cart": {
+        "title": "Cart",
+        "description": "It updates instantly and recalculates the total without reloading the page.",
+        "empty": "Your cart is empty",
+        "emptyHint": "Add the chair from the product page: the two pieces are connected.",
+        "line": "{qty} × {price}",
+        "remove": "Remove",
+        "removeLabel": "Remove {name} from the cart",
+        "subtotal": "Subtotal ({count, plural, one {# item} other {# items}})",
+        "checkout": "Go to checkout"
+      },
+      "form": {
+        "title": "Form",
+        "description": "It validates as you type and reaches your inbox or your CRM.",
+        "name": "Name",
+        "email": "Email",
+        "kind": "What do you need?",
+        "emailError": "Check the email: something is missing, like the @ or the domain.",
+        "emailOk": "Valid email.",
+        "submit": "Send",
+        "thanks": "Thank you, {name}.",
+        "thanksAnonymous": "Thank you, really.",
+        "thanksText": "This is what the confirmation looks like. On the real site, the message is saved in the panel and you get an email. Nothing was sent here.",
+        "again": "Try again"
+      },
+      "content": {
+        "title": "Content",
+        "description": "You build pages and articles with blocks, without touching code.",
+        "toolbar": "Add blocks",
+        "blocks": {
+          "title": "Title",
+          "text": "Paragraph",
+          "image": "Image",
+          "quote": "Quote"
+        },
+        "remove": "Remove block: {block}",
+        "empty": "Add a block to get started.",
+        "imageLabel": "Sample image"
       }
+    },
+    "lines": {
+      "eyebrow": "{number} — Lines of work",
+      "title": "{count, plural, =6 {Six lines of work} =7 {Seven lines of work} =8 {Eight lines of work} other {# lines of work}}. Each with its own page, process and cases.",
+      "cta": "See the line"
     },
     "cases": {
       "eyebrow": "{number} — Cases",
-      "title": "Real work, told with verifiable data.",
-      "lead": "For each project I show the challenge, the solution and only the results the client has confirmed. What is still missing is marked.",
-      "pickerLabel": "Case studies",
-      "caseNumber": "Case {number}",
-      "next": "Next case",
-      "nextPending": "[Complete case study]",
-      "quote": "Client quote",
-      "quotePending": "[Add an authorized testimonial]",
-      "search": "Find your tire",
-      "searchWidth": "Width",
-      "searchProfile": "Profile",
-      "searchRim": "Rim",
-      "illustration": "Illustration · replace with an authorized screenshot",
-      "partsLabel": "Parts of the case",
-      "parts": {
-        "challenge": "Challenge",
-        "solution": "Solution",
-        "results": "Results"
-      },
-      "metricPending": "[Confirm metric]",
-      "projectLink": "Project link",
-      "linkPending": "[Final link]",
-      "sector": "Sector",
-      "type": "Project type",
-      "platform": "Platform",
-      "confirm": "[Confirm]",
-      "brandUse": "Brand use",
-      "brandPending": "[Authorization pending]"
+      "title": "Real cases, told with data you can verify.",
+      "lead": "Each case has its own page: the problem, what I decided and what changed. They are published only with the client's authorization.",
+      "all": "See all cases"
     },
     "process": {
-      "eyebrow": "{number} — How I work",
-      "title": "In phases, with deliveries you can see.",
-      "lead": "Every phase ends with something concrete. That way you decide with information instead of promises, and you can change course before investing in the next one.",
-      "receives": "You get",
-      "note": "I do not publish generic timelines: each proposal sets its times according to the real scope.",
-      "notePending": "[Confirm commercial terms: payment method, warranty, support]"
-    },
-    "criteria": {
-      "eyebrow": "{number} — Technical judgment",
-      "title": "The problem first. Then the technology.",
-      "lead": "I do not start with a favorite tool. I start with what your business needs and choose the simplest option that solves it well and can be maintained.",
-      "tableLabel": "How I choose the technology",
-      "colNeed": "If you need…",
-      "colChoice": "I usually choose…",
-      "colWhy": "Why",
-      "principle": "Principle {number}",
-      "stack": "Technologies with experience in real projects:",
-      "stackPending": "[Confirm list: ecommerce platforms, CMS, languages, databases, infrastructure]"
-    },
-    "about": {
-      "photoPending": "[Founder photo]",
-      "namePending": "[Founder name]",
-      "role": "Founder · Engineer responsible for every project",
-      "eyebrow": "{number} — About Mr. Design",
-      "title": "An independent studio. The person you talk to is the one who builds.",
-      "body": "Mr. Design is not a big agency and does not pretend to be one. The person who listens to you in the first meeting is the one who designs the architecture, writes the code and answers when something needs attention.",
-      "bodyCollaborators": "When a project needs other specialties, I work with collaborators openly and you know who is involved.",
-      "bodyPending": "[Confirm network of collaborators and specialties]"
-    },
-    "faq": {
-      "eyebrow": "{number} — Frequently asked questions",
-      "title": "What people usually ask me before starting.",
-      "notHere": "Is your question not here?",
-      "write": "Write to me"
+      "eyebrow": "{number} — Process",
+      "title": "This is how a project gets built with me.",
+      "lead": "In phases, with deliveries you can see working. You talk to the person who writes the code, from start to finish.",
+      "terminal": "terminal — your-project",
+      "command": "mrdesign build your-project",
+      "done": "✓ ready to sell"
     },
     "contact": {
-      "eyebrow": "Let's talk",
-      "title": "What do you want to solve?",
-      "lead": "Tell me about the challenge in a few lines. I reply with concrete questions or a clear next step, not with a catalog.",
+      "title": "What shall we build?",
       "directTitle": "Rather write to me directly?",
       "directEmail": "Email:",
       "directWhatsapp": "WhatsApp:",
       "responseTime": "Response time:",
       "confirm": "[Confirm]",
-      "needsLegend": "What do you need?",
-      "needsHint": "You can pick several options",
       "message": "Tell me about the challenge",
       "messagePlaceholder": "E.g.: we have an online store, but inventory is updated by hand and…",
       "name": "Name",
@@ -173,7 +175,9 @@
         "text": "I will write to you to schedule a conversation.",
         "pending": "[Confirm response time and next step]",
         "again": "Send another message"
-      }
+      },
+      "intentsLabel": "Project type",
+      "projectType": "What do you need?"
     },
     "ctaTitle": "Have an idea? Let's talk",
     "ctaText": "Tell me what you need and I'll reply within one business day with the next steps.",

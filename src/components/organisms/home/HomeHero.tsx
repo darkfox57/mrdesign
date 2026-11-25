@@ -1,106 +1,71 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { buttonBase, buttonSizes, buttonVariants } from "@/components/atoms/ButtonLink";
-import { Eyebrow } from "@/components/atoms/Eyebrow";
-import { audiences, heroLayers, SHOW_CASES } from "@/content/home";
+import { BuildStage } from "@/components/motion/BuildStage";
+import { demoStore, homeBuildSteps } from "@/content/home-stage";
 import type { Locale } from "@/i18n/routing";
 import { cn } from "@/lib/cn";
-import { HeroLayers } from "./HeroLayers";
+import { formatPrice } from "@/lib/home/price";
+import { HomeStageChrome, HomeStageScreen } from "./HomeStageScreen";
 
-const line = "block overflow-hidden pb-[0.06em]";
-
+// The hero: the headline is server-rendered text (the LCP, no client JavaScript), and next to it a
+// demo store assembles in the order I work. Only the stage's controls are a client island.
 export async function HomeHero() {
   const [t, locale] = await Promise.all([getTranslations("Home.hero"), getLocale() as Promise<Locale>]);
+  const firstProduct = demoStore.products[0];
 
   return (
-    <section
-      data-hero=""
-      data-surface="ink"
-      aria-labelledby="t-hero"
-      className="grid-texture overflow-hidden bg-ink pt-12 pb-14 text-on-ink md:pt-16 lg:pt-24 lg:pb-22"
-    >
-      <div className="site-container">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-          <div>
-            <div data-hero-fade="">
-              <Eyebrow className="text-on-ink-muted">{t("eyebrow")}</Eyebrow>
-            </div>
-            <h1 id="t-hero" className="text-hero mt-6">
-              <span className={line}>
-                <span data-hero-line="" className="inline-block">
-                  {t("line1")}
-                </span>
-              </span>{" "}
-              <span className={line}>
-                <span data-hero-line="" className="inline-block">
-                  {t.rich("line2", {
-                    hl: (chunks) => (
-                      <span
-                        data-hl=""
-                        className="relative inline-block text-brand-500 [--ul:1] after:absolute after:inset-x-0 after:bottom-[0.04em] after:h-[0.07em] after:origin-left after:scale-x-(--ul) after:bg-brand-500"
-                      >
-                        {chunks}
-                      </span>
-                    ),
-                  })}
-                </span>
-              </span>{" "}
-              <span className={line}>
-                <span data-hero-line="" className="inline-block">
-                  {t("line3")}
-                </span>
-              </span>
-            </h1>
-            <p data-hero-fade="" className="text-lead mt-7 max-w-[46ch] text-on-ink-muted">
-              {t.rich("sub", { strong: (chunks) => <strong className="font-semibold text-on-ink">{chunks}</strong> })}
-            </p>
-            <div data-hero-fade="" className="mt-9 flex flex-wrap gap-3">
-              <a
-                href="#contacto"
-                data-magnetic=""
-                className={cn(buttonBase, buttonSizes.lg, buttonVariants.primary, "group flex-1 basis-full md:flex-none md:basis-auto")}
-              >
-                {t("ctaPrimary")}
-                <span aria-hidden="true" className="inline-block transition-transform group-hover:translate-x-1">
-                  →
-                </span>
-              </a>
-              {SHOW_CASES ? (
-                <a
-                  href="#casos"
-                  className={cn(buttonBase, buttonSizes.lg, buttonVariants.secondary, "flex-1 basis-full md:flex-none md:basis-auto")}
-                >
-                  {t("ctaCases")}
-                </a>
-              ) : null}
-            </div>
+    <section id="inicio" data-x="Hero" data-surface="ink" aria-labelledby="t-hero" className="relative bg-ink text-on-ink">
+      <div className="site-container flex flex-wrap items-center gap-14 pt-14 pb-18 lg:pt-18 lg:pb-22">
+        <div className="flex min-w-0 flex-[1_1_25rem] flex-col gap-7">
+          <p className="font-mono text-caption text-on-ink-muted">{t("eyebrow")}</p>
+          <h1 id="t-hero" className="text-display">
+            {t.rich("title", { accent: (chunks) => <span className="text-brand-500">{chunks}</span> })}
+          </h1>
+          <p className="text-lead max-w-[34rem] text-on-ink-muted">{t("sub")}</p>
+          <div className="flex flex-wrap gap-3">
+            <a href="#contacto" className={cn(buttonBase, buttonSizes.lg, buttonVariants.primary)}>
+              {t("ctaPrimary")}
+            </a>
+            <a href="#lineas" className={cn(buttonBase, buttonSizes.lg, buttonVariants.secondary)}>
+              {t("ctaLines")}
+            </a>
           </div>
-
-          <HeroLayers
-            legendLabel={t("layersLabel")}
-            hub={{ api: t("hubApi"), systems: [t("hubPayments"), t("hubInventory"), t("hubErp"), t("hubCrm")] }}
-            layers={heroLayers.map((layer, index) => ({
-              number: `0${index + 1}`,
-              name: layer.name[locale],
-              description: layer.description[locale],
-            }))}
-          />
+          <p className="font-mono text-xs text-on-ink-muted">{t("xrayHint")}</p>
         </div>
 
-        <ul
-          data-hero-fade=""
-          aria-label={t("audienceLabel")}
-          className="mt-12 grid border-t border-ink-line md:grid-cols-3 lg:mt-22"
+        <BuildStage
+          className="flex-[1.35_1_35rem]"
+          steps={homeBuildSteps.map((step, index) => ({
+            label: step.label[locale],
+            log: step.log[locale],
+            success: index === homeBuildSteps.length - 1,
+          }))}
+          labels={{ rail: t("stage.rail"), log: t("stage.log"), play: t("stage.play"), pause: t("stage.pause") }}
+          chrome={<HomeStageChrome host={demoStore.host} live={demoStore.live[locale]} />}
         >
-          {audiences.map((audience) => (
-            <li
-              key={audience.title.es}
-              className="flex flex-col gap-1.5 border-b border-ink-line py-3.5 md:border-b-0 md:pt-5 md:pr-6 md:pb-0 md:not-first:border-l md:not-first:pl-6"
-            >
-              <b className="text-lg font-semibold text-on-ink">{audience.title[locale]}</b>
-              <span className="text-sm text-on-ink-muted">{audience.text[locale]}</span>
-            </li>
-          ))}
-        </ul>
+          <HomeStageScreen
+            store={demoStore.name}
+            nav={demoStore.nav[locale]}
+            headline={demoStore.headline[locale]}
+            promise={demoStore.promise[locale]}
+            add={demoStore.add[locale]}
+            products={demoStore.products.map((product) => ({ name: product.name[locale], price: formatPrice(product.price, locale), tone: product.tone }))}
+            cart={{
+              title: demoStore.cart.title[locale],
+              item: demoStore.cart.item[locale],
+              line: `1 × ${formatPrice(firstProduct.price, locale)}`,
+              subtotal: demoStore.cart.subtotal[locale],
+              total: formatPrice(firstProduct.price, locale),
+              checkout: demoStore.cart.checkout[locale],
+            }}
+            checkout={{
+              title: demoStore.checkout.title[locale],
+              fields: demoStore.checkout.fields.map((field) => ({ label: field.label[locale], value: field.value, valid: field.valid })),
+              pay: `${demoStore.checkout.pay[locale]} ${formatPrice(firstProduct.price, locale)}`,
+            }}
+            toast={demoStore.toast[locale]}
+          />
+        </BuildStage>
       </div>
     </section>
   );

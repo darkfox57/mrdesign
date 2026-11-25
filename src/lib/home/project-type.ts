@@ -1,13 +1,8 @@
-import { contactNeeds } from "@/content/home";
+import { contactIntents } from "@/content/home";
 import type { ProjectType } from "@/lib/contact/contact-form";
 
-// The home form lets the visitor pick several needs, but the contact action stores one project
-// type. When every pick points to the same service, that service is sent; otherwise "other".
-// No pick, or only picks without a service of their own ("Aún no lo sé"), also send "other".
-export function projectTypeForNeeds(selectedIds: readonly string[]): ProjectType {
-  const services = new Set<ProjectType>();
-  for (const need of contactNeeds) {
-    if (selectedIds.includes(need.id) && need.projectType !== "other") services.add(need.projectType);
-  }
-  return services.size === 1 ? [...services][0] : "other";
+// The intent chip the visitor picks above the home contact form preselects the form's project type.
+// An intent without a service of its own, or an unknown one, sends "other".
+export function projectTypeForIntent(intentId: string): ProjectType {
+  return contactIntents.find((intent) => intent.id === intentId)?.projectType ?? "other";
 }

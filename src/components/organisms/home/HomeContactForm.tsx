@@ -7,10 +7,19 @@ import { buttonBase, buttonSizes, buttonVariants } from "@/components/atoms/Butt
 import { Pending } from "@/components/atoms/Pending";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/cn";
-import { MESSAGE_MAX_LENGTH, type ContactField } from "@/lib/contact/contact-form";
-import { projectTypeForNeeds } from "@/lib/home/project-type";
+import { MESSAGE_MAX_LENGTH, type ContactField, type ProjectType } from "@/lib/contact/contact-form";
 
-type Need = { id: string; label: string };
+export type ProjectOption = { value: ProjectType; label: string };
+
+type FormProps = {
+  projectOptions: ProjectOption[];
+  // The project type is chosen with the intent chips above the form (HomeContactPanel) and can be
+  // changed here; the parent owns it, so it survives a submission and a new message.
+  projectType: ProjectType;
+  onProjectType: (value: ProjectType) => void;
+  // Whether the placeholder about the response time is published (SHOW_PENDING_CONTENT).
+  showPending: boolean;
+};
 
 const initialState: ContactState = { status: "idle" };
 const fieldClass =
@@ -18,22 +27,19 @@ const fieldClass =
 const labelClass = "mb-2.5 block text-sm font-semibold";
 
 // "Enviar otro mensaje" starts a fresh form: a new key gives the action a new, idle state.
-// showPending: whether the placeholder about the response time is published (SHOW_PENDING_CONTENT).
-export function HomeContactForm({ needs, showPending }: { needs: Need[]; showPending: boolean }) {
+export function HomeContactForm(props: FormProps) {
   const [round, setRound] = useState(0);
-  return <ContactRound key={round} needs={needs} showPending={showPending} onAgain={() => setRound(round + 1)} />;
+  return <ContactRound key={round} {...props} onAgain={() => setRound(round + 1)} />;
 }
 
 // Posts to the same server action as the contact page (validation, rate limit and storage live
-// there). The needs map to its single project type; without JavaScript the form still posts,
-// with "other" as the project type.
-function ContactRound({ needs, showPending, onAgain }: { needs: Need[]; showPending: boolean; onAgain: () => void }) {
+// there). Without JavaScript the form still posts, with the preselected project type.
+function ContactRound({ projectOptions, projectType, onProjectType, showPending, onAgain }: FormProps & { onAgain: () => void }) {
   const t = useTranslations("Home.contact");
   const contact = useTranslations("Contact");
   const locale = useLocale();
   const id = useId();
   const [state, action, pending] = useActionState(submitContact, initialState);
-  const [picked, setPicked] = useState<string[]>([]);
 
   if (state.status === "success") {
     return (
@@ -85,34 +91,30 @@ function ContactRound({ needs, showPending, onAgain }: { needs: Need[]; showPend
       className="flex flex-col gap-5 rounded-3xl bg-ink p-6 text-on-ink md:p-9"
     >
       <input type="hidden" name="locale" value={locale} />
-      <input type="hidden" name="projectType" value={projectTypeForNeeds(picked)} />
       {/* Honeypot: hidden from people and assistive technology, filled by bots. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
         <label htmlFor={`${id}-website`}>Website</label>
         <input id={`${id}-website`} name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
-      <fieldset>
-        <legend className={labelClass}>
-          {t("needsLegend")} <span className="font-normal text-on-ink-muted">{t("needsHint")}</span>
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {needs.map((need) => {
-            const on = picked.includes(need.id);
-            return (
-              <button
-                key={need.id}
-                type="button"
-                aria-pressed={on}
-                onClick={() => setPicked(on ? picked.filter((item) => item !== need.id) : [...picked, need.id])}
-                className="inline-flex min-h-11 cursor-pointer items-center rounded-full border-[1.5px] border-ink-line px-4 text-sm font-medium transition-colors hover:border-on-ink aria-pressed:border-brand-500 aria-pressed:bg-brand-500 aria-pressed:text-ink"
-              >
-                {need.label}
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
+      <div>
+        <label htmlFor={`${id}-projectType`} className={labelClass}>
+          {t("projectType")}
+        </label>
+        <select
+          {...fieldProps("projectType")}
+          value={projectType}
+          onChange={(event) => onProjectType(event.target.value as ProjectType)}
+          className={cn(fieldClass, "cursor-pointer")}
+        >
+          {projectOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        {fieldError("projectType")}
+      </div>
 
       <div>
         <label htmlFor={`${id}-message`} className={labelClass}>
@@ -187,7 +189,6 @@ function ContactRound({ needs, showPending, onAgain }: { needs: Need[]; showPend
       <button
         type="submit"
         disabled={pending}
-        data-magnetic=""
         className={cn(buttonBase, buttonSizes.lg, buttonVariants.primary, "group w-full cursor-pointer", pending && "opacity-60")}
       >
         {pending ? contact("sending") : t("submit")}

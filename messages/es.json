@@ -14,7 +14,8 @@
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
     "menu": "Menú",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "xray": "Rayos X"
   },
   "Language": {
     "label": "Idioma",
@@ -36,128 +37,129 @@
   "Home": {
     "metaTitle": "Desarrollo web, apps y tiendas en línea",
     "hero": {
-      "eyebrow": "Estudio independiente de software y productos digitales",
-      "line1": "Software que",
-      "line2": "<hl>trabaja</hl> para",
-      "line3": "tu negocio.",
-      "sub": "Diseño, construyo y evoluciono sitios web, tiendas online, plataformas e integraciones para empresas que necesitan operar mejor, vender online o lanzar algo nuevo. <strong>Hablas directamente con el ingeniero que construye tu proyecto.</strong>",
+      "eyebrow": "Desarrollo independiente · sitios, tiendas, apps y plugins",
+      "title": "Mira cómo se construye lo que vas a <accent>vender.</accent>",
+      "sub": "Diseño y programo sitios web, tiendas en línea y aplicaciones a la medida. Lo que ves armarse aquí es el orden real en que trabajo: estructura, contenido, comercio, formularios y lanzamiento.",
       "ctaPrimary": "Cuéntame tu proyecto",
-      "ctaCases": "Ver casos",
-      "layersLabel": "Las capas de un producto digital",
-      "audienceLabel": "Para quién trabajo",
-      "hubApi": "API",
-      "hubPayments": "Pagos",
-      "hubInventory": "Inventario",
-      "hubErp": "ERP",
-      "hubCrm": "CRM"
+      "ctaLines": "Ver líneas de trabajo",
+      "xrayHint": "Activa los rayos X arriba y mira el esqueleto de cualquier página.",
+      "stage": {
+        "rail": "Etapas de la construcción",
+        "log": "Registro de la construcción",
+        "play": "Reproducir",
+        "pause": "Pausar"
+      }
     },
     "problems": {
       "eyebrow": "{number} — El punto de partida",
       "title": "¿Te suena alguno de estos problemas?",
-      "lead": "Elige uno y mira cómo lo abordaría. Hablo de resultados posibles, no prometidos: dependen de cada negocio y se miden desde el inicio.",
+      "lead": "Dime en qué punto estás, elige un problema y mira cómo lo abordaría. Hablo de resultados posibles, no prometidos: dependen de cada negocio y se miden desde el inicio.",
+      "audienceLabel": "¿En qué punto estás?",
+      "audiences": {
+        "starting": "Estoy empezando",
+        "existing": "Ya tengo un negocio funcionando"
+      },
       "listLabel": "Problemas frecuentes",
+      "tags": {
+        "idea": "idea",
+        "started": "en marcha",
+        "open": "abierto",
+        "solved": "resuelto"
+      },
+      "issueStarting": "proyecto #{number} · desde cero",
+      "issueExisting": "issue #{number} · {count} piezas",
+      "statusOpenStarting": "idea · todavía no existe",
+      "statusDoneStarting": "en marcha · así arrancaría",
+      "statusOpenExisting": "abierto · así funciona hoy",
+      "statusDoneExisting": "resuelto · así quedaría",
+      "whereYouAre": "Dónde estás",
       "problem": "Problema",
       "solution": "Cómo lo abordo",
       "result": "Resultado posible",
-      "serviceLine": "Línea de servicio:",
-      "seeHow": "Ver cómo funciona →"
+      "line": "Línea: {line} →",
+      "replay": "Ver el arreglo otra vez"
     },
-    "services": {
-      "eyebrow": "{number} — Servicios",
-      "title": "Seis líneas de trabajo. Un mismo criterio.",
-      "lead": "Puedes empezar por una y sumar otras cuando el negocio lo pida. Todas comparten la misma forma de trabajar: diagnóstico, fases y entregas que puedes revisar.",
-      "tabsLabel": "Servicios",
-      "counter": "{number} / {total} · {kind}",
-      "when": "Cuándo tiene sentido",
-      "deliverables": "Entregables típicos",
-      "flowTitle": "Cómo fluye un proyecto de este tipo",
-      "flowLabel": "Flujo: {nodes}",
-      "ai": {
-        "tag": "Pendiente de decisión",
-        "title": "IA aplicada a procesos",
-        "optional": "(opcional)",
-        "text": "Asistentes, clasificación de información o automatizaciones con IA en tareas donde un error se pueda detectar y corregir. Publicar solo si se confirma como servicio.",
-        "note": "No es un servicio confirmado"
+    "pieces": {
+      "eyebrow": "{number} — Las piezas",
+      "title": "Cada pieza está pensada para que alguien compre, escriba o vuelva.",
+      "lead": "No son capturas: puedes usarlas. Agrega la silla al carrito, llena el formulario, arma un artículo. Y si quieres ver cómo están hechas, pídele a cada una su esqueleto.",
+      "skeleton": "Ver esqueleto",
+      "finished": "Ver terminado",
+      "product": {
+        "title": "Ficha de producto",
+        "description": "Variantes, cantidades y fotos que cargan rápido.",
+        "variant": "Madera: {name}",
+        "quantity": "Cantidad:",
+        "less": "Quitar una",
+        "more": "Agregar una",
+        "add": "Agregar al carrito"
+      },
+      "cart": {
+        "title": "Carrito",
+        "description": "Se actualiza al instante y recalcula el total sin recargar la página.",
+        "empty": "Tu carrito está vacío",
+        "emptyHint": "Agrega la silla desde la ficha de producto: las dos piezas están conectadas.",
+        "line": "{qty} × {price}",
+        "remove": "Quitar",
+        "removeLabel": "Quitar {name} del carrito",
+        "subtotal": "Subtotal ({count, plural, one {# producto} other {# productos}})",
+        "checkout": "Ir a pagar"
+      },
+      "form": {
+        "title": "Formulario",
+        "description": "Valida mientras escribes y llega a tu correo o a tu CRM.",
+        "name": "Nombre",
+        "email": "Correo",
+        "kind": "¿Qué necesitas?",
+        "emailError": "Revisa el correo: le falta algo, como la @ o el dominio.",
+        "emailOk": "Correo válido.",
+        "submit": "Enviar",
+        "thanks": "Gracias, {name}.",
+        "thanksAnonymous": "Gracias, de verdad.",
+        "thanksText": "Así se ve la confirmación. En el sitio real, el mensaje queda guardado en el panel y te llega un correo. Aquí no se envió nada.",
+        "again": "Volver a probar"
+      },
+      "content": {
+        "title": "Contenidos",
+        "description": "Tú armas páginas y artículos con bloques, sin tocar código.",
+        "toolbar": "Agregar bloques",
+        "blocks": {
+          "title": "Título",
+          "text": "Párrafo",
+          "image": "Imagen",
+          "quote": "Cita"
+        },
+        "remove": "Quitar bloque: {block}",
+        "empty": "Agrega un bloque para empezar.",
+        "imageLabel": "Imagen de ejemplo"
       }
+    },
+    "lines": {
+      "eyebrow": "{number} — Líneas de trabajo",
+      "title": "{count, plural, =6 {Seis líneas de trabajo} =7 {Siete líneas de trabajo} =8 {Ocho líneas de trabajo} other {# líneas de trabajo}}. Cada una con su página, su proceso y sus casos.",
+      "cta": "Ver la línea"
     },
     "cases": {
       "eyebrow": "{number} — Casos",
-      "title": "Trabajo real, contado con datos verificables.",
-      "lead": "Para cada proyecto muestro el reto, la solución y solo los resultados que el cliente haya confirmado. Lo que aún falta está marcado.",
-      "pickerLabel": "Casos de estudio",
-      "caseNumber": "Caso {number}",
-      "next": "Próximo caso",
-      "nextPending": "[Completar caso de estudio]",
-      "quote": "Cita del cliente",
-      "quotePending": "[Agregar testimonio autorizado]",
-      "search": "Busca tu llanta",
-      "searchWidth": "Ancho",
-      "searchProfile": "Perfil",
-      "searchRim": "Rin",
-      "illustration": "Ilustración · reemplazar por captura autorizada",
-      "partsLabel": "Partes del caso",
-      "parts": {
-        "challenge": "Reto",
-        "solution": "Solución",
-        "results": "Resultados"
-      },
-      "metricPending": "[Confirmar métrica]",
-      "projectLink": "Enlace al proyecto",
-      "linkPending": "[Enlace definitivo]",
-      "sector": "Sector",
-      "type": "Tipo de proyecto",
-      "platform": "Plataforma",
-      "confirm": "[Confirmar]",
-      "brandUse": "Uso de marca",
-      "brandPending": "[Autorización pendiente]"
+      "title": "Casos reales, contados con datos que se pueden verificar.",
+      "lead": "Cada caso tiene su página: el problema, lo que decidí y lo que cambió. Solo se publican con autorización del cliente.",
+      "all": "Ver todos los casos"
     },
     "process": {
-      "eyebrow": "{number} — Cómo trabajo",
-      "title": "Por fases, con entregas que puedes ver.",
-      "lead": "Cada fase termina con algo concreto. Así decides con información y no con promesas, y puedes ajustar el rumbo antes de invertir en la siguiente.",
-      "receives": "Recibes",
-      "note": "No publico plazos genéricos: cada propuesta define tiempos según el alcance real.",
-      "notePending": "[Confirmar condiciones comerciales: forma de pago, garantía, soporte]"
-    },
-    "criteria": {
-      "eyebrow": "{number} — Criterio técnico",
-      "title": "Primero el problema. Después la tecnología.",
-      "lead": "No empiezo con una herramienta favorita. Empiezo con lo que tu negocio necesita y elijo la opción más simple que lo resuelva bien y se pueda mantener.",
-      "tableLabel": "Cómo elijo la tecnología",
-      "colNeed": "Si necesitas…",
-      "colChoice": "Normalmente elijo…",
-      "colWhy": "Por qué",
-      "principle": "Principio {number}",
-      "stack": "Tecnologías con experiencia en proyectos reales:",
-      "stackPending": "[Confirmar lista: plataformas de ecommerce, CMS, lenguajes, bases de datos, infraestructura]"
-    },
-    "about": {
-      "photoPending": "[Foto del fundador]",
-      "namePending": "[Nombre del fundador]",
-      "role": "Fundador · Ingeniero responsable de cada proyecto",
-      "eyebrow": "{number} — Sobre Mr. Design",
-      "title": "Un estudio independiente. La persona con la que hablas es la que construye.",
-      "body": "Mr. Design no es una agencia grande y no pretende parecerlo. Quien te escucha en la primera reunión es quien diseña la arquitectura, escribe el código y responde cuando algo necesita atención.",
-      "bodyCollaborators": "Cuando un proyecto necesita otras especialidades, trabajo con colaboradores de forma explícita y sabes quién participa.",
-      "bodyPending": "[Confirmar red de colaboradores y especialidades]"
-    },
-    "faq": {
-      "eyebrow": "{number} — Preguntas frecuentes",
-      "title": "Lo que suelen preguntarme antes de empezar.",
-      "notHere": "¿Tu pregunta no está aquí?",
-      "write": "Escríbeme"
+      "eyebrow": "{number} — Proceso",
+      "title": "Así se construye un proyecto conmigo.",
+      "lead": "Por fases, con entregas que puedes ver funcionando. Hablas con la persona que escribe el código, de principio a fin.",
+      "terminal": "terminal — tu-proyecto",
+      "command": "mrdesign build tu-proyecto",
+      "done": "✓ listo para vender"
     },
     "contact": {
-      "eyebrow": "Hablemos",
-      "title": "¿Qué quieres resolver?",
-      "lead": "Cuéntame el reto en pocas líneas. Te respondo con preguntas concretas o con un siguiente paso claro, no con un catálogo.",
+      "title": "¿Qué construimos?",
       "directTitle": "¿Prefieres escribir directo?",
       "directEmail": "Correo:",
       "directWhatsapp": "WhatsApp:",
       "responseTime": "Tiempo de respuesta:",
       "confirm": "[Confirmar]",
-      "needsLegend": "¿Qué necesitas?",
-      "needsHint": "Puedes elegir varias opciones",
       "message": "Cuéntame el reto",
       "messagePlaceholder": "Ej.: tenemos tienda online, pero el inventario se actualiza a mano y…",
       "name": "Nombre",
@@ -173,7 +175,9 @@
         "text": "Te escribiré para agendar una conversación.",
         "pending": "[Confirmar tiempo de respuesta y siguiente paso]",
         "again": "Enviar otro mensaje"
-      }
+      },
+      "intentsLabel": "Tipo de proyecto",
+      "projectType": "¿Qué necesitas?"
     },
     "ctaTitle": "¿Tienes una idea? Hablemos",
     "ctaText": "Cuéntame qué necesitas y te respondo en menos de un día hábil con los siguientes pasos.",

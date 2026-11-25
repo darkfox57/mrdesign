@@ -13,7 +13,7 @@ export async function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer data-surface="ink" className="border-t border-ink-line bg-ink text-sm text-on-ink-muted">
+    <footer data-x="SiteFooter" data-surface="ink" className="border-t border-ink-line bg-ink text-sm text-on-ink-muted">
       <div className="site-container flex flex-wrap items-center justify-between gap-x-10 gap-y-5 py-10">
         {/* The signature closes every page: the work is signed. */}
         <Logo className="h-14 text-brand-500" />

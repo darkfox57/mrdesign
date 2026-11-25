@@ -1,0 +1,32 @@
+/*
+ * The working pieces of the home (PieceCard.tsx). "Ver esqueleto" sets data-skeleton on the card:
+ * the demo keeps its layout and controls, but its text and drawings fade to bare boxes, and every
+ * element marked data-x shows its component name (styles shared with X-ray mode in globals.css).
+ */
+
+.piece {
+  transition: background 0.4s;
+}
+
+.piece[data-skeleton] {
+  background: var(--color-paper-deep);
+}
+
+.piece[data-skeleton] .demo * {
+  color: transparent !important;
+  border-color: var(--color-line) !important;
+  box-shadow: none !important;
+  text-decoration-color: transparent !important;
+}
+
+.piece[data-skeleton] .demo ::placeholder {
+  color: transparent;
+}
+
+.piece[data-skeleton] .demo svg {
+  opacity: 0;
+}
+
+.piece[data-skeleton] .demo :is(input, select, button, [data-fill]) {
+  background: var(--color-paper-skeleton) !important;
+}

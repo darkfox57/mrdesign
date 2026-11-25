@@ -21,8 +21,8 @@ Concept prototype: https://claude.ai/artifact/Qr3txUKigWzghPKHV6B5sw (`Main.dc.h
 | --- | --- | --- | --- | --- | --- |
 | T1 | S2 | `Case` model and migration, `/admin/casos` module, import of portfolio projects as drafts | delegated (context backstop) | done (64015a6, review approved) | Verifier: 2 findings confirmed and fixed test-first (5 RED, then GREEN). Parent: vitest 486/486, lint 0, typecheck 0. Writer: e2e cases, landing editor and builder 11/11. |
 | T2 | S2, S6 | Public case pages `/portafolio/[slug]` (`/en/portfolio/[slug]`, see L10), CreativeWork JSON-LD, sitemap, `/portafolio` lists published cases | delegated (context backstop) | done | Writer: vitest 510, lint 0, typecheck 0, e2e cases+admin 19/19, public specs 133/133 + security 15/15. Verifier: 1 finding, fixed (L11). Parent: vitest 512/512. |
-| T3 | S3, S4, S6 | Build-stage motion system: reusable stage, X-ray mode, GSAP scroll reveals, no-JS content | inline | pending | |
-| T4 | S3, S4, S5, S7, S8 | New home page from the prototype | inline | pending | |
+| T3 | S3, S4, S6 | Build-stage motion system: reusable stage, X-ray mode, GSAP scroll reveals, no-JS content | delegated (context backstop), together with T4 | done | see T4 |
+| T4 | S3, S4, S5, S7, S8 | New home page from the prototype | delegated, together with T3 | done | Writer: vitest 572, lint 0, typecheck 0, e2e 135/135 (+1 skip by design). Verifier: 10 minor findings, 9 fixed test-first, 1 moved to T5 (L12). Parent: vitest 572/572, lint 0, typecheck 0. |
 | T5 | S1, S3, S5, S6 | Eight line-of-work pages, each with its own build stage, summary, deliverables, comparison, FAQ, cases, related lines; Service, FAQPage, BreadcrumbList JSON-LD | inline or parallel writers | pending | |
 | T6 | S6, S8 | Founder guide page `/empezar-mi-negocio-en-linea` | inline | pending | |
 | T7 | S6 | `llms.txt`, Organization/ProfessionalService JSON-LD, metadata, no-JS e2e | inline | pending | |
@@ -78,3 +78,28 @@ Route notes: T1 Risk names item 1 (new migration), so its commit gets an indepen
   - **Line labels:** they live in messages, and a test pins their keys to `CASE_LINES`.
   - **Verification:** visibility, SEO and regression lenses, each refuted. The visibility and SEO lenses found nothing; a datePublished suggestion was refuted.
   - **Confirmed (minor):** `/portafolio` became `force-dynamic`, so a database outage would make it fail where it used to serve the static grid. Fixed inline, test-first: `casesOrEmpty` reports the error and falls back to the grid.
+- L12 (2026-11-25): T3 and T4 were delivered by one writer, because the home is the first user of the stage.
+  - **BuildStage API (for T5):** `<BuildStage steps labels chrome? autoplay? stepMs? xName?>{screen}</BuildStage>`. The stage root carries `data-step` and `data-on="0 1 … n"`, and screen CSS reacts to `[data-on~="n"]`. The server renders the last step. Autoplay starts when the stage is on screen, pauses off screen or in a hidden tab, and never overrides a step the visitor picked.
+  - **Scroll reveals:** `<ScrollReveals>` with `data-reveal` uses GSAP, and only elements fully below the fold get the hidden from-state.
+  - **X-ray mode:** an `xray` class on `<html>`, set by a head boot script before paint. It is stored in localStorage under `mrdesign:xray`, and its labels are CSS pseudo-content.
+  - **Home:** now `force-dynamic`, with cases read through `casesOrEmpty`. The home FAQ, criteria and about sections were removed, as in the prototype; their copy is in git history.
+  - **Process:** the prototype's 6 phases.
+  - **Contact form:** the real form gained a visible project-type select, and the CTA intents preselect it.
+  - **Deviations:**
+    - The header keeps the real navigation and the language switcher.
+    - The hero says "Lo que ves armarse aquí".
+    - The starter guide link waits for T6's route.
+  - **Verification:** four lenses (a11y-seo, shared, runtime, spec-copy), each refuted. 10 minor findings were confirmed:
+    - focus loss in the demo pieces
+    - a live region announcing the intro
+    - an infinite animation (WCAG 2.2.2)
+    - a clipped focus ring
+    - reveal hiding visible elements
+    - 4 process phases instead of 6
+    - a plural "Empezamos"
+    - Spanish product names in en
+    - dead `data-magnetic`
+    - lines order
+  - **Fixes:** 9 were fixed test-first by the writer. Moved to T5: the home lists lines in services.ts order, and T5 reorders services.ts to the approved order (websites, funnels, shopify, prestashop, wordpress, apps, evolution, plugins).
+  - **T5 content:** the copy for the eight line pages was drafted by a workflow of 8 writers plus a critic (61 fixes applied), checked automatically, and published for the user's review at https://claude.ai/artifact/KrX8mm3Es95QV8wgKw2r4g. 15 FAQs carry pending business facts (price ranges, timelines, support terms).
+  - **Open question to the user:** should the PrestaShop page still mention custom modules, now that the module searches belong to the plugins page?

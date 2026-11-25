@@ -1,0 +1,151 @@
+/*
+ * The diagram of a problem (ProblemExplorer.tsx). The panel carries data-fixed when the fix is
+ * shown and data-grow on the founders' path:
+ * - existing business: dashed nodes and broken links (×) turn solid, and a dot travels each link twice;
+ * - starting: nothing is broken; the pieces appear one by one, then link up.
+ * The diagram is decorative (aria-hidden): the same story is told in the text columns below it.
+ */
+
+.diagram {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 0.875rem;
+}
+
+.node {
+  position: relative;
+  display: flex;
+  min-height: 3.75rem;
+  max-width: 11.25rem;
+  align-items: center;
+  border: 1px dashed color-mix(in srgb, var(--color-on-ink) 32%, transparent);
+  border-radius: 0.75rem;
+  background: var(--color-ink-high);
+  color: var(--color-on-ink-muted);
+  padding: 0.75rem 1rem;
+  font: 500 0.875rem var(--font-sans);
+  transition:
+    opacity 0.5s,
+    transform 0.5s,
+    background 0.6s,
+    border-color 0.6s,
+    color 0.6s;
+}
+
+.after {
+  display: none;
+}
+
+[data-fixed] .node {
+  border-style: solid;
+  border-color: var(--color-brand-500);
+  background: var(--color-brand-950);
+  color: var(--color-brand-100);
+}
+
+[data-fixed] .before {
+  display: none;
+}
+
+[data-fixed] .after {
+  display: inline;
+  animation: var(--animate-rise);
+}
+
+.link {
+  position: relative;
+  height: 2px;
+  min-width: 1.75rem;
+  flex: 1 1 1.75rem;
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-on-ink) 35%, transparent) 0 6px,
+    transparent 6px 12px
+  );
+  transition:
+    opacity 0.4s,
+    background 0.6s;
+}
+
+.link::after {
+  content: "×";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 0 3px;
+  background: var(--color-ink);
+  color: var(--color-danger-soft);
+  font: 700 0.9375rem/1 var(--font-sans);
+  transform: translate(-50%, -50%);
+}
+
+[data-fixed] .link {
+  background: var(--color-brand-500);
+}
+
+[data-fixed] .link::after {
+  content: "";
+  left: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--color-brand-100);
+  /* Twice, then it rests at the end of the link: nothing moves forever (WCAG 2.2.2). */
+  animation: travel 1.6s linear 2 forwards;
+}
+
+/* Starting from zero: the later pieces and the links appear instead of being repaired. */
+[data-grow] .later {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+[data-grow] .link {
+  opacity: 0;
+}
+
+[data-grow] .link::after {
+  content: "";
+}
+
+[data-grow][data-fixed] .later {
+  opacity: 1;
+  transform: none;
+}
+
+[data-grow][data-fixed] .link {
+  opacity: 1;
+}
+
+/* The approach and the result light up once the fix is shown. */
+.fixColumn {
+  opacity: 0.45;
+  transition: opacity 0.6s;
+}
+
+[data-fixed] .fixColumn {
+  opacity: 1;
+}
+
+.statusDone {
+  display: none;
+}
+
+[data-fixed] .statusOpen {
+  display: none;
+}
+
+[data-fixed] .statusDone {
+  display: inline-flex;
+}
+
+@keyframes travel {
+  from {
+    left: 0;
+  }
+  to {
+    left: 100%;
+  }
+}

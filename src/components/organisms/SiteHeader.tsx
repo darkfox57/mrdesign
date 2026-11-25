@@ -3,6 +3,7 @@ import { ButtonLink } from "@/components/atoms/ButtonLink";
 import { Logo } from "@/components/atoms/Logo";
 import { LanguageSwitcher } from "@/components/molecules/LanguageSwitcher";
 import { MobileMenu } from "@/components/molecules/MobileMenu";
+import { XrayToggle } from "@/components/motion/XrayToggle";
 import { Link } from "@/i18n/navigation";
 
 const items = [
@@ -17,7 +18,7 @@ export async function SiteHeader() {
   return (
     // Solid background on purpose: backdrop-filter would make the header the containing block of the
     // fixed mobile menu panel, collapsing it to the header's height.
-    <header data-surface="ink" className="sticky top-0 z-40 border-b border-ink-line bg-ink text-on-ink">
+    <header data-x="SiteHeader" data-surface="ink" className="sticky top-0 z-40 border-b border-ink-line bg-ink text-on-ink">
       <a
         href="#contenido"
         className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-brand-500 focus:px-4 focus:py-2.5 focus:font-semibold focus:text-ink"
@@ -45,8 +46,9 @@ export async function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
+          <XrayToggle label={t("xray")} />
           <LanguageSwitcher tone="dark" />
-          <ButtonLink href="/contacto" size="md" data-magnetic="">
+          <ButtonLink href="/contacto" size="md">
             {t("contact")}
           </ButtonLink>
         </div>
@@ -67,6 +69,7 @@ export async function SiteHeader() {
             {t("contact")}
           </ButtonLink>
           <LanguageSwitcher tone="dark" className="mt-6" />
+          <XrayToggle label={t("xray")} className="mt-6" />
         </MobileMenu>
       </div>
     </header>
