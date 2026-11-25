@@ -19,8 +19,8 @@ Concept prototype: https://claude.ai/artifact/Qr3txUKigWzghPKHV6B5sw (`Main.dc.h
 
 | ID | Specs | Task | Route | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| T1 | S2 | `Case` model and migration, `/admin/casos` module, import of portfolio projects as drafts | delegated (context backstop) | done | Verifier: 2 findings confirmed and fixed test-first (5 RED, then GREEN). Parent: vitest 486/486, lint 0, typecheck 0. Writer: e2e cases, landing editor and builder 11/11. |
-| T2 | S2, S6 | Public case pages `/casos/[slug]` (`/en/cases/[slug]`), CreativeWork JSON-LD, sitemap, `/portafolio` lists published cases | inline | pending | |
+| T1 | S2 | `Case` model and migration, `/admin/casos` module, import of portfolio projects as drafts | delegated (context backstop) | done (64015a6, review approved) | Verifier: 2 findings confirmed and fixed test-first (5 RED, then GREEN). Parent: vitest 486/486, lint 0, typecheck 0. Writer: e2e cases, landing editor and builder 11/11. |
+| T2 | S2, S6 | Public case pages `/portafolio/[slug]` (`/en/portfolio/[slug]`, see L10), CreativeWork JSON-LD, sitemap, `/portafolio` lists published cases | delegated (context backstop) | in progress | |
 | T3 | S3, S4, S6 | Build-stage motion system: reusable stage, X-ray mode, GSAP scroll reveals, no-JS content | inline | pending | |
 | T4 | S3, S4, S5, S7, S8 | New home page from the prototype | inline | pending | |
 | T5 | S1, S3, S5, S6 | Eight line-of-work pages, each with its own build stage, summary, deliverables, comparison, FAQ, cases, related lines; Service, FAQPage, BreadcrumbList JSON-LD | inline or parallel writers | pending | |
@@ -52,3 +52,22 @@ Route notes: T1 Risk names item 1 (new migration), so its commit gets an indepen
   Spec and security lenses: no findings.
   Recheck: full vitest passed once and failed once. The failing run had 4 timeouts in `login-rate-limit.integration.test.ts` (5 s limit, under full-suite load). The same file alone passed 28/28, and the next full run passed 486/486.
   Follow-up: those rate-limit integration tests are timing-sensitive under parallel load.
+- L9 (2026-11-25): T1 committed as 64015a6.
+  - Native review: the user granted it, with lenses risk, resilience and reliability. It was approved and the acknowledgement burned lineage `review-dacb315bd6fafd41`. The reviewed boundary is now 64015a6.
+  - Advisory follow-ups (non-blocking, later work):
+    - **WARNING:** e2e/admin-cases.spec.ts leaks a user row.
+    - **WARNING:** `listCases` filters are not covered by tests.
+    - **WARNING:** the retry path after a conflict in casos/actions.ts:40.
+    - **WARNING:** the import's target guard (import-portfolio.ts:47).
+    - **WARNING:** media usage fan-out cost (library.ts:118).
+    - **Suggestions:**
+      - caseUsage substring match
+      - prefill of authorization on a new translation
+      - a vacuous redirect assertion in the e2e
+      - import tests coupled to their run order
+      - public case paths not asserted in revalidation
+      - publication path when a media file is missing
+      - publish errors short-circuit
+      - import swallows unique errors
+      - list filter parse
+- L10 (2026-11-25, decision): case detail pages live under the portfolio index, at `/portafolio/[slug]` (`/en/portfolio/[slug]`), not `/casos/[slug]`. One hierarchy for breadcrumbs and SEO, and the existing `/portafolio` URL is kept. The index lists published cases and keeps the current project grid while none are published.
