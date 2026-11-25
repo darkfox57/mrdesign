@@ -259,8 +259,8 @@ export const problems: Problem[] = [
     },
     solutionTitle: { es: "Un sitio construido sobre tu oferta real", en: "A site built on your real offer" },
     solution: {
-      es: "Definimos qué necesita saber tu cliente, en qué orden, y diseñamos y construimos el sitio alrededor de eso.",
-      en: "We define what your customer needs to know, in what order, and design and build the site around it.",
+      es: "Defino qué necesita saber tu cliente, en qué orden, y diseño y construyo el sitio alrededor de eso.",
+      en: "I define what your customer needs to know, in what order, and design and build the site around it.",
     },
     resultTitle: { es: "Una web que puedes mostrar con confianza", en: "A website you can show with confidence" },
     result: {
@@ -277,8 +277,8 @@ export const problems: Problem[] = [
     },
     solutionTitle: { es: "Un recorrido diseñado para una acción", en: "A journey designed for one action" },
     solution: {
-      es: "Revisamos mensaje, página, formulario y seguimiento; rediseñamos el flujo y medimos cada paso.",
-      en: "We review the message, page, form and follow-up; we redesign the flow and measure every step.",
+      es: "Reviso mensaje, página, formulario y seguimiento; rediseño el flujo y mido cada paso.",
+      en: "I review the message, page, form and follow-up; I redesign the flow and measure every step.",
     },
     resultTitle: { es: "Saber qué funciona y qué no", en: "Knowing what works and what does not" },
     result: {
@@ -298,8 +298,8 @@ export const problems: Problem[] = [
     },
     solutionTitle: { es: "Una herramienta hecha para tu proceso", en: "A tool made for your process" },
     solution: {
-      es: "Modelamos el proceso real y construimos una aplicación interna o una automatización que lo ejecute.",
-      en: "We model the real process and build an internal application or an automation that runs it.",
+      es: "Modelo el proceso real y construyo una aplicación interna o una automatización que lo ejecute.",
+      en: "I model the real process and build an internal application or an automation that runs it.",
     },
     resultTitle: { es: "Menos trabajo manual repetitivo", en: "Less repetitive manual work" },
     result: {
@@ -316,8 +316,8 @@ export const problems: Problem[] = [
     },
     solutionTitle: { es: "Integraciones con registro y alertas", en: "Integrations with logs and alerts" },
     solution: {
-      es: "Mapeamos qué dato vive dónde y conectamos los sistemas por API, con sincronizaciones y alertas cuando algo falla.",
-      en: "We map which data lives where and connect the systems through APIs, with syncs and alerts when something fails.",
+      es: "Mapeo qué dato vive dónde y conecto los sistemas por API, con sincronizaciones y alertas cuando algo falla.",
+      en: "I map which data lives where and connect the systems through APIs, with syncs and alerts when something fails.",
     },
     resultTitle: { es: "Un dato, una fuente", en: "One piece of data, one source" },
     result: {
@@ -334,8 +334,8 @@ export const problems: Problem[] = [
     },
     solutionTitle: { es: "Diagnóstico y evolución por etapas", en: "Assessment and evolution in stages" },
     solution: {
-      es: "Revisamos el estado técnico, priorizamos y mejoramos por fases sin detener la operación.",
-      en: "We review the technical state, prioritize, and improve in phases without stopping operations.",
+      es: "Reviso el estado técnico, priorizo y mejoro por fases sin detener la operación.",
+      en: "I review the technical state, prioritize, and improve in phases without stopping operations.",
     },
     resultTitle: { es: "Cambios con menos riesgo", en: "Changes with less risk" },
     result: {
@@ -482,8 +482,8 @@ export const phases: Phase[] = [
   {
     title: { es: "Diagnóstico", en: "Assessment" },
     text: {
-      es: "Entendemos el negocio, el problema y lo que ya existe: sistemas, datos, equipo y restricciones.",
-      en: "We understand the business, the problem and what already exists: systems, data, team and constraints.",
+      es: "Entiendo el negocio, el problema y lo que ya existe: sistemas, datos, equipo y restricciones.",
+      en: "I understand the business, the problem and what already exists: systems, data, team and constraints.",
     },
     receives: {
       es: "Un diagnóstico por escrito y una recomendación de alcance.",
@@ -493,8 +493,8 @@ export const phases: Phase[] = [
   {
     title: { es: "Propuesta por fases", en: "Proposal in phases" },
     text: {
-      es: "Dividimos el proyecto en fases con entregables claros, empezando por lo que más impacto tiene.",
-      en: "We split the project into phases with clear deliverables, starting with what has the most impact.",
+      es: "Divido el proyecto en fases con entregables claros, empezando por lo que más impacto tiene.",
+      en: "I split the project into phases with clear deliverables, starting with what has the most impact.",
     },
     receives: { es: "Una propuesta con fases y alcance de cada una.", en: "A proposal with phases and the scope of each one." },
     pending: { es: "[Confirmar formato comercial]", en: "[Confirm commercial format]" },
@@ -510,8 +510,8 @@ export const phases: Phase[] = [
   {
     title: { es: "Lanzamiento y evolución", en: "Launch and evolution" },
     text: {
-      es: "Publicamos, acompañamos la salida a producción y definimos juntos qué sigue.",
-      en: "We publish, support the move to production and decide together what comes next.",
+      es: "Publico, acompaño la salida a producción y definimos juntos qué sigue.",
+      en: "I publish, support the move to production, and together we decide what comes next.",
     },
     receives: {
       es: "Plataforma en producción, documentación y accesos.",
@@ -582,8 +582,8 @@ export const principles: Principle[] = [
   {
     title: { es: "Comprar antes que construir, cuando conviene", en: "Buy before you build, when it makes sense" },
     text: {
-      es: "Construimos a medida solo lo que una herramienta existente no resuelve bien.",
-      en: "We custom-build only what an existing tool does not solve well.",
+      es: "Construyo a medida solo lo que una herramienta existente no resuelve bien.",
+      en: "I custom-build only what an existing tool does not solve well.",
     },
   },
   {
@@ -614,7 +614,7 @@ export const aboutPoints: AboutPoint[] = [
   },
   {
     title: { es: "Capacidad honesta", en: "Honest capacity" },
-    text: { es: "Tomamos los proyectos que podemos atender bien.", en: "We take on the projects we can serve well." },
+    text: { es: "Tomo los proyectos que puedo atender bien.", en: "I take on the projects I can serve well." },
     pending: { es: "[Confirmar]", en: "[Confirm]" },
   },
 ];
@@ -623,25 +623,25 @@ export type Faq = { question: Text; answer: Text; pending?: Text };
 
 export const faqs: Faq[] = [
   {
-    question: { es: "¿Qué tipo de proyectos toman?", en: "What kind of projects do you take on?" },
+    question: { es: "¿Qué tipo de proyectos tomas?", en: "What kind of projects do you take on?" },
     answer: {
-      es: "Sitios web, tiendas online, aplicaciones, funnels, integraciones y mejoras sobre plataformas existentes, para empresas que necesitan resolver un problema concreto de operación o ventas. Si tu proyecto no encaja con lo que hacemos, te lo decimos en la primera conversación.",
-      en: "Websites, online stores, applications, funnels, integrations and improvements to existing platforms, for companies that need to solve a concrete operations or sales problem. If your project does not fit what we do, we tell you in the first conversation.",
+      es: "Sitios web, tiendas online, aplicaciones, funnels, integraciones y mejoras sobre plataformas existentes, para empresas que necesitan resolver un problema concreto de operación o ventas. Si tu proyecto no encaja con lo que hago, te lo digo en la primera conversación.",
+      en: "Websites, online stores, applications, funnels, integrations and improvements to existing platforms, for companies that need to solve a concrete operations or sales problem. If your project does not fit what I do, I tell you in the first conversation.",
     },
   },
   {
     question: { es: "¿Cuánto tiempo toma un proyecto?", en: "How long does a project take?" },
     answer: {
-      es: "Depende del alcance. Por eso empezamos con un diagnóstico y dividimos el trabajo en fases: cada fase tiene entregables y una estimación propia antes de empezar.",
-      en: "It depends on the scope. That is why we start with an assessment and split the work into phases: each phase has deliverables and its own estimate before it starts.",
+      es: "Depende del alcance. Por eso empiezo con un diagnóstico y divido el trabajo en fases: cada fase tiene entregables y una estimación propia antes de empezar.",
+      en: "It depends on the scope. That is why I start with an assessment and split the work into phases: each phase has deliverables and its own estimate before it starts.",
     },
     pending: { es: "[Confirmar si se publican rangos de referencia]", en: "[Confirm whether reference ranges are published]" },
   },
   {
     question: { es: "¿Todo se construye a la medida?", en: "Is everything custom-built?" },
     answer: {
-      es: "No. Si una plataforma existente resuelve tu problema, la usamos y construimos a la medida solo lo que aporta algo diferencial. Construir de más también es un costo.",
-      en: "No. If an existing platform solves your problem, we use it and custom-build only what adds something distinctive. Building too much is also a cost.",
+      es: "No. Si una plataforma existente resuelve tu problema, la uso y construyo a la medida solo lo que aporta algo diferencial. Construir de más también es un costo.",
+      en: "No. If an existing platform solves your problem, I use it and custom-build only what adds something distinctive. Building too much is also a cost.",
     },
   },
   {
@@ -650,8 +650,8 @@ export const faqs: Faq[] = [
       en: "Who owns the code, the domain and the access?",
     },
     answer: {
-      es: "Recomendamos que el dominio, el hosting y las cuentas de servicios de terceros estén a nombre de tu empresa desde el inicio.",
-      en: "We recommend that the domain, the hosting and third-party service accounts are in your company's name from the start.",
+      es: "Recomiendo que el dominio, el hosting y las cuentas de servicios de terceros estén a nombre de tu empresa desde el inicio.",
+      en: "I recommend that the domain, the hosting and third-party service accounts are in your company's name from the start.",
     },
     pending: {
       es: "[Confirmar política de propiedad intelectual y entrega de accesos]",
@@ -659,17 +659,17 @@ export const faqs: Faq[] = [
     },
   },
   {
-    question: { es: "¿Pueden migrar mi web o tienda actual?", en: "Can you migrate my current website or store?" },
+    question: { es: "¿Puedes migrar mi web o tienda actual?", en: "Can you migrate my current website or store?" },
     answer: {
-      es: "Lo evaluamos en el diagnóstico: revisamos contenido, productos, clientes, URLs e integraciones, y planeamos la migración para cuidar la operación y el posicionamiento en buscadores.",
-      en: "We evaluate it in the assessment: we review content, products, customers, URLs and integrations, and plan the migration to protect your operations and search rankings.",
+      es: "Lo evalúo en el diagnóstico: reviso contenido, productos, clientes, URLs e integraciones, y planeo la migración para cuidar la operación y el posicionamiento en buscadores.",
+      en: "I evaluate it in the assessment: I review content, products, customers, URLs and integrations, and plan the migration to protect your operations and search rankings.",
     },
   },
   {
-    question: { es: "¿Con qué plataformas trabajan?", en: "Which platforms do you work with?" },
+    question: { es: "¿Con qué plataformas trabajas?", en: "Which platforms do you work with?" },
     answer: {
-      es: "Elegimos según el problema: plataformas de ecommerce y gestores de contenido existentes cuando son suficientes, y desarrollo a medida cuando el negocio lo necesita.",
-      en: "We choose based on the problem: existing ecommerce platforms and content managers when they are enough, and custom development when the business needs it.",
+      es: "Elijo según el problema: plataformas de ecommerce y gestores de contenido existentes cuando son suficientes, y desarrollo a medida cuando el negocio lo necesita.",
+      en: "I choose based on the problem: existing ecommerce platforms and content managers when they are enough, and custom development when the business needs it.",
     },
     pending: {
       es: "[Confirmar lista de plataformas con experiencia demostrable]",

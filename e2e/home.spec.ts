@@ -12,7 +12,7 @@ const headings = {
       "Por fases, con entregas que puedes ver.",
       "Primero el problema. Después la tecnología.",
       "Un estudio independiente. La persona con la que hablas es la que construye.",
-      "Lo que suelen preguntarnos antes de empezar.",
+      "Lo que suelen preguntarme antes de empezar.",
       "¿Qué quieres resolver?",
     ],
   },
@@ -26,7 +26,7 @@ const headings = {
       "In phases, with deliveries you can see.",
       "The problem first. Then the technology.",
       "An independent studio. The person you talk to is the one who builds.",
-      "What people usually ask us before starting.",
+      "What people usually ask me before starting.",
       "What do you want to solve?",
     ],
   },
@@ -130,11 +130,11 @@ test("the cases browser switches case and part by click and keyboard", async ({ 
 
 test("FAQ answers expand and collapse and stay in the page", async ({ page }) => {
   await page.goto("/");
-  const firstAnswer = page.getByText(/Si tu proyecto no encaja con lo que hacemos/);
+  const firstAnswer = page.getByText(/Si tu proyecto no encaja con lo que hago/);
   await expect(firstAnswer).toBeVisible();
 
   const question = page.getByText("¿Cuánto tiempo toma un proyecto?", { exact: true });
-  const answer = page.getByText(/Por eso empezamos con un diagnóstico/);
+  const answer = page.getByText(/Por eso empiezo con un diagnóstico/);
   await expect(answer).toHaveCount(1);
   await expect(answer).toBeHidden();
   await question.click();
@@ -151,13 +151,13 @@ test("the home contact form sends through the contact action", async ({ page }, 
   const store = form.getByRole("button", { name: "Tienda online" });
   await store.click();
   await expect(store).toHaveAttribute("aria-pressed", "true");
-  await form.getByLabel("Cuéntanos el reto").fill("Tenemos tienda online y el inventario se actualiza a mano.");
+  await form.getByLabel("Cuéntame el reto").fill("Tenemos tienda online y el inventario se actualiza a mano.");
   await form.getByLabel("Nombre").fill("E2E Home");
   await form.getByLabel("Correo", { exact: true }).fill(`e2e-home-${Date.now()}@example.com`);
   await form.getByLabel(/Autorizo el tratamiento de mis datos/).check();
   await form.getByRole("button", { name: /Enviar y agendar una conversación/ }).click();
 
-  await expect(page.getByRole("status")).toContainText("Gracias. Ya tenemos tu reto.");
+  await expect(page.getByRole("status")).toContainText("Gracias. Ya tengo tu reto.");
   await page.getByRole("button", { name: "Enviar otro mensaje" }).click();
   await expect(page.locator("#contacto form").getByLabel("Nombre")).toHaveValue("");
 });

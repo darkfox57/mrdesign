@@ -10,7 +10,7 @@
     "services": "Servicios",
     "portfolio": "Portafolio",
     "blog": "Blog",
-    "contact": "Cuéntanos tu proyecto",
+    "contact": "Cuéntame tu proyecto",
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
     "menu": "Menú",
@@ -40,11 +40,11 @@
       "line1": "Software que",
       "line2": "<hl>trabaja</hl> para",
       "line3": "tu negocio.",
-      "sub": "Diseñamos, construimos y evolucionamos sitios web, tiendas online, plataformas e integraciones para empresas que necesitan operar mejor, vender online o lanzar algo nuevo. <strong>Hablas directamente con el ingeniero que construye tu proyecto.</strong>",
-      "ctaPrimary": "Cuéntanos tu proyecto",
+      "sub": "Diseño, construyo y evoluciono sitios web, tiendas online, plataformas e integraciones para empresas que necesitan operar mejor, vender online o lanzar algo nuevo. <strong>Hablas directamente con el ingeniero que construye tu proyecto.</strong>",
+      "ctaPrimary": "Cuéntame tu proyecto",
       "ctaCases": "Ver casos",
       "layersLabel": "Las capas de un producto digital",
-      "audienceLabel": "Para quién trabajamos",
+      "audienceLabel": "Para quién trabajo",
       "hubApi": "API",
       "hubPayments": "Pagos",
       "hubInventory": "Inventario",
@@ -54,10 +54,10 @@
     "problems": {
       "eyebrow": "01 — El punto de partida",
       "title": "¿Te suena alguno de estos problemas?",
-      "lead": "Elige uno y mira cómo lo abordaríamos. Hablamos de resultados posibles, no prometidos: dependen de cada negocio y se miden desde el inicio.",
+      "lead": "Elige uno y mira cómo lo abordaría. Hablo de resultados posibles, no prometidos: dependen de cada negocio y se miden desde el inicio.",
       "listLabel": "Problemas frecuentes",
       "problem": "Problema",
-      "solution": "Cómo lo abordamos",
+      "solution": "Cómo lo abordo",
       "result": "Resultado posible",
       "serviceLine": "Línea de servicio:",
       "seeHow": "Ver cómo funciona →"
@@ -83,7 +83,7 @@
     "cases": {
       "eyebrow": "03 — Casos",
       "title": "Trabajo real, contado con datos verificables.",
-      "lead": "Para cada proyecto mostramos el reto, la solución y solo los resultados que el cliente haya confirmado. Lo que aún falta está marcado.",
+      "lead": "Para cada proyecto muestro el reto, la solución y solo los resultados que el cliente haya confirmado. Lo que aún falta está marcado.",
       "pickerLabel": "Casos de estudio",
       "caseNumber": "Caso {number}",
       "next": "Próximo caso",
@@ -112,20 +112,20 @@
       "brandPending": "[Autorización pendiente]"
     },
     "process": {
-      "eyebrow": "04 — Cómo trabajamos",
+      "eyebrow": "04 — Cómo trabajo",
       "title": "Por fases, con entregas que puedes ver.",
       "lead": "Cada fase termina con algo concreto. Así decides con información y no con promesas, y puedes ajustar el rumbo antes de invertir en la siguiente.",
       "receives": "Recibes",
-      "note": "No publicamos plazos genéricos: cada propuesta define tiempos según el alcance real.",
+      "note": "No publico plazos genéricos: cada propuesta define tiempos según el alcance real.",
       "notePending": "[Confirmar condiciones comerciales: forma de pago, garantía, soporte]"
     },
     "criteria": {
       "eyebrow": "05 — Criterio técnico",
       "title": "Primero el problema. Después la tecnología.",
-      "lead": "No empezamos con una herramienta favorita. Empezamos con lo que tu negocio necesita y elegimos la opción más simple que lo resuelva bien y se pueda mantener.",
-      "tableLabel": "Cómo elegimos la tecnología",
+      "lead": "No empiezo con una herramienta favorita. Empiezo con lo que tu negocio necesita y elijo la opción más simple que lo resuelva bien y se pueda mantener.",
+      "tableLabel": "Cómo elijo la tecnología",
       "colNeed": "Si necesitas…",
-      "colChoice": "Normalmente elegimos…",
+      "colChoice": "Normalmente elijo…",
       "colWhy": "Por qué",
       "principle": "Principio {number}",
       "stack": "Tecnologías con experiencia en proyectos reales:",
@@ -137,19 +137,19 @@
       "role": "Fundador · Ingeniero responsable de cada proyecto",
       "eyebrow": "06 — Sobre Mr. Design",
       "title": "Un estudio independiente. La persona con la que hablas es la que construye.",
-      "body": "Mr. Design no es una agencia grande y no pretende parecerlo. Quien te escucha en la primera reunión es quien diseña la arquitectura, escribe el código y responde cuando algo necesita atención. Cuando un proyecto necesita otras especialidades, las sumamos de forma explícita y sabes quién participa.",
+      "body": "Mr. Design no es una agencia grande y no pretende parecerlo. Quien te escucha en la primera reunión es quien diseña la arquitectura, escribe el código y responde cuando algo necesita atención. Cuando un proyecto necesita otras especialidades, trabajo con colaboradores de forma explícita y sabes quién participa.",
       "bodyPending": "[Confirmar red de colaboradores y especialidades]"
     },
     "faq": {
       "eyebrow": "07 — Preguntas frecuentes",
-      "title": "Lo que suelen preguntarnos antes de empezar.",
+      "title": "Lo que suelen preguntarme antes de empezar.",
       "notHere": "¿Tu pregunta no está aquí?",
-      "write": "Escríbenos"
+      "write": "Escríbeme"
     },
     "contact": {
       "eyebrow": "Hablemos",
       "title": "¿Qué quieres resolver?",
-      "lead": "Cuéntanos el reto en pocas líneas. Te respondemos con preguntas concretas o con un siguiente paso claro, no con un catálogo.",
+      "lead": "Cuéntame el reto en pocas líneas. Te respondo con preguntas concretas o con un siguiente paso claro, no con un catálogo.",
       "directTitle": "¿Prefieres escribir directo?",
       "directEmail": "Correo:",
       "directWhatsapp": "WhatsApp:",
@@ -157,7 +157,7 @@
       "confirm": "[Confirmar]",
       "needsLegend": "¿Qué necesitas?",
       "needsHint": "Puedes elegir varias opciones",
-      "message": "Cuéntanos el reto",
+      "message": "Cuéntame el reto",
       "messagePlaceholder": "Ej.: tenemos tienda online, pero el inventario se actualiza a mano y…",
       "name": "Nombre",
       "email": "Correo",
@@ -168,8 +168,8 @@
       "submit": "Enviar y agendar una conversación",
       "success": {
         "label": "Mensaje enviado",
-        "title": "Gracias. Ya tenemos tu reto.",
-        "text": "Te escribiremos para agendar una conversación.",
+        "title": "Gracias. Ya tengo tu reto.",
+        "text": "Te escribiré para agendar una conversación.",
         "pending": "[Confirmar tiempo de respuesta y siguiente paso]",
         "again": "Enviar otro mensaje"
       }

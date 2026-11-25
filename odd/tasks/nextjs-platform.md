@@ -535,3 +535,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - Voice: the design uses "we" ("Cuéntanos tu proyecto"); the rest of the site uses "I" ("Cuéntame tu proyecto").
     - Base text is now 16 px site-wide (it was 17).
     - Placeholders must be filled or hidden before going to production.
+- L56 (2026-11-24, user): "en singular yo creo". The homepage, header CTA and footer copy switch from "we" to "I" in es and en (74 strings).
+  - Inclusive plurals are kept: "definimos juntos", "Hablemos", and the visitor's own "tenemos tienda online" placeholder.
+  - The rest of the site was already singular.
+  - Evidence: vitest 437/437; lint 0; typecheck 0; home, smoke and public-pages e2e 75 passed and 0 failed. The FAQ expectations were updated after a first RED on the old answers.
