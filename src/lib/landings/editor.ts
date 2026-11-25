@@ -136,7 +136,7 @@ export async function discardDraft(rawId: unknown, rawVersion: unknown): Promise
 
 // Every write moves the version strictly forward, even within the same millisecond or with a clock
 // behind the stored value, so no write can hand an old version back to a stale editor.
-function nextVersion(version: Date) {
+export function nextVersion(version: Date) {
   return new Date(Math.max(Date.now(), version.getTime() + 1));
 }
 

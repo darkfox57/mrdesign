@@ -101,9 +101,21 @@ const landingUsage: MediaUsageCheck = async (url) => {
   return landings.map((landing) => `Landing: ${landing.title}`);
 };
 
+// Success cases that show the image as their cover or in their gallery, drafts included. The
+// gallery is JSON, matched like the landing blocks (strpos on its text). A case without a headline
+// yet is named by its client, then its slug.
+const caseUsage: MediaUsageCheck = async (url) => {
+  const cases = await db.$queryRaw<{ name: string }[]>`
+    select coalesce(nullif(title, ''), nullif(client, ''), slug) as name from "Case"
+    where "coverImageUrl" = ${url} or strpos(coalesce(gallery::text, ''), ${url}) > 0
+    order by name asc, id asc
+    limit 5`;
+  return cases.map((item) => `Caso: ${item.name}`);
+};
+
 // Hook point: every module that stores image URLs adds its check here, so an image it uses
 // cannot be deleted.
-const usageChecks: MediaUsageCheck[] = [postUsage, landingUsage];
+const usageChecks: MediaUsageCheck[] = [postUsage, landingUsage, caseUsage];
 
 export async function mediaUsage(url: string) {
   const results = await Promise.all(usageChecks.map((check) => check(url)));

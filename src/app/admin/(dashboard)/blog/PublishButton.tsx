@@ -3,13 +3,29 @@
 import { useActionState } from "react";
 import { setPublication, type PublicationState } from "./actions";
 
-export function PublishButton({ postId, title, published }: { postId: string; title: string; published: boolean }) {
-  const [state, action, pending] = useActionState<PublicationState, FormData>(setPublication, {});
+type PublicationAction = (state: PublicationState, formData: FormData) => Promise<PublicationState>;
+
+// The blog's publish toggle. Other modules pass their own server action and the name of the id field
+// it reads (the cases list passes `caseId`).
+export function PublishButton({
+  postId,
+  title,
+  published,
+  action: publicationAction = setPublication,
+  idField = "postId",
+}: {
+  postId: string;
+  title: string;
+  published: boolean;
+  action?: PublicationAction;
+  idField?: string;
+}) {
+  const [state, action, pending] = useActionState<PublicationState, FormData>(publicationAction, {});
   const verb = published ? "Despublicar" : "Publicar";
 
   return (
     <form action={action} className="grid gap-1">
-      <input type="hidden" name="postId" value={postId} />
+      <input type="hidden" name={idField} value={postId} />
       <input type="hidden" name="intent" value={published ? "unpublish" : "publish"} />
       <button
         type="submit"

@@ -239,6 +239,50 @@ model Landing {
   @@index([locale, status])
 }
 
+// Success cases managed from the dashboard (src/lib/admin/cases.ts). One row per locale; versions
+// share a translationKey. Text fields are plain text, not HTML. A case is published only with all
+// its content and the client's authorization (src/lib/admin/case-form.ts).
+model Case {
+  id               String        @id @default(cuid())
+  locale           Locale
+  translationKey   String        @default(cuid())
+  slug             String
+  // The case headline.
+  title            String
+  // Client or brand name.
+  client           String
+  year             Int?
+  // Line-of-work ids from src/lib/cases/lines.ts.
+  lines            String[]
+  // One answer-first paragraph, used in cards and meta descriptions.
+  summary          String
+  challenge        String
+  solution         String
+  result           String
+  // [{ label, value, source }], at most 6; `source` says how the figure can be verified.
+  metrics          Json?
+  stack            String[]
+  websiteUrl       String?
+  coverImageUrl    String?
+  coverImageAlt    String?
+  // [{ url, alt }], at most 12, library images only.
+  gallery          Json?
+  // The client allowed publishing this case.
+  clientAuthorized Boolean       @default(false)
+  featured         Boolean       @default(false)
+  sortOrder        Int           @default(0)
+  status           ContentStatus @default(DRAFT)
+  publishedAt      DateTime?
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@unique([locale, slug])
+  @@unique([translationKey, locale])
+  @@index([locale, status, publishedAt])
+}
+
 // Login and password-reset throttling (src/lib/auth/login-rate-limit.ts). One row per counted key,
 // "<namespace>:acct:<sha256 of the email>" or "<namespace>:ip:<sha256 of the address>" (throttleKey).
 // Rows live in the database so locks survive restarts, work across instances and are never evicted

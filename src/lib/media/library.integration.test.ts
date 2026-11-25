@@ -54,6 +54,7 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
   afterAll(async () => {
     await db.post.deleteMany({ where: { slug: { startsWith: `media-usage-${run}` } } });
     await db.landing.deleteMany({ where: { slug: { startsWith: `media-usage-${run}` } } });
+    await db.case.deleteMany({ where: { slug: { startsWith: `media-usage-${run}` } } });
     await db.mediaFile.deleteMany({ where: { sha256: { startsWith: run } } });
   });
 
@@ -204,6 +205,32 @@ describe.skipIf(!runAgainstDatabase)(title, () => {
     await deleteMedia(published.id);
     await deleteMedia(drafted.id);
     expect(await db.mediaFile.count({ where: { id: { in: [published.id, drafted.id] } } })).toBe(0);
+  });
+
+  it("refuses to delete an image a case uses as its cover or in its gallery, drafts included", async () => {
+    const cover = await registerImage(40);
+    const inGallery = await registerImage(41);
+    const caseRow = (name: string, data: { coverImageUrl?: string; gallery?: { url: string; alt: string }[] }) =>
+      db.case.create({
+        data: { locale: "es", slug: `media-usage-${run}-${name}`, title: `Caso ${name} ${run}`, client: "C", summary: "", challenge: "", solution: "", result: "", ...data },
+      });
+    const cases = await Promise.all([caseRow("portada", { coverImageUrl: cover.url }), caseRow("galeria", { gallery: [{ url: inGallery.url, alt: "G" }] })]);
+
+    for (const [media, item] of [
+      [cover, cases[0]],
+      [inGallery, cases[1]],
+    ] as const) {
+      const attempt = deleteMedia(media.id);
+      await expect(attempt).rejects.toBeInstanceOf(MediaInUseError);
+      await expect(attempt).rejects.toMatchObject({ usedIn: [`Caso: ${item.title}`] });
+      expect(await db.mediaFile.count({ where: { id: media.id } })).toBe(1);
+    }
+    expect(deleted).toEqual([]);
+
+    await db.case.deleteMany({ where: { id: { in: cases.map((item) => item.id) } } });
+    await deleteMedia(cover.id);
+    await deleteMedia(inGallery.id);
+    expect(await db.mediaFile.count({ where: { id: { in: [cover.id, inGallery.id] } } })).toBe(0);
   });
 
   it("keeps the row when R2 is not configured, so no row ever outlives its object", async () => {

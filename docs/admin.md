@@ -52,8 +52,8 @@ Permissions are defined in `src/lib/auth/permissions.ts`. A role missing from th
 ## Images
 
 - `/admin/imagenes` is the R2 media library. Admins change the alt text of any image; editors only of the images they uploaded (`canEditMediaAlt` in `src/lib/media/rules.ts`). An image with no recorded uploader is admin-only.
-- Deleting an image deletes the R2 object first and the row after, so a failed R2 call keeps the row and deleting again finishes the job. An image in use by a post or a landing cannot be deleted.
-- A delete and a save that uses the same image never both succeed (`src/lib/media/references.ts`). Every save that stores library URLs, as images or as links (post editor, ingest API, landing draft and publish, a landing translation's copied blocks), locks their `MediaFile` rows (`FOR KEY SHARE`) in the transaction of its write. The delete locks its row (`FOR UPDATE`) before it checks the usage and holds it until the row is gone. So a save in progress makes the delete wait and then see it in use, and a save after the delete is refused because the image is no longer in the library. A library address must be an image's exact URL: one with no row (deleted, never uploaded, or a variant such as `?v=1`) is refused. A landing save checks every string of the page (image, link and any other prop, slots included); a post save checks the `src` and `href` values of its HTML and the cover. Images and links from outside the library are not checked.
+- Deleting an image deletes the R2 object first and the row after, so a failed R2 call keeps the row and deleting again finishes the job. An image in use by a post, a landing or a success case cannot be deleted.
+- A delete and a save that uses the same image never both succeed (`src/lib/media/references.ts`). Every save that stores library URLs, as images or as links (post editor, ingest API, landing draft and publish, a landing translation's copied blocks, case save and publish), locks their `MediaFile` rows (`FOR KEY SHARE`) in the transaction of its write. The delete locks its row (`FOR UPDATE`) before it checks the usage and holds it until the row is gone. So a save in progress makes the delete wait and then see it in use, and a save after the delete is refused because the image is no longer in the library. A library address must be an image's exact URL: one with no row (deleted, never uploaded, or a variant such as `?v=1`) is refused. A landing save checks every string of the page (image, link and any other prop, slots included); a post save checks the `src` and `href` values of its HTML and the cover. Images and links from outside the library are not checked.
 
 ## Landings
 
@@ -65,6 +65,25 @@ Sales pages built with the Puck visual editor. Admins and editors create, edit a
 - Every save is validated on the server: strict block schemas, safe links, library images only, at most 100 blocks counting the ones inside slots, unique slug per language. Public reads validate the stored blocks again, and so does the editor before loading them: a stored page that fails starts the editor from the published page or an empty one, with a notice.
 - The public page is `/soluciones/<slug>` (`/en/solutions/<slug>`), rendered on request. Writes revalidate the route pattern `/[locale]/soluciones/[slug]`.
 - Blocks and how to add one: `.claude/skills/landing-blocks/SKILL.md`.
+
+## Success cases
+
+`/admin/casos` manages the success cases of the portfolio, one row per language (`Case`), linked as translations by `translationKey` like blog posts. Admins and editors use it (`content` permissions, like the blog).
+
+- A case belongs to one or more lines of work, defined once in `src/lib/cases/lines.ts`.
+- **Draft vs publish.** A draft saves whatever is written so far; it only needs a title, client or slug to build its slug. Publishing ("Guardar y publicar" in the editor, "Publicar" in the list) needs the title, client, slug, summary, challenge, solution and result, at least one line of work, a cover with its alt text, alt text for every gallery image, and the client's authorization. Without the authorization the server answers "Para publicar, el cliente tiene que haber autorizado el caso." (`src/lib/admin/case-form.ts`).
+- A published case is validated with the publishing rules on every save, so an edit cannot leave it published without them. To withdraw the authorization, unpublish the case first.
+- Saves carry the version (`updatedAt`) the editor loaded and only write while the case still has it, moving it strictly forward (`nextVersion`, shared with the landing editor). A second tab with an older copy cannot overwrite a newer save or publish over one that withdrew the authorization: it gets "El caso cambió mientras lo editabas. Recarga la página y vuelve a intentarlo." Publishing from the list checks the stored case again, writes only while it is still the version it checked, and moves the version forward too.
+- Text fields are plain text, not HTML. Metrics (at most 6) need a label, a value and how the figure can be verified. The website must be https. The cover and the gallery (at most 12) come from the image library and are locked with the write, like a post's images; an image a case uses cannot be deleted (the library reports "Caso: <title>").
+- Writes revalidate `/admin/casos`, the home page and the portfolio in both languages.
+
+### Importing the old portfolio
+
+`npm run cases:import` (`scripts/import-portfolio-cases.ts`) creates one draft case per project of `src/content/portfolio.ts`, in Spanish and in English, linked as translations: the client name, a slug from it, no texts, no cover (the portfolio photos live in `/public/portfolio`, not in the library) and no authorization. Tags map to lines of work as `web` → "Sitios web a la medida"; `ecommerce` maps to none, because it does not say which platform the store runs on. Everything else is completed in the dashboard before publishing.
+
+- It is idempotent: a project counts as imported in a language when a case there carries its import key (`portfolio-<project id>`, the `translationKey` the import gives it, which survives a slug edit) or its slug. Such a language is skipped, so a second run creates nothing, also after the owner edits a slug. It prints what it created and skipped.
+- It never reads `.env` and refuses to run without `DATABASE_URL` on the command line: `DATABASE_URL="postgresql://..." npm run cases:import`. It prints the target host and database before writing.
+- Against production it is run by the owner, explicitly and once, after `npm run db:deploy` has applied the `cases` migration. Development and tests only run it against the local Docker database.
 
 ## UI
 
