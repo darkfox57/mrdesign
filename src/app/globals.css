@@ -1,63 +1,123 @@
 @import "tailwindcss";
 
 /*
- * Design tokens. brand-500 is the Mr. Design magenta from the previous site.
- * brand-500 is 4.2:1 on paper: use it for large text, the signature and accents only.
- * Use brand-600 (5.5:1 on paper, 6.1:1 under white text) for body-size text, links and buttons.
+ * Design tokens from the homepage design (odd/tasks/nextjs-platform.md, S10 / A11).
+ * Contrast rules from the design spec:
+ * - brand-500 (#FF5A1F) only on ink, or as a background under ink text (about 6.3:1).
+ * - On paper, text and links in orange use brand-600 (#B83A0B, about 5.4:1; 5.8:1 under white text).
+ * - graphite (#58544C) is the secondary text on paper (about 6.4:1).
+ * `static` emits every variable, so CSS modules can read them with var().
  */
-@theme {
-  --color-brand-50: #fde8f0;
-  --color-brand-500: #e5105b;
-  --color-brand-600: #c20e4e;
-  --color-brand-700: #9c0b3f;
+@theme static {
+  --color-brand-50: #fbe6dc;
+  --color-brand-400: #ff7a47;
+  --color-brand-500: #ff5a1f;
+  --color-brand-600: #b83a0b;
+  --color-brand-700: #8f2c07;
+  /* Body text on an orange background. */
+  --color-brand-950: #2b1206;
 
-  --color-ink: #1e1a2e;
-  --color-ink-raised: #2a2540;
-  --color-ink-line: #3d3757;
-  --color-on-ink: #f1eef8;
-  --color-on-ink-muted: #b9b3c9;
+  --color-ink: #0f0f0d;
+  --color-ink-raised: #171714;
+  --color-ink-high: #22221e;
+  --color-ink-line: rgb(237 233 225 / 0.14);
+  --color-on-ink: #ede9e1;
+  --color-on-ink-muted: #a9a498;
 
-  --color-paper: #f6f4fa;
-  --color-surface: #ffffff;
-  --color-graphite: #4a4658;
-  --color-line: #dcd7e6;
+  --color-paper: #efebe3;
+  --color-paper-deep: #e4dfd4;
+  --color-surface: #f8f6f1;
+  --color-text: #151513;
+  --color-graphite: #58544c;
+  --color-line: rgb(21 21 19 / 0.14);
   /* Form field borders: 3.4:1 on paper, above the 3:1 WCAG minimum for UI boundaries. */
-  --color-field: #8a84a0;
+  --color-field: #857f75;
+  /* Content still waiting for the client's data or authorization. Always under text-text. */
+  --color-pending: #ffe27a;
 
   --color-success: #0f7a4a;
   --color-danger: #b91c1c;
+  /* Error text and borders on ink (about 8:1). */
+  --color-danger-soft: #ff8a7a;
 
-  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
-  --radius-control: 0.625rem;
+  /* Decorative labels only (aria-hidden drawings): nothing informative goes below text-xs. */
+  --text-2xs: 0.625rem;
+  --text-caption: 0.8125rem;
+  --text-md: 0.9375rem;
+  /* Fluid steps of the homepage design. */
+  --text-question: clamp(1.0625rem, 1.6vw, 1.3125rem);
+  --text-case: clamp(1.5rem, 2.4vw, 2rem);
+  --text-tab: clamp(1.25rem, 2vw, 1.75rem);
+  --text-panel: clamp(1.75rem, 3vw, 2.5rem);
+  --text-quote: clamp(1.625rem, 3.2vw, 2.75rem);
+  --text-cta: clamp(3rem, 7vw, 7rem);
+
+  --radius-control: 0.75rem;
   --radius-card: 1.25rem;
 
-  --container-site: 76rem;
+  --container-site: 80rem;
   --container-prose: 40rem;
+
+  --spacing-18: 4.5rem;
 }
 
-/* Fluid type scale; display sizes lean on the optical-size and width axes of Bricolage Grotesque. */
+/* Display type: Bricolage Grotesque at its largest optical size. */
+@utility font-display-tight {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  font-variation-settings: "opsz" 96;
+}
+
+/* Fluid type scale. */
 @utility text-display {
+  font-family: var(--font-display);
   font-size: clamp(2.75rem, 1.6rem + 4.2vw, 5.5rem);
   line-height: 0.95;
   letter-spacing: -0.035em;
   font-weight: 700;
   font-variation-settings: "opsz" 96;
-  font-stretch: 85%;
   text-wrap: balance;
+}
 
-  @media (width >= 64rem) {
-    font-stretch: 92%;
+@utility text-hero {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  font-variation-settings: "opsz" 96;
+  font-size: clamp(2.625rem, 13vw, 4rem);
+
+  @media (width >= 48rem) {
+    font-size: clamp(3rem, 7.6vw, 7.75rem);
   }
 }
 
+@utility text-section {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  font-variation-settings: "opsz" 96;
+  font-size: clamp(2.25rem, 5.4vw, 4.75rem);
+  text-wrap: balance;
+  /* Long words in narrow columns (the FAQ title between 1024 and 1280 px) break instead of overflowing. */
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
 @utility text-headline {
+  font-family: var(--font-display);
   font-size: clamp(2rem, 1.3rem + 2.6vw, 3.25rem);
   line-height: 1.02;
   letter-spacing: -0.025em;
   font-weight: 650;
   font-variation-settings: "opsz" 72;
-  font-stretch: 90%;
   text-wrap: balance;
 }
 
@@ -69,19 +129,27 @@
 }
 
 @utility text-lead {
-  font-size: clamp(1.125rem, 1rem + 0.45vw, 1.3125rem);
+  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
   line-height: 1.55;
+}
+
+/* Monospaced uppercase labels (eyebrows, column heads, counters). */
+@utility mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 @utility site-container {
   width: 100%;
   max-width: var(--container-site);
   margin-inline: auto;
-  padding-inline: 1.25rem;
+  padding-inline: clamp(1.25rem, 5vw, 4rem);
+}
 
-  @media (width >= 48rem) {
-    padding-inline: 2rem;
-  }
+@utility section-y {
+  padding-block: clamp(4.5rem, 10vw, 9rem);
 }
 
 /* The signature logo is a mask, so it takes any color token through background-color. */
@@ -91,24 +159,58 @@
   aspect-ratio: 196 / 141;
 }
 
+/* Background grid of the dark sections. */
+@utility grid-texture {
+  background-image:
+    linear-gradient(rgb(237 233 225 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(237 233 225 / 0.035) 1px, transparent 1px);
+  background-size: 5rem 5rem;
+}
+
 @layer base {
   html {
     color-scheme: light;
     -webkit-text-size-adjust: 100%;
   }
 
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
   body {
     background-color: var(--color-paper);
-    color: var(--color-ink);
+    color: var(--color-text);
     font-family: var(--font-sans);
-    font-size: 1.0625rem;
-    line-height: 1.6;
+    font-size: 1rem;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
   }
 
   :focus-visible {
-    outline: 3px solid var(--color-brand-600);
+    outline: 2px solid var(--color-brand-600);
     outline-offset: 3px;
-    border-radius: var(--radius-control);
+    border-radius: 0.375rem;
+  }
+
+  /* On dark surfaces the outline switches to the bright accent, which is legible on ink. */
+  [data-surface="ink"] :focus-visible {
+    outline-color: var(--color-brand-500);
+  }
+
+  /* On the orange band the outline is ink, except inside its dark form. */
+  [data-surface="accent"] :focus-visible {
+    outline-color: var(--color-ink);
+  }
+
+  [data-surface="accent"] [data-surface="ink"] :focus-visible {
+    outline-color: var(--color-brand-500);
+  }
+
+  /* Anchored sections clear the sticky header. */
+  section[id] {
+    scroll-margin-top: 4.5rem;
   }
 
   @media (prefers-reduced-motion: reduce) {

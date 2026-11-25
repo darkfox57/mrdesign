@@ -10,22 +10,23 @@
     "services": "Servicios",
     "portfolio": "Portafolio",
     "blog": "Blog",
-    "contact": "Cuéntame tu proyecto",
+    "contact": "Cuéntanos tu proyecto",
     "openMenu": "Abrir menú",
-    "closeMenu": "Cerrar menú"
+    "closeMenu": "Cerrar menú",
+    "menu": "Menú",
+    "close": "Cerrar"
   },
   "Language": {
     "label": "Idioma",
     "current": "idioma actual"
   },
   "Footer": {
-    "tagline": "Desarrollo web hecho a mano, de la idea al lanzamiento.",
     "navigation": "Sitio",
     "contact": "Contacto",
     "legal": "Legal",
     "privacy": "Política de privacidad",
     "terms": "Términos y condiciones",
-    "rights": "Todos los derechos reservados."
+    "legalNamePending": "[Razón social / NIT]"
   },
   "NotFound": {
     "title": "Esta página no existe",
@@ -34,63 +35,145 @@
   },
   "Home": {
     "metaTitle": "Desarrollo web, apps y tiendas en línea",
-    "title": "Construyo el sitio, la app o la tienda que tu negocio necesita",
-    "lead": "Soy desarrollador independiente. Trabajas directo conmigo, sin intermediarios, desde la primera idea hasta que tu proyecto está en línea y funcionando.",
-    "pickerTitle": "¿En qué está tu proyecto?",
-    "pickerLead": "Elige la plataforma y te muestro cómo puedo ayudarte.",
-    "pickerCustom": "Algo a la medida",
-    "servicesTitle": "Qué construyo",
-    "servicesLead": "Proyectos nuevos, mejoras a lo que ya tienes y rescates de sitios que dejaron de funcionar.",
-    "servicesAll": "Ver todos los servicios",
-    "whyTitle": "Por qué trabajar conmigo",
-    "why": [
-      {
-        "title": "Hablas con quien programa",
-        "text": "Sin ejecutivos de cuenta ni teléfono roto: me cuentas lo que necesitas y yo lo construyo."
-      },
-      {
-        "title": "Precio y alcance claros",
-        "text": "Antes de empezar sabes qué se entrega, cuánto cuesta y cuándo está listo."
-      },
-      {
-        "title": "El código es tuyo",
-        "text": "Te entrego el código, los accesos y la documentación. No quedas amarrado a nadie."
-      },
-      {
-        "title": "Después del lanzamiento sigo ahí",
-        "text": "Soporte, actualizaciones y mejoras cuando las necesites."
+    "hero": {
+      "eyebrow": "Estudio independiente de software y productos digitales",
+      "line1": "Software que",
+      "line2": "<hl>trabaja</hl> para",
+      "line3": "tu negocio.",
+      "sub": "Diseñamos, construimos y evolucionamos sitios web, tiendas online, plataformas e integraciones para empresas que necesitan operar mejor, vender online o lanzar algo nuevo. <strong>Hablas directamente con el ingeniero que construye tu proyecto.</strong>",
+      "ctaPrimary": "Cuéntanos tu proyecto",
+      "ctaCases": "Ver casos",
+      "layersLabel": "Las capas de un producto digital",
+      "audienceLabel": "Para quién trabajamos",
+      "hubApi": "API",
+      "hubPayments": "Pagos",
+      "hubInventory": "Inventario",
+      "hubErp": "ERP",
+      "hubCrm": "CRM"
+    },
+    "problems": {
+      "eyebrow": "01 — El punto de partida",
+      "title": "¿Te suena alguno de estos problemas?",
+      "lead": "Elige uno y mira cómo lo abordaríamos. Hablamos de resultados posibles, no prometidos: dependen de cada negocio y se miden desde el inicio.",
+      "listLabel": "Problemas frecuentes",
+      "problem": "Problema",
+      "solution": "Cómo lo abordamos",
+      "result": "Resultado posible",
+      "serviceLine": "Línea de servicio:",
+      "seeHow": "Ver cómo funciona →"
+    },
+    "services": {
+      "eyebrow": "02 — Servicios",
+      "title": "Seis líneas de trabajo. Un mismo criterio.",
+      "lead": "Puedes empezar por una y sumar otras cuando el negocio lo pida. Todas comparten la misma forma de trabajar: diagnóstico, fases y entregas que puedes revisar.",
+      "tabsLabel": "Servicios",
+      "counter": "{number} / {total} · {kind}",
+      "when": "Cuándo tiene sentido",
+      "deliverables": "Entregables típicos",
+      "flowTitle": "Cómo fluye un proyecto de este tipo",
+      "flowLabel": "Flujo: {nodes}",
+      "ai": {
+        "tag": "Pendiente de decisión",
+        "title": "IA aplicada a procesos",
+        "optional": "(opcional)",
+        "text": "Asistentes, clasificación de información o automatizaciones con IA en tareas donde un error se pueda detectar y corregir. Publicar solo si se confirma como servicio.",
+        "note": "No es un servicio confirmado"
       }
-    ],
-    "portfolioTitle": "Proyectos",
-    "portfolioLead": "Algunas marcas con las que he trabajado.",
-    "portfolioAll": "Ver el portafolio",
-    "processTitle": "Cómo trabajo",
-    "process": [
-      {
-        "title": "Conversación",
-        "text": "Me cuentas tu negocio y lo que quieres lograr. Te digo con honestidad qué vale la pena construir y qué no."
+    },
+    "cases": {
+      "eyebrow": "03 — Casos",
+      "title": "Trabajo real, contado con datos verificables.",
+      "lead": "Para cada proyecto mostramos el reto, la solución y solo los resultados que el cliente haya confirmado. Lo que aún falta está marcado.",
+      "pickerLabel": "Casos de estudio",
+      "caseNumber": "Caso {number}",
+      "next": "Próximo caso",
+      "nextPending": "[Completar caso de estudio]",
+      "quote": "Cita del cliente",
+      "quotePending": "[Agregar testimonio autorizado]",
+      "search": "Busca tu llanta",
+      "searchWidth": "Ancho",
+      "searchProfile": "Perfil",
+      "searchRim": "Rin",
+      "illustration": "Ilustración · reemplazar por captura autorizada",
+      "partsLabel": "Partes del caso",
+      "parts": {
+        "challenge": "Reto",
+        "solution": "Solución",
+        "results": "Resultados"
       },
-      {
-        "title": "Propuesta",
-        "text": "Recibes el alcance, el precio y el calendario por escrito, antes de pagar nada."
-      },
-      {
-        "title": "Diseño",
-        "text": "Revisas un prototipo navegable y lo ajustamos juntos antes de programar."
-      },
-      {
-        "title": "Desarrollo",
-        "text": "Construyo por etapas y te muestro avances que puedes probar."
-      },
-      {
-        "title": "Lanzamiento",
-        "text": "Publico el proyecto, configuro dominio, analítica y copias de seguridad, y te enseño a administrarlo."
-      },
-      {
-        "title": "Soporte",
-        "text": "Mantengo tu proyecto actualizado y seguro, y lo mejoro cuando tu negocio cambia."
+      "metricPending": "[Confirmar métrica]",
+      "projectLink": "Enlace al proyecto",
+      "linkPending": "[Enlace definitivo]",
+      "sector": "Sector",
+      "type": "Tipo de proyecto",
+      "platform": "Plataforma",
+      "confirm": "[Confirmar]",
+      "brandUse": "Uso de marca",
+      "brandPending": "[Autorización pendiente]"
+    },
+    "process": {
+      "eyebrow": "04 — Cómo trabajamos",
+      "title": "Por fases, con entregas que puedes ver.",
+      "lead": "Cada fase termina con algo concreto. Así decides con información y no con promesas, y puedes ajustar el rumbo antes de invertir en la siguiente.",
+      "receives": "Recibes",
+      "note": "No publicamos plazos genéricos: cada propuesta define tiempos según el alcance real.",
+      "notePending": "[Confirmar condiciones comerciales: forma de pago, garantía, soporte]"
+    },
+    "criteria": {
+      "eyebrow": "05 — Criterio técnico",
+      "title": "Primero el problema. Después la tecnología.",
+      "lead": "No empezamos con una herramienta favorita. Empezamos con lo que tu negocio necesita y elegimos la opción más simple que lo resuelva bien y se pueda mantener.",
+      "tableLabel": "Cómo elegimos la tecnología",
+      "colNeed": "Si necesitas…",
+      "colChoice": "Normalmente elegimos…",
+      "colWhy": "Por qué",
+      "principle": "Principio {number}",
+      "stack": "Tecnologías con experiencia en proyectos reales:",
+      "stackPending": "[Confirmar lista: plataformas de ecommerce, CMS, lenguajes, bases de datos, infraestructura]"
+    },
+    "about": {
+      "photoPending": "[Foto del fundador]",
+      "namePending": "[Nombre del fundador]",
+      "role": "Fundador · Ingeniero responsable de cada proyecto",
+      "eyebrow": "06 — Sobre Mr. Design",
+      "title": "Un estudio independiente. La persona con la que hablas es la que construye.",
+      "body": "Mr. Design no es una agencia grande y no pretende parecerlo. Quien te escucha en la primera reunión es quien diseña la arquitectura, escribe el código y responde cuando algo necesita atención. Cuando un proyecto necesita otras especialidades, las sumamos de forma explícita y sabes quién participa.",
+      "bodyPending": "[Confirmar red de colaboradores y especialidades]"
+    },
+    "faq": {
+      "eyebrow": "07 — Preguntas frecuentes",
+      "title": "Lo que suelen preguntarnos antes de empezar.",
+      "notHere": "¿Tu pregunta no está aquí?",
+      "write": "Escríbenos"
+    },
+    "contact": {
+      "eyebrow": "Hablemos",
+      "title": "¿Qué quieres resolver?",
+      "lead": "Cuéntanos el reto en pocas líneas. Te respondemos con preguntas concretas o con un siguiente paso claro, no con un catálogo.",
+      "directTitle": "¿Prefieres escribir directo?",
+      "directEmail": "Correo:",
+      "directWhatsapp": "WhatsApp:",
+      "responseTime": "Tiempo de respuesta:",
+      "confirm": "[Confirmar]",
+      "needsLegend": "¿Qué necesitas?",
+      "needsHint": "Puedes elegir varias opciones",
+      "message": "Cuéntanos el reto",
+      "messagePlaceholder": "Ej.: tenemos tienda online, pero el inventario se actualiza a mano y…",
+      "name": "Nombre",
+      "email": "Correo",
+      "phone": "WhatsApp",
+      "company": "Empresa",
+      "optional": "(opcional)",
+      "consent": "Autorizo el tratamiento de mis datos personales según la <link>política de tratamiento de datos</link>.",
+      "submit": "Enviar y agendar una conversación",
+      "success": {
+        "label": "Mensaje enviado",
+        "title": "Gracias. Ya tenemos tu reto.",
+        "text": "Te escribiremos para agendar una conversación.",
+        "pending": "[Confirmar tiempo de respuesta y siguiente paso]",
+        "again": "Enviar otro mensaje"
       }
-    ],
+    },
     "ctaTitle": "¿Tienes una idea? Hablemos",
     "ctaText": "Cuéntame qué necesitas y te respondo en menos de un día hábil con los siguientes pasos.",
     "ctaButton": "Cuéntame tu proyecto"

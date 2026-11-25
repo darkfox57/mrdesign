@@ -10,22 +10,23 @@
     "services": "Services",
     "portfolio": "Portfolio",
     "blog": "Blog",
-    "contact": "Tell me about your project",
+    "contact": "Tell us about your project",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "menu": "Menu",
+    "close": "Close"
   },
   "Language": {
     "label": "Language",
     "current": "current language"
   },
   "Footer": {
-    "tagline": "Handmade web development, from idea to launch.",
     "navigation": "Site",
     "contact": "Contact",
     "legal": "Legal",
     "privacy": "Privacy policy",
     "terms": "Terms and conditions",
-    "rights": "All rights reserved."
+    "legalNamePending": "[Legal name / Tax ID]"
   },
   "NotFound": {
     "title": "This page does not exist",
@@ -34,63 +35,145 @@
   },
   "Home": {
     "metaTitle": "Web, app and online store development",
-    "title": "I build the website, app or store your business needs",
-    "lead": "I'm an independent developer. You work directly with me, no middlemen, from the first idea until your project is live and working.",
-    "pickerTitle": "What is your project built on?",
-    "pickerLead": "Pick the platform and I'll show you how I can help.",
-    "pickerCustom": "Something custom",
-    "servicesTitle": "What I build",
-    "servicesLead": "New projects, improvements to what you already have, and rescues for sites that stopped working.",
-    "servicesAll": "See all services",
-    "whyTitle": "Why work with me",
-    "why": [
-      {
-        "title": "You talk to the person who codes",
-        "text": "No account managers, no broken telephone: you tell me what you need and I build it."
-      },
-      {
-        "title": "Clear price and scope",
-        "text": "Before we start, you know what gets delivered, what it costs and when it's ready."
-      },
-      {
-        "title": "The code is yours",
-        "text": "You get the code, the credentials and the documentation. You're never locked in."
-      },
-      {
-        "title": "Still here after launch",
-        "text": "Support, updates and improvements whenever you need them."
+    "hero": {
+      "eyebrow": "Independent software and digital product studio",
+      "line1": "Software that",
+      "line2": "<hl>works</hl> for",
+      "line3": "your business.",
+      "sub": "We design, build and evolve websites, online stores, platforms and integrations for companies that need to run better, sell online or launch something new. <strong>You talk directly to the engineer who builds your project.</strong>",
+      "ctaPrimary": "Tell us about your project",
+      "ctaCases": "See cases",
+      "layersLabel": "The layers of a digital product",
+      "audienceLabel": "Who we work for",
+      "hubApi": "API",
+      "hubPayments": "Payments",
+      "hubInventory": "Inventory",
+      "hubErp": "ERP",
+      "hubCrm": "CRM"
+    },
+    "problems": {
+      "eyebrow": "01 — The starting point",
+      "title": "Does any of these problems sound familiar?",
+      "lead": "Pick one and see how we would approach it. We talk about possible results, not promised ones: they depend on each business and are measured from the start.",
+      "listLabel": "Common problems",
+      "problem": "Problem",
+      "solution": "How we approach it",
+      "result": "Possible result",
+      "serviceLine": "Service line:",
+      "seeHow": "See how it works →"
+    },
+    "services": {
+      "eyebrow": "02 — Services",
+      "title": "Six lines of work. One standard.",
+      "lead": "You can start with one and add others when the business calls for it. They all share the same way of working: an assessment, phases and deliveries you can review.",
+      "tabsLabel": "Services",
+      "counter": "{number} / {total} · {kind}",
+      "when": "When it makes sense",
+      "deliverables": "Typical deliverables",
+      "flowTitle": "How a project of this kind flows",
+      "flowLabel": "Flow: {nodes}",
+      "ai": {
+        "tag": "Pending decision",
+        "title": "AI applied to processes",
+        "optional": "(optional)",
+        "text": "Assistants, information sorting or AI automations in tasks where a mistake can be spotted and corrected. Publish only if it is confirmed as a service.",
+        "note": "Not a confirmed service"
       }
-    ],
-    "portfolioTitle": "Projects",
-    "portfolioLead": "Some of the brands I've worked with.",
-    "portfolioAll": "See the portfolio",
-    "processTitle": "How I work",
-    "process": [
-      {
-        "title": "Conversation",
-        "text": "You tell me about your business and your goals. I tell you honestly what's worth building and what isn't."
+    },
+    "cases": {
+      "eyebrow": "03 — Cases",
+      "title": "Real work, told with verifiable data.",
+      "lead": "For each project we show the challenge, the solution and only the results the client has confirmed. What is still missing is marked.",
+      "pickerLabel": "Case studies",
+      "caseNumber": "Case {number}",
+      "next": "Next case",
+      "nextPending": "[Complete case study]",
+      "quote": "Client quote",
+      "quotePending": "[Add an authorized testimonial]",
+      "search": "Find your tire",
+      "searchWidth": "Width",
+      "searchProfile": "Profile",
+      "searchRim": "Rim",
+      "illustration": "Illustration · replace with an authorized screenshot",
+      "partsLabel": "Parts of the case",
+      "parts": {
+        "challenge": "Challenge",
+        "solution": "Solution",
+        "results": "Results"
       },
-      {
-        "title": "Proposal",
-        "text": "You get the scope, price and schedule in writing, before you pay anything."
-      },
-      {
-        "title": "Design",
-        "text": "You review a clickable prototype and we adjust it together before any code."
-      },
-      {
-        "title": "Development",
-        "text": "I build in stages and show you progress you can try."
-      },
-      {
-        "title": "Launch",
-        "text": "I publish the project, set up the domain, analytics and backups, and show you how to manage it."
-      },
-      {
-        "title": "Support",
-        "text": "I keep your project updated and secure, and improve it as your business changes."
+      "metricPending": "[Confirm metric]",
+      "projectLink": "Project link",
+      "linkPending": "[Final link]",
+      "sector": "Sector",
+      "type": "Project type",
+      "platform": "Platform",
+      "confirm": "[Confirm]",
+      "brandUse": "Brand use",
+      "brandPending": "[Authorization pending]"
+    },
+    "process": {
+      "eyebrow": "04 — How we work",
+      "title": "In phases, with deliveries you can see.",
+      "lead": "Every phase ends with something concrete. That way you decide with information instead of promises, and you can change course before investing in the next one.",
+      "receives": "You get",
+      "note": "We do not publish generic timelines: each proposal sets its times according to the real scope.",
+      "notePending": "[Confirm commercial terms: payment method, warranty, support]"
+    },
+    "criteria": {
+      "eyebrow": "05 — Technical judgment",
+      "title": "The problem first. Then the technology.",
+      "lead": "We do not start with a favorite tool. We start with what your business needs and choose the simplest option that solves it well and can be maintained.",
+      "tableLabel": "How we choose the technology",
+      "colNeed": "If you need…",
+      "colChoice": "We usually choose…",
+      "colWhy": "Why",
+      "principle": "Principle {number}",
+      "stack": "Technologies with experience in real projects:",
+      "stackPending": "[Confirm list: ecommerce platforms, CMS, languages, databases, infrastructure]"
+    },
+    "about": {
+      "photoPending": "[Founder photo]",
+      "namePending": "[Founder name]",
+      "role": "Founder · Engineer responsible for every project",
+      "eyebrow": "06 — About Mr. Design",
+      "title": "An independent studio. The person you talk to is the one who builds.",
+      "body": "Mr. Design is not a big agency and does not pretend to be one. The person who listens to you in the first meeting is the one who designs the architecture, writes the code and answers when something needs attention. When a project needs other specialties, we bring them in explicitly and you know who is involved.",
+      "bodyPending": "[Confirm network of collaborators and specialties]"
+    },
+    "faq": {
+      "eyebrow": "07 — Frequently asked questions",
+      "title": "What people usually ask us before starting.",
+      "notHere": "Is your question not here?",
+      "write": "Write to us"
+    },
+    "contact": {
+      "eyebrow": "Let's talk",
+      "title": "What do you want to solve?",
+      "lead": "Tell us about the challenge in a few lines. We reply with concrete questions or a clear next step, not with a catalog.",
+      "directTitle": "Rather write to us directly?",
+      "directEmail": "Email:",
+      "directWhatsapp": "WhatsApp:",
+      "responseTime": "Response time:",
+      "confirm": "[Confirm]",
+      "needsLegend": "What do you need?",
+      "needsHint": "You can pick several options",
+      "message": "Tell us about the challenge",
+      "messagePlaceholder": "E.g.: we have an online store, but inventory is updated by hand and…",
+      "name": "Name",
+      "email": "Email",
+      "phone": "WhatsApp",
+      "company": "Company",
+      "optional": "(optional)",
+      "consent": "I authorize the processing of my personal data under the <link>data processing policy</link>.",
+      "submit": "Send and schedule a conversation",
+      "success": {
+        "label": "Message sent",
+        "title": "Thank you. We have your challenge.",
+        "text": "We will write to you to schedule a conversation.",
+        "pending": "[Confirm response time and next step]",
+        "again": "Send another message"
       }
-    ],
+    },
     "ctaTitle": "Have an idea? Let's talk",
     "ctaText": "Tell me what you need and I'll reply within one business day with the next steps.",
     "ctaButton": "Tell me about your project"

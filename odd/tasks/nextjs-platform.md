@@ -60,7 +60,7 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
 | T15 | S4 | T12 follow-ups (L30): savePost and ingest keep a generic P2002 fallback (returning the typed values) for unique errors that match no known index; order-independent field match in violatesUnique; drop the double P2002 guard in createLanding; dashboard home post counts behind content:read and stale comment; document the http-cover message; exercise the real transaction in the term clash test; T13 notes: `?idioma=` without `traducir` shows the plain form silently, landings-security public-route rows use a fixed prefix; investigate the intermittent ECONNRESET in e2e/admin-actions (editor inbox replay, full-suite only, likely keep-alive reuse) | delegated (context backstop) | done | 56baea8 |
 | T16 | S4 | Throttle follow-ups from review L38: count both keys in one transaction; refund the counted attempt when the password check fails for infrastructure (non-APIError); the success refund must never release an address lock already reached; a failed success write must not leave a valid login locked; guard rows[0] inside the fail-closed path; one key-derivation helper shared with tests; rename failures to attempts | delegated (context backstop) | done | (T16 commit) |
 | T17 | S4, S9 | Pending fixes from L17/L29: (a) media delete vs save race: an image cannot be deleted while a post or landing save that references it commits, and a save cannot reference an image whose delete committed; (b) ingest API: per-key request limit with 429 + Retry-After; revoking a key that is missing or already revoked tells the admin instead of silently succeeding | delegated, two parallel writers (context backstop + two independent units with disjoint surfaces) | done | (T17 commits) |
-| T18 | S6, S10 | Implement the homepage design (artifact 03bd4bd4): site-wide tokens and fonts, header/footer restyle, new homepage sections with GSAP motion, es/en strings, tests | delegated (context backstop) | in progress | |
+| T18 | S6, S10 | Implement the homepage design (artifact 03bd4bd4): site-wide tokens and fonts, header/footer restyle, new homepage sections with GSAP motion, es/en strings, tests | delegated (context backstop) | done | (T18 commit) |
 | T10 | S4 | Auth hardening from review L9 advisories (session cookie cache, limiter eviction and forwarded IP, 307 redirect on POST, silent reset failure) | delegated (context backstop) | done | 0111320 |
 | T8.0 | S5 | Landing builder foundation: Landing model (blocks/draftBlocks, per-locale slug, translationKey) and migration, @puckeditor/core 0.24.2 | inline | done | d863737 |
 | T8 | S5 | Landing builder: generic blocks with strict zod schemas, Puck editor (draft/publish/discard), admin list/create/translations, public route, e2e | delegated (context backstop: parent context is past ~150k) | done | 06435e2, 22f255d |
@@ -513,3 +513,25 @@ Reference standard: `E:\Work\proyectos\datilab-web` (stack, conventions, `docs/a
     - Unauthenticated ingest requests are not throttled; they are 401s before the body is read.
     - Retry-After is always the full window.
 - L54 (2026-11-24, user): asked to implement the homepage design from the artifact (S10 quotes the request). T18 was opened and delegated to one writer (context backstop).
+- L55 (2026-11-24): T18 done (one delegated writer).
+  - Theme: the design tokens drive the whole site (`@theme static`). Fonts are Inter, Bricolage Grotesque and JetBrains Mono via next/font. Header and footer are dark. Routes, the language switcher, the mobile menu and the logo are kept.
+  - Homepage: hero with the 3D layer stage and legend, then problems, services with the flow schema, cases browser, process, criteria, about, FAQ (`<details>`), and the contact band.
+  - Motion: GSAP 3.15.1 (pinned), loaded dynamically only on the homepage. It uses gsap.context with revert, is skipped under reduced motion, and gives up after 4 s.
+  - The applied AI card sits behind `SHOW_APPLIED_AI`.
+  - Contact form: it posts to the existing submitContact action.
+    - The multi-select "¿Qué necesitas?" maps to one projectType through `projectTypeForNeeds` ("other" when the picks are mixed); the full list of picks is not stored.
+    - "Correo o WhatsApp" is split into email (required) and phone (optional).
+  - Pending placeholders stay visible (A13): cases, metrics, founder, commercial terms, support scope, technology list, response time, and "[Razón social / NIT]" in the site-wide footer.
+  - Deviations from the design:
+    - Header and footer keep the real routes and legal links.
+    - Reveals use opacity, not autoAlpha (tab order).
+    - The headline entrance only plays in the first 3 s after load.
+    - No FAQPage JSON-LD while answers hold placeholders.
+  - Parent: removed PlatformPicker and ProcessSteps, unused after the redesign.
+  - Evidence:
+    - Writer: home.spec RED 12 failing, then GREEN; vitest 437/437; lint 0; typecheck 0; e2e 242 passed and 0 failed.
+    - Parent spot check: vitest 437/437; lint 0; typecheck 0.
+  - Open decisions for the user:
+    - Voice: the design uses "we" ("Cuéntanos tu proyecto"); the rest of the site uses "I" ("Cuéntame tu proyecto").
+    - Base text is now 16 px site-wide (it was 17).
+    - Placeholders must be filled or hidden before going to production.

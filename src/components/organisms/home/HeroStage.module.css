@@ -1,0 +1,283 @@
+/* The decorative 3D stack of the hero (aria-hidden): four plates for interface, logic, data and
+   integrations. Drawings use the theme tokens; GSAP only moves the plates in depth (transform). */
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 0.92;
+  perspective: 1600px;
+  display: grid;
+  place-items: center;
+}
+
+.tilt {
+  position: relative;
+  width: 66%;
+  aspect-ratio: 4 / 3;
+  transform-style: preserve-3d;
+}
+
+.stack {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(58deg) rotateZ(-38deg);
+}
+
+.plate {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6%;
+  padding: 7%;
+  border-radius: 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--color-on-ink) 28%, transparent);
+  background: color-mix(in srgb, var(--color-ink-raised) 82%, transparent);
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s,
+    opacity 0.3s;
+}
+
+.l4 {
+  transform: translateZ(0);
+}
+.l3 {
+  transform: translateZ(46px);
+}
+.l2 {
+  transform: translateZ(92px);
+}
+.l1 {
+  transform: translateZ(138px);
+}
+
+.plate[data-on] {
+  border-color: var(--color-brand-500);
+  box-shadow:
+    0 0 0 1px var(--color-brand-500),
+    0 30px 60px -20px color-mix(in srgb, var(--color-brand-500) 45%, transparent);
+}
+
+.stage[data-active] .plate:not([data-on]) {
+  opacity: 0.38;
+}
+
+.tag {
+  position: absolute;
+  top: -1px;
+  left: 1rem;
+  transform: translateY(-100%);
+  padding: 3px 6px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-on-ink-muted);
+}
+
+.plate[data-on] .tag {
+  color: var(--color-brand-500);
+}
+
+/* 01 Interface: a tiny page. */
+.uiBar {
+  display: flex;
+  align-items: center;
+  gap: 4%;
+  height: 9%;
+  padding: 0 4%;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-on-ink) 18%, transparent);
+}
+.uiBar i {
+  display: block;
+  width: 12%;
+  height: 28%;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--color-on-ink) 40%, transparent);
+}
+.uiBar i:first-child {
+  width: 8%;
+  background: var(--color-brand-500);
+}
+.uiHero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8%;
+  padding: 0 8%;
+  border-radius: 6px;
+  background: linear-gradient(
+    color-mix(in srgb, var(--color-on-ink) 10%, transparent),
+    color-mix(in srgb, var(--color-on-ink) 4%, transparent)
+  );
+}
+.uiHero i {
+  display: block;
+  height: 9%;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--color-on-ink) 55%, transparent);
+}
+.uiHero i:nth-child(2) {
+  width: 60%;
+  background: color-mix(in srgb, var(--color-on-ink) 30%, transparent);
+}
+.uiHero i:nth-child(3) {
+  width: 22%;
+  height: 12%;
+  border-radius: 20px;
+  background: var(--color-brand-500);
+}
+.uiCards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5%;
+  height: 26%;
+}
+.uiCards i {
+  border-radius: 5px;
+  border: 1px solid color-mix(in srgb, var(--color-on-ink) 14%, transparent);
+  background: color-mix(in srgb, var(--color-on-ink) 12%, transparent);
+}
+
+/* 02 Logic: a flow of steps. */
+.flow {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 8%;
+}
+.flow i {
+  position: relative;
+  display: block;
+  aspect-ratio: 1.4 / 1;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--color-on-ink) 45%, transparent);
+}
+.flow i:nth-child(2) {
+  border-color: var(--color-brand-500);
+  background: color-mix(in srgb, var(--color-brand-500) 14%, transparent);
+}
+.flow i:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  width: 60%;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-on-ink) 50%, transparent);
+}
+.flowRow {
+  display: flex;
+  gap: 5%;
+  height: 22%;
+}
+.flowRow i {
+  flex: 1;
+  border-radius: 5px;
+  border: 1px dashed color-mix(in srgb, var(--color-on-ink) 30%, transparent);
+}
+
+/* 03 Data: rows of records. */
+.rows {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7%;
+}
+.rows i {
+  flex: 1;
+  border-radius: 3px;
+  opacity: 0.9;
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-on-ink) 22%, transparent) 0 22%,
+    transparent 22% 26%
+  );
+}
+.rows i:first-child {
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-brand-500) 60%, transparent) 0 22%,
+    transparent 22% 26%
+  );
+}
+
+/* 04 Integrations: a hub and its systems. */
+.hub {
+  position: relative;
+  flex: 1;
+}
+.hub b,
+.hub span {
+  position: absolute;
+  padding: 4px 6px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.hub b {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: 700;
+  color: var(--color-ink);
+  background: var(--color-brand-500);
+}
+.hub span {
+  border: 1px solid color-mix(in srgb, var(--color-on-ink) 40%, transparent);
+  color: var(--color-on-ink);
+}
+.hub span:nth-of-type(1) {
+  left: 0;
+  top: 0;
+}
+.hub span:nth-of-type(2) {
+  right: 0;
+  top: 0;
+}
+.hub span:nth-of-type(3) {
+  left: 0;
+  bottom: 0;
+}
+.hub span:nth-of-type(4) {
+  right: 0;
+  bottom: 0;
+}
+.hub::before,
+.hub::after {
+  content: "";
+  position: absolute;
+  inset: 16% 22%;
+  border: 1px dashed color-mix(in srgb, var(--color-on-ink) 30%, transparent);
+  border-radius: 4px;
+}
+.hub::after {
+  inset: 50% 10% auto 10%;
+  height: 0;
+  border-width: 1px 0 0;
+}
+
+@media (width < 48rem) {
+  .stage {
+    aspect-ratio: 1 / 0.95;
+  }
+  .tilt {
+    width: 72%;
+  }
+  .l3 {
+    transform: translateZ(30px);
+  }
+  .l2 {
+    transform: translateZ(60px);
+  }
+  .l1 {
+    transform: translateZ(90px);
+  }
+}

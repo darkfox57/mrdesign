@@ -30,10 +30,11 @@ export const BACKGROUNDS: Record<Background, { section: string; title: string; t
 // Same look as the ButtonLink atom. Blocks link to any safe URL (not only typed routes), so they
 // render a plain anchor with these classes instead of the next-intl Link.
 export const BUTTON =
-  "inline-flex min-h-11 items-center justify-center rounded-control px-5 font-semibold transition-colors";
+  "inline-flex min-h-13 items-center justify-center rounded-full px-6 font-semibold transition-colors";
 
 export const BUTTON_VARIANTS = {
-  primary: "bg-brand-600 text-white hover:bg-brand-700",
+  // The accent as a background always carries ink text.
+  primary: "bg-brand-500 text-ink hover:bg-brand-400",
   // Takes the text color of its section, so it reads on light and dark backgrounds alike.
   secondary: "border border-field text-current hover:border-current",
   // On dark or brand sections.

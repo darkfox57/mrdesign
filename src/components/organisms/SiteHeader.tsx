@@ -17,15 +17,15 @@ export async function SiteHeader() {
   return (
     // Solid background on purpose: backdrop-filter would make the header the containing block of the
     // fixed mobile menu panel, collapsing it to the header's height.
-    <header className="sticky top-0 z-40 border-b border-line bg-paper">
+    <header data-surface="ink" className="sticky top-0 z-40 border-b border-ink-line bg-ink text-on-ink">
       <a
         href="#contenido"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:rounded-control focus:bg-ink focus:px-4 focus:py-2 focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-brand-500 focus:px-4 focus:py-2.5 focus:font-semibold focus:text-ink"
       >
         {t("skip")}
       </a>
-      <div className="site-container flex h-16 items-center justify-between gap-6">
-        <Link href="/" aria-label={t("home")} className="shrink-0 text-brand-600">
+      <div className="site-container flex h-18 items-center justify-between gap-6">
+        <Link href="/" aria-label={t("home")} className="shrink-0 text-on-ink">
           <Logo className="h-11" decorative />
         </Link>
 
@@ -35,7 +35,7 @@ export async function SiteHeader() {
               <li key={item.key}>
                 <Link
                   href={item.href}
-                  className="inline-flex min-h-11 items-center rounded-control px-3 font-medium text-graphite transition-colors hover:text-ink"
+                  className="inline-flex min-h-11 items-center rounded-full px-3.5 text-md text-on-ink-muted no-underline transition-colors hover:bg-on-ink/6 hover:text-on-ink"
                 >
                   {t(item.key)}
                 </Link>
@@ -45,26 +45,28 @@ export async function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <LanguageSwitcher />
-          <ButtonLink href="/contacto">{t("contact")}</ButtonLink>
+          <LanguageSwitcher tone="dark" />
+          <ButtonLink href="/contacto" size="md" data-magnetic="">
+            {t("contact")}
+          </ButtonLink>
         </div>
 
-        <MobileMenu openLabel={t("openMenu")} closeLabel={t("closeMenu")}>
+        <MobileMenu openLabel={t("openMenu")} closeLabel={t("closeMenu")} openText={t("menu")} closeText={t("close")}>
           <nav aria-label={t("label")}>
-            <ul className="flex flex-col">
+            <ul className="flex flex-col gap-1">
               {items.map((item) => (
-                <li key={item.key} className="border-b border-line">
-                  <Link href={item.href} className="text-title flex min-h-14 items-center">
+                <li key={item.key}>
+                  <Link href={item.href} className="flex min-h-11 items-center py-3 text-xl font-semibold no-underline">
                     {t(item.key)}
                   </Link>
                 </li>
               ))}
             </ul>
           </nav>
-          <ButtonLink href="/contacto" className="mt-8 w-full">
+          <ButtonLink href="/contacto" className="mt-4 w-full">
             {t("contact")}
           </ButtonLink>
-          <LanguageSwitcher className="mt-6" />
+          <LanguageSwitcher tone="dark" className="mt-6" />
         </MobileMenu>
       </div>
     </header>

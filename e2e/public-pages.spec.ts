@@ -44,11 +44,13 @@ test("an unknown service is not found", async ({ page }) => {
   expect(response?.status()).toBe(404);
 });
 
-test("the platform picker leads to the service page", async ({ page }) => {
+test("the header Services link leads to the services page", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("navigation", { name: "¿En qué está tu proyecto?" }).getByRole("link", { name: "PrestaShop" }).click();
-  await expect(page).toHaveURL(/\/servicios\/prestashop$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Tiendas PrestaShop" })).toBeVisible();
+  // On small screens the links live in the menu.
+  const menu = page.getByRole("button", { name: "Abrir menú" });
+  if (await menu.isVisible()) await menu.click();
+  await page.getByRole("banner").getByRole("link", { name: "Servicios" }).filter({ visible: true }).click();
+  await expect(page).toHaveURL(/\/servicios$/);
 });
 
 test("the language switcher keeps the page", async ({ page }) => {

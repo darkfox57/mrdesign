@@ -7,7 +7,7 @@ import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { routing } from "@/i18n/routing";
 import { organizationJsonLd } from "@/lib/seo/json-ld";
 import { siteUrl } from "@/lib/seo/site";
-import { bricolage } from "../fonts";
+import { fontVariables } from "@/lib/fonts";
 import "../globals.css";
 
 export function generateStaticParams() {
@@ -29,7 +29,7 @@ export default async function LocaleLayout({ children }: LayoutProps<"/[locale]"
   const locale = await getLocale();
 
   return (
-    <html lang={locale} className={bricolage.variable}>
+    <html lang={locale} className={fontVariables}>
       <body className="antialiased">
         <JsonLd data={organizationJsonLd} />
         <NextIntlClientProvider>
