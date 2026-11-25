@@ -88,6 +88,21 @@ export function caseStudyJsonLd({ title, summary, url, locale, image, lines, sta
   };
 }
 
+// Frequent questions of a page, each with its answer as plain text. The JsonLd atom escapes the
+// copy, so no question or answer can close the script tag.
+export function faqPageJsonLd(faqs: Array<{ question: string; answer: string }>, url?: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    ...(url ? { url: `${siteUrl}${url}` } : {}),
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  };
+}
+
 export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
   return {
     "@context": "https://schema.org",

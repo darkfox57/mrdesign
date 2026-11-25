@@ -35,6 +35,25 @@ describe("the home's process", () => {
   });
 });
 
+describe("the home's problems", () => {
+  const lineOf = (title: string) => [...startingProblems, ...problems].find((problem) => problem.title.es === title)?.line;
+
+  it("send campaign traffic that does not convert to the landing pages line", () => {
+    expect(lineOf("Tienes visitas, pero no contactos")).toBe("funnels");
+  });
+
+  it("send a platform that is hard to change to the platform evolution line", () => {
+    expect(lineOf("Tu plataforma es difícil de cambiar")).toBe("evolution");
+  });
+
+  it("keep the lines of the other problems", () => {
+    expect(lineOf("Tu web no representa lo que hace tu empresa")).toBe("websites");
+    expect(lineOf("Tu operación depende de hojas de cálculo y copiar y pegar")).toBe("apps");
+    expect(lineOf("Tus sistemas no se hablan entre sí")).toBe("plugins");
+    expect(startingProblems.map((problem) => problem.line)).toEqual(["websites", "shopify", "websites", "websites", "websites"]);
+  });
+});
+
 describe("the home's voice (S5)", () => {
   // First person singular: "I" do the work. "¿Qué construimos?" invites the visitor, so it stays,
   // and the message placeholder is written in the visitor's voice, about their own company.

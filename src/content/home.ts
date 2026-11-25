@@ -192,7 +192,7 @@ export const problems: Problem[] = [
       es: "Un embudo medido para tomar decisiones con datos y mejorar la conversión de forma sostenida.",
       en: "A measured funnel to make decisions with data and improve conversion steadily.",
     },
-    line: "websites",
+    line: "funnels",
     nodes: [
       same("Pauta y redes", "Ads and social"),
       fix({ es: "Página genérica", en: "Generic page" }, { es: "Página por campaña", en: "A page per campaign" }),
@@ -261,7 +261,7 @@ export const problems: Problem[] = [
       es: "Una plataforma que vuelve a evolucionar al ritmo del negocio, con documentación y control.",
       en: "A platform that evolves again at the pace of the business, with documentation and control.",
     },
-    line: "apps",
+    line: "evolution",
     nodes: [
       same("Un cambio", "A change"),
       fix({ es: "Código frágil", en: "Fragile code" }, { es: "Código documentado", en: "Documented code" }),

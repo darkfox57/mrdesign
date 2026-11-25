@@ -1,6 +1,52 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { caseStudyJsonLd, organizationJsonLd } from "./json-ld";
+import { JsonLd } from "@/components/atoms/JsonLd";
+import { caseStudyJsonLd, faqPageJsonLd, organizationJsonLd } from "./json-ld";
 import { siteUrl } from "./site";
+
+describe("faqPageJsonLd", () => {
+  const faqs = [
+    { question: "¿Puedo editar la tienda yo mismo?", answer: "Sí, desde el administrador de Shopify." },
+    { question: "¿Cuánto cuesta?", answer: "Depende del tamaño del proyecto." },
+  ];
+
+  it("describes every question with its accepted answer, in order", () => {
+    expect(faqPageJsonLd(faqs)).toEqual({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "¿Puedo editar la tienda yo mismo?",
+          acceptedAnswer: { "@type": "Answer", text: "Sí, desde el administrador de Shopify." },
+        },
+        {
+          "@type": "Question",
+          name: "¿Cuánto cuesta?",
+          acceptedAnswer: { "@type": "Answer", text: "Depende del tamaño del proyecto." },
+        },
+      ],
+    });
+  });
+
+  it("names the page it describes when given its path", () => {
+    expect(faqPageJsonLd(faqs, "/servicios/shopify")).toMatchObject({ url: `${siteUrl}/servicios/shopify` });
+    expect(faqPageJsonLd(faqs)).not.toHaveProperty("url");
+  });
+
+  it("stays inside its script tag whatever the copy holds", () => {
+    const hostile = [{ question: "</script><script>alert(1)</script>", answer: "<b>a & b</b>" }];
+    const html = renderToStaticMarkup(createElement(JsonLd, { data: faqPageJsonLd(hostile) }));
+    expect(html.match(/<\/script>/g)).toHaveLength(1);
+    const json = html.replace(/^<script[^>]*>/, "").replace(/<\/script>$/, "");
+    expect(JSON.parse(json).mainEntity[0]).toEqual({
+      "@type": "Question",
+      name: "</script><script>alert(1)</script>",
+      acceptedAnswer: { "@type": "Answer", text: "<b>a & b</b>" },
+    });
+  });
+});
 
 const base = {
   title: "Una tienda que se arma sola",

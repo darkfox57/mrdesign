@@ -79,6 +79,13 @@ describe("parseContactForm", () => {
     }
   });
 
+  it("accepts the landing pages and platform evolution lines as project types", () => {
+    for (const projectType of ["funnels", "evolution"]) {
+      const result = parseContactForm(form({ ...valid, projectType }));
+      expect(result.ok && result.data.projectType).toBe(projectType);
+    }
+  });
+
   it("rejects a project type that is not offered", () => {
     expect(parseContactForm(form({ ...valid, projectType: "crypto-exchange" }))).toEqual({
       ok: false,

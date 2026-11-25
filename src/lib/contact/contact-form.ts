@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { serviceIds } from "@/content/services";
+import { serviceIds } from "@/content/service-catalog";
 
 // Error codes map to Contact.errors.* messages, so the page shows them in its own language.
 export type ContactErrorCode =

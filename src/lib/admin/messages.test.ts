@@ -78,6 +78,8 @@ describe("projectTypeLabel", () => {
   it("names a service in Spanish", () => {
     expect(projectTypeLabel("wordpress")).toBe("Sitios y tiendas en WordPress");
     expect(projectTypeLabel("websites")).toBe("Sitios web a la medida");
+    expect(projectTypeLabel("funnels")).toBe("Landing pages y embudos");
+    expect(projectTypeLabel("evolution")).toBe("Evolución de plataformas");
   });
 
   it("names the other option", () => {

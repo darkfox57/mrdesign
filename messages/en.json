@@ -185,7 +185,7 @@
   },
   "Services": {
     "metaTitle": "Development services",
-    "metaDescription": "Custom websites, apps, plugins and online stores on WordPress, Shopify and PrestaShop.",
+    "metaDescription": "Custom websites, landing pages, Shopify, PrestaShop and WordPress stores, apps, platform evolution, plugins and integrations.",
     "title": "Services",
     "lead": "Pick what you need. If it's not on the list, ask me: I probably do it too.",
     "more": "See details for {name}",
@@ -195,6 +195,52 @@
     "ctaText": "I reply within one business day.",
     "ctaButton": "Tell me about your project",
     "breadcrumb": "Services"
+  },
+  "ServiceLine": {
+    "breadcrumbLabel": "Breadcrumb",
+    "home": "Home",
+    "eyebrow": "Line of work {number} · {name}",
+    "audienceLabel": "Who it is for",
+    "cta": "Tell me about your project",
+    "ctaFaq": "See frequent questions",
+    "build": {
+      "eyebrow": "How it gets built",
+      "title": "How it comes together, step by step.",
+      "lead": "Every step, in the order I do it. Pick one on the rail to see that stage.",
+      "stepsLabel": "Build steps"
+    },
+    "stage": {
+      "rail": "Build stages",
+      "log": "Build log",
+      "play": "Play",
+      "pause": "Pause"
+    },
+    "deliverables": {
+      "eyebrow": "What I build",
+      "title": "What you get, piece by piece.",
+      "lead": "Each deliverable is named after the component it becomes."
+    },
+    "comparison": {
+      "eyebrow": "Comparison",
+      "title": "The options, side by side.",
+      "lead": "This is the comparison I walk through in the first conversation, so you can choose with confidence.",
+      "caption": "Options compared: {name}",
+      "criterion": "Criterion",
+      "highlight": "This line"
+    },
+    "faq": {
+      "eyebrow": "Frequently asked questions",
+      "title": "What people ask me before starting.",
+      "lead": "The answers are complete on the page, even while the questions are closed."
+    },
+    "cases": {
+      "eyebrow": "Cases in this line",
+      "title": "Projects in this line that are already running."
+    },
+    "related": {
+      "eyebrow": "Related lines",
+      "title": "Other lines that often go with this one."
+    }
   },
   "Portfolio": {
     "metaTitle": "Portfolio",

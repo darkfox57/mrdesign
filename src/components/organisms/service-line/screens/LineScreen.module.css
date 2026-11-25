@@ -1,0 +1,411 @@
+/*
+ * The screens that assemble in each line page's build stage (LineScreens.tsx). BuildStage marks its
+ * root with data-on="0 1 … <step>", so `[data-on~="N"]` applies from step N on. Instead of one
+ * stylesheet per line, every screen marks its parts with step gates:
+ *   data-in="N"     hidden until step N, then it rises in (data-fx picks another entrance)
+ *   data-out="N"    shown until step N, then it fades away (wins over data-in)
+ *   data-lit="N"    turns "live" green from step N on (checks, pills, arrows)
+ *   data-alert="N"  turns red from step N on (a warning, a failed sync); data-lit wins over it
+ *   data-solid="N"  a dashed component box becomes a finished, solid part from step N on
+ * The server renders the last step: without JavaScript and with reduced motion the build is done.
+ * Everything here is decorative (aria-hidden): the build log under the stage carries the story.
+ */
+
+.screen {
+  position: relative;
+  height: 24rem;
+  overflow: hidden;
+  background: var(--color-ink-raised);
+  color: var(--color-on-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  line-height: 1.3;
+}
+
+@media (width >= 48rem) {
+  .screen {
+    height: 30rem;
+    font-size: var(--text-xs);
+  }
+}
+
+/* The 12-column grid of the first steps, fading once the real parts are in place. */
+.cols {
+  position: absolute;
+  inset: 0 1rem;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 0.625rem;
+  pointer-events: none;
+  transition: opacity 0.8s;
+}
+
+.cols span {
+  background: color-mix(in srgb, var(--color-brand-500) 6%, transparent);
+  border-inline: 1px solid color-mix(in srgb, var(--color-brand-500) 16%, transparent);
+}
+
+[data-on~="2"] .cols {
+  opacity: 0.3;
+}
+
+[data-on~="5"] .cols {
+  opacity: 0;
+}
+
+/* --- Step gates ------------------------------------------------------------------------------ */
+
+.screen [data-in],
+.screen [data-out],
+.screen [data-lit],
+.screen [data-alert],
+.screen [data-solid] {
+  transition:
+    opacity 0.6s,
+    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 0.5s,
+    background-color 0.5s,
+    border-color 0.5s;
+}
+
+.screen [data-in] {
+  opacity: 0;
+  transform: translateY(0.75rem);
+}
+
+.screen [data-in][data-fx="pop"] {
+  transform: scale(0.8);
+}
+
+.screen [data-in][data-fx="right"] {
+  transform: translateX(105%);
+}
+
+.screen [data-in][data-fx="left"] {
+  transform: translateX(-105%);
+}
+
+.screen [data-in][data-fx="grow"] {
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.screen [data-in][data-fx="fade"] {
+  transform: none;
+}
+
+[data-on~="1"] .screen [data-in="1"],
+[data-on~="2"] .screen [data-in="2"],
+[data-on~="3"] .screen [data-in="3"],
+[data-on~="4"] .screen [data-in="4"],
+[data-on~="5"] .screen [data-in="5"] {
+  opacity: 1;
+  transform: none;
+}
+
+[data-on~="1"] .screen [data-out="1"],
+[data-on~="2"] .screen [data-out="2"],
+[data-on~="3"] .screen [data-out="3"],
+[data-on~="4"] .screen [data-out="4"],
+[data-on~="5"] .screen [data-out="5"] {
+  opacity: 0;
+  transform: scale(0.96);
+  pointer-events: none;
+}
+
+[data-on~="1"] .screen [data-solid="1"],
+[data-on~="2"] .screen [data-solid="2"],
+[data-on~="3"] .screen [data-solid="3"],
+[data-on~="4"] .screen [data-solid="4"],
+[data-on~="5"] .screen [data-solid="5"] {
+  border-style: solid;
+  border-color: var(--color-ink-line);
+  background-color: var(--color-ink-high);
+}
+
+/* On a light page a finished part takes the page's own surfaces. */
+[data-on~="1"] .paper [data-solid="1"],
+[data-on~="2"] .paper [data-solid="2"],
+[data-on~="3"] .paper [data-solid="3"],
+[data-on~="4"] .paper [data-solid="4"],
+[data-on~="5"] .paper [data-solid="5"] {
+  border-color: var(--color-line);
+  background-color: var(--color-paper-deep);
+}
+
+/* State colors come after the solid state, so a finished wire can still fail (red) and recover (green). */
+[data-on~="0"] .screen [data-alert="0"],
+[data-on~="1"] .screen [data-alert="1"],
+[data-on~="2"] .screen [data-alert="2"],
+[data-on~="3"] .screen [data-alert="3"],
+[data-on~="4"] .screen [data-alert="4"],
+[data-on~="5"] .screen [data-alert="5"] {
+  border-color: var(--color-danger-soft);
+  background-color: color-mix(in srgb, var(--color-danger-soft) 16%, var(--color-ink-high));
+  color: var(--color-danger-soft);
+}
+
+[data-on~="0"] .screen [data-lit="0"],
+[data-on~="1"] .screen [data-lit="1"],
+[data-on~="2"] .screen [data-lit="2"],
+[data-on~="3"] .screen [data-lit="3"],
+[data-on~="4"] .screen [data-lit="4"],
+[data-on~="5"] .screen [data-lit="5"] {
+  border-color: var(--color-live);
+  background-color: color-mix(in srgb, var(--color-live) 16%, var(--color-ink-high));
+  color: var(--color-live);
+}
+
+/* --- Primitives ------------------------------------------------------------------------------ */
+
+/* A component box: dashed until it is built, and always named after its component. No position here:
+   a box is placed by its utilities (Box adds "relative" unless told otherwise). */
+.box {
+  border: 1px dashed color-mix(in srgb, var(--color-brand-400) 75%, transparent);
+  border-radius: 0.625rem;
+}
+
+.box[data-part]::before {
+  content: attr(data-part);
+  position: absolute;
+  top: -0.5rem;
+  left: 0.5rem;
+  z-index: 3;
+  max-width: calc(100% - 1rem);
+  overflow: hidden;
+  padding: 0 0.3rem;
+  background: var(--color-ink-raised);
+  color: var(--color-brand-400);
+  font: 500 var(--text-2xs) / 1 var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A part on a light page (a storefront, a document): its label keeps the page's background. */
+.paper .box[data-part]::before {
+  background: var(--color-surface);
+  color: var(--color-brand-600);
+}
+
+/* Placeholder text: a bar. */
+.bar {
+  display: block;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-ink-dim);
+}
+
+.paper .bar {
+  background: var(--color-paper-skeleton);
+}
+
+/* CSS modules sit outside Tailwind's layers, so a bar's variants live here, not in utilities. */
+.bar.thick {
+  height: 0.875rem;
+}
+
+.bar.accent {
+  background: var(--color-brand-500);
+}
+
+.bar.muted {
+  background: color-mix(in srgb, var(--color-brand-600) 45%, transparent);
+}
+
+.bar.ink {
+  background: var(--color-text);
+}
+
+.bar.light {
+  background: var(--color-brand-100);
+}
+
+/* A light page inside the dark screen: a storefront, a landing page, a document. */
+.paper {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* A code token: mono, small, on the screen's surface. */
+.token {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  white-space: nowrap;
+}
+
+/* A rounded pill: a status, a tag, an event. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--color-ink-line);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  white-space: nowrap;
+}
+
+/* A connector between two parts. */
+.wire {
+  display: block;
+  height: 0;
+  border-top: 1px dashed color-mix(in srgb, var(--color-brand-400) 70%, transparent);
+}
+
+.wire[data-lit],
+.wire[data-alert] {
+  border-top-width: 2px;
+}
+
+/* A phone frame around a page. */
+.phone {
+  border: 3px solid var(--color-ink-dim);
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+
+/* One small thing that travels along a wire once, when its step arrives. */
+.packet {
+  position: absolute;
+  top: -0.3rem;
+  left: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--color-brand-400);
+  opacity: 0;
+}
+
+[data-on~="3"] .packet {
+  animation: travel 1.6s ease-in-out both;
+}
+
+[data-on~="4"] .packet {
+  animation: none;
+}
+
+.packet + .packet {
+  animation-delay: 0.6s;
+}
+
+/* --- Per-line moves ---------------------------------------------------------------------------- */
+
+/* Websites: the finished page narrows into a phone at the performance step, and reflows. */
+.shrink {
+  width: 100%;
+  margin-inline: auto;
+  transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+[data-on~="4"] .shrink {
+  width: max(36%, 9.5rem);
+}
+
+/* Funnels: the menu is struck out when the page becomes a single column. */
+.strike {
+  position: relative;
+}
+
+.strike::after {
+  content: "";
+  position: absolute;
+  inset: 50% -0.25rem auto;
+  height: 2px;
+  background: var(--color-danger);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.6s 0.3s;
+}
+
+[data-on~="1"] .strike::after {
+  transform: scaleX(1);
+}
+
+/* Shopify and PrestaShop: a filter sidebar pushes the product grid while it is open. */
+.pushed {
+  transition: margin 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+[data-on~="1"] .pushed[data-push="1"],
+[data-on~="2"] .pushed[data-push="2"] {
+  margin-left: 38%;
+}
+
+[data-on~="2"] .pushed[data-push="1"],
+[data-on~="3"] .pushed[data-push="2"] {
+  margin-left: 0;
+}
+
+/* What a filter leaves out greys from step N (data-dim) until step M (data-undim). */
+.screen [data-dim] {
+  transition:
+    opacity 0.5s,
+    filter 0.5s;
+}
+
+[data-on~="1"] .screen [data-dim="1"],
+[data-on~="2"] .screen [data-dim="2"] {
+  opacity: 0.25;
+  filter: grayscale(1);
+}
+
+[data-on~="2"] .screen [data-undim="2"],
+[data-on~="3"] .screen [data-undim="3"] {
+  opacity: 1;
+  filter: none;
+}
+
+/* Shopify: one section is dragged to a new place. */
+.dragged {
+  transition: transform 0.8s 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+[data-on~="1"] .dragged {
+  transform: translate(0.75rem, -0.25rem) rotate(-1.5deg);
+}
+
+/* WordPress and evolution: the request waterfall shrinks once the extra scripts are gone. */
+.waterfall {
+  transform-origin: left center;
+  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+[data-on~="5"] .waterfall {
+  transform: scaleX(0.45);
+}
+
+/* WordPress: the speed gauge's needle moves from red to green. */
+.needle {
+  transform: rotate(-70deg);
+  transform-origin: bottom center;
+  transition: transform 1s 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+[data-on~="5"] .needle {
+  transform: rotate(60deg);
+}
+
+@keyframes travel {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(100% - 0.55rem);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: nothing travels; the global rule already shortens transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .packet {
+    animation: none !important;
+  }
+}

@@ -355,8 +355,12 @@ test("the home contact form shows the action's field errors", async ({ page }) =
 test("every line of work in services.ts has its row and page link", async ({ page }) => {
   await page.goto("/");
   const rows = page.locator("#lineas [data-x=ServiceRow] a");
-  await expect(rows).toHaveCount(6);
+  await expect(rows).toHaveCount(8);
   await expect(rows.first()).toHaveAttribute("href", "/servicios/sitios-web");
+  // The approved order of services.ts: landing pages right after websites, plugins last.
+  await expect(rows.nth(1)).toHaveAttribute("href", "/servicios/landing-pages");
+  await expect(rows.nth(6)).toHaveAttribute("href", "/servicios/evolucion-de-plataformas");
+  await expect(rows.last()).toHaveAttribute("href", "/servicios/plugins");
   await expect(page.locator('#lineas a[href="/servicios/shopify"]')).toHaveCount(1);
 });
 

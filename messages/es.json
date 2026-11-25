@@ -185,7 +185,7 @@
   },
   "Services": {
     "metaTitle": "Servicios de desarrollo",
-    "metaDescription": "Sitios web, aplicaciones, plugins y tiendas en WordPress, Shopify y PrestaShop, desarrollados a la medida.",
+    "metaDescription": "Sitios web, landing pages, tiendas en Shopify, PrestaShop y WordPress, aplicaciones, evolución de plataformas y plugins, desarrollados a la medida.",
     "title": "Servicios",
     "lead": "Elige lo que necesitas. Si no está en la lista, cuéntame: es probable que también lo haga.",
     "more": "Ver detalles de {name}",
@@ -195,6 +195,52 @@
     "ctaText": "Te respondo en menos de un día hábil.",
     "ctaButton": "Cuéntame tu proyecto",
     "breadcrumb": "Servicios"
+  },
+  "ServiceLine": {
+    "breadcrumbLabel": "Ruta",
+    "home": "Inicio",
+    "eyebrow": "Línea de trabajo {number} · {name}",
+    "audienceLabel": "Para quién es",
+    "cta": "Cuéntame tu proyecto",
+    "ctaFaq": "Ver preguntas frecuentes",
+    "build": {
+      "eyebrow": "Cómo se construye",
+      "title": "Así se arma, paso a paso.",
+      "lead": "Cada paso, en el orden en que lo hago. Elige uno en la barra para ver esa etapa.",
+      "stepsLabel": "Pasos de la construcción"
+    },
+    "stage": {
+      "rail": "Etapas de la construcción",
+      "log": "Registro de la construcción",
+      "play": "Reproducir",
+      "pause": "Pausar"
+    },
+    "deliverables": {
+      "eyebrow": "Qué construyo",
+      "title": "Lo que recibes, pieza por pieza.",
+      "lead": "Cada entrega lleva el nombre del componente en que se convierte."
+    },
+    "comparison": {
+      "eyebrow": "Comparación",
+      "title": "Las opciones, lado a lado.",
+      "lead": "Esta es la comparación que hago en la primera conversación, para que elijas con claridad.",
+      "caption": "Comparación de opciones: {name}",
+      "criterion": "Criterio",
+      "highlight": "Esta línea"
+    },
+    "faq": {
+      "eyebrow": "Preguntas frecuentes",
+      "title": "Lo que me preguntan antes de empezar.",
+      "lead": "Las respuestas están completas en la página, aunque las preguntas estén cerradas."
+    },
+    "cases": {
+      "eyebrow": "Casos de esta línea",
+      "title": "Proyectos de esta línea que ya están funcionando."
+    },
+    "related": {
+      "eyebrow": "Líneas relacionadas",
+      "title": "Otras líneas que suelen ir con esta."
+    }
   },
   "Portfolio": {
     "metaTitle": "Portafolio",

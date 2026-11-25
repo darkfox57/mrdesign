@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { services } from "@/content/services";
+import { serviceEntries } from "@/content/service-catalog";
 import type { Locale } from "@/i18n/routing";
 import type { Role } from "@/lib/auth/permissions";
 
@@ -13,7 +13,7 @@ export function canReadInbox(role: Role) {
 
 export const LOCALE_LABELS: Record<Locale, string> = { es: "Español", en: "Inglés" };
 
-const SERVICE_NAMES: Record<string, string> = Object.fromEntries(services.map((service) => [service.id, service.name.es]));
+const SERVICE_NAMES: Record<string, string> = Object.fromEntries(serviceEntries.map((service) => [service.id, service.name.es]));
 
 // The stored value is a service id or "other". Anything else (an old value) is shown as is.
 export function projectTypeLabel(projectType: string) {

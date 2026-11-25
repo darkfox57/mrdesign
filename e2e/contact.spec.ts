@@ -13,6 +13,15 @@ test("shows field errors and keeps what the visitor typed", async ({ page }) => 
   await expect(page.getByLabel("Email")).toHaveAttribute("aria-invalid", "true");
 });
 
+test("offers the eight lines of work as project types, in order, plus something else", async ({ page }) => {
+  await page.goto("/contacto");
+  const options = await page
+    .getByLabel("¿Qué necesitas?")
+    .locator("option:not([value=''])")
+    .evaluateAll((nodes) => nodes.map((node) => (node as HTMLOptionElement).value));
+  expect(options).toEqual(["websites", "funnels", "shopify", "prestashop", "wordpress", "apps", "evolution", "plugins", "other"]);
+});
+
 test("sends a message in English and confirms it", async ({ page }) => {
   await page.goto("/en/contact");
   await page.getByLabel("Name").fill("E2E Visitor");
