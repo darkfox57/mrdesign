@@ -21,6 +21,8 @@ export const routing = defineRouting({
     "/blog/[slug]": "/blog/[slug]",
     "/blog/categoria/[category]": { es: "/blog/categoria/[category]", en: "/blog/category/[category]" },
     "/contacto": { es: "/contacto", en: "/contact" },
+    // The founder guide (src/content/founder-guide.ts).
+    "/empezar-mi-negocio-en-linea": { es: "/empezar-mi-negocio-en-linea", en: "/start-my-business-online" },
     // Landings made with the visual builder (src/lib/landings).
     "/soluciones/[slug]": { es: "/soluciones/[slug]", en: "/solutions/[slug]" },
     "/politica-de-privacidad": { es: "/politica-de-privacidad", en: "/privacy-policy" },

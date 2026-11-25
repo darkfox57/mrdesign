@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { JsonLd } from "@/components/atoms/JsonLd";
-import { caseStudyJsonLd, faqPageJsonLd, organizationJsonLd } from "./json-ld";
+import { articleJsonLd, caseStudyJsonLd, faqPageJsonLd, organizationJsonLd } from "./json-ld";
 import { siteUrl } from "./site";
 
 describe("faqPageJsonLd", () => {
@@ -90,5 +90,36 @@ describe("caseStudyJsonLd", () => {
     expect(data).not.toHaveProperty("dateCreated");
     expect(data).not.toHaveProperty("keywords");
     expect(data).not.toHaveProperty("about");
+  });
+});
+
+describe("articleJsonLd", () => {
+  const guide = {
+    headline: "Cómo empezar tu negocio en línea, paso a paso",
+    description: "Qué necesitas primero para empezar tu negocio en línea.",
+    url: "/empezar-mi-negocio-en-linea",
+    locale: "es",
+  };
+
+  it("describes a guide written and published by the business", () => {
+    expect(articleJsonLd(guide)).toEqual({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: guide.headline,
+      description: guide.description,
+      url: `${siteUrl}${guide.url}`,
+      mainEntityOfPage: `${siteUrl}${guide.url}`,
+      inLanguage: "es",
+      author: { "@id": organizationJsonLd["@id"] },
+      publisher: { "@id": organizationJsonLd["@id"] },
+    });
+  });
+
+  it("stays inside its script tag whatever the copy holds", () => {
+    const hostile = { ...guide, headline: "</script><script>alert(1)</script>", description: "<b>a & b</b>" };
+    const html = renderToStaticMarkup(createElement(JsonLd, { data: articleJsonLd(hostile) }));
+    expect(html.match(/<\/script>/g)).toHaveLength(1);
+    const json = html.replace(/^<script[^>]*>/, "").replace(/<\/script>$/, "");
+    expect(JSON.parse(json)).toMatchObject({ headline: hostile.headline, description: hostile.description });
   });
 });

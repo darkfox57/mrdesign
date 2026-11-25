@@ -36,6 +36,11 @@ export async function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link href="/empezar-mi-negocio-en-linea" className={linkClass}>
+                {t("guide")}
+              </Link>
+            </li>
+            <li>
               <Link href="/contacto" className={linkClass}>
                 {t("contact")}
               </Link>

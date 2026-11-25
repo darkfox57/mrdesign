@@ -2,11 +2,14 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-// The line copy is long (eight pages in two languages). It must stay on the server: a client module
-// that reaches it, even through a value import of the service ids, ships all of it to the browser.
+// The line copy is long (eight pages in two languages), and so is the founder guide. Both must stay on
+// the server: a client module that reaches them, even through a value import of the service ids,
+// ships all of it to the browser.
 
 const SRC = path.resolve(__dirname, "../..");
 const LINE_COPY = path.join(SRC, "content", "service-lines");
+const FOUNDER_GUIDE = path.join(SRC, "content", "founder-guide.ts");
+const isServerCopy = (file: string) => file.startsWith(LINE_COPY + path.sep) || file === FOUNDER_GUIDE;
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -36,10 +39,10 @@ function valueImports(file: string): string[] {
     .filter((resolved): resolved is string => resolved !== null);
 }
 
-function reachesLineCopy(entry: string): string[] | null {
+function reachesServerCopy(entry: string): string[] | null {
   const seen = new Set<string>();
   const walk = (file: string, trail: string[]): string[] | null => {
-    if (file.startsWith(LINE_COPY + path.sep)) return [...trail, file];
+    if (isServerCopy(file)) return [...trail, file];
     if (seen.has(file)) return null;
     seen.add(file);
     for (const next of valueImports(file)) {
@@ -53,13 +56,13 @@ function reachesLineCopy(entry: string): string[] | null {
 
 const clientModules = sourceFiles(SRC).filter((file) => /^\s*["']use client["']/.test(readFileSync(file, "utf8")));
 
-describe("line copy client boundary", () => {
+describe("server copy client boundary", () => {
   it("finds the client modules to check", () => {
     expect(clientModules.length).toBeGreaterThan(0);
   });
 
-  it.each(clientModules.map((file) => [path.relative(SRC, file)]))("keeps the line copy out of %s", (relative) => {
-    const trail = reachesLineCopy(path.join(SRC, relative));
+  it.each(clientModules.map((file) => [path.relative(SRC, file)]))("keeps the line copy and the founder guide out of %s", (relative) => {
+    const trail = reachesServerCopy(path.join(SRC, relative));
     expect(trail?.map((file) => path.relative(SRC, file)) ?? null).toBeNull();
   });
 });

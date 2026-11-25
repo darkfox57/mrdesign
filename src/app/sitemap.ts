@@ -20,6 +20,7 @@ const STATIC_PAGES: Href[] = [
   "/portafolio",
   "/blog",
   "/contacto",
+  "/empezar-mi-negocio-en-linea",
   "/politica-de-privacidad",
   "/terminos-y-condiciones",
 ];

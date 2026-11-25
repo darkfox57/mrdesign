@@ -27,7 +27,8 @@
     "legal": "Legal",
     "privacy": "Privacy policy",
     "terms": "Terms and conditions",
-    "legalNamePending": "[Legal name / Tax ID]"
+    "legalNamePending": "[Legal name / Tax ID]",
+    "guide": "Start your business online"
   },
   "NotFound": {
     "title": "This page does not exist",
@@ -77,7 +78,11 @@
       "solution": "How I approach it",
       "result": "Possible result",
       "line": "Line: {line} →",
-      "replay": "Watch the fix again"
+      "replay": "Watch the fix again",
+      "guide": {
+        "label": "Guide · /en/start-my-business-online",
+        "text": "Starting your business online: what you need, in what order and what can wait"
+      }
     },
     "pieces": {
       "eyebrow": "{number} — The pieces",
@@ -240,6 +245,31 @@
     "related": {
       "eyebrow": "Related lines",
       "title": "Other lines that often go with this one."
+    }
+  },
+  "FounderGuide": {
+    "breadcrumb": "Start your business online",
+    "eyebrow": "A guide for founders",
+    "ctaSections": "Read the guide by parts",
+    "build": {
+      "eyebrow": "The path, step by step",
+      "title": "How an online business comes together.",
+      "lead": "Every step, in the order I recommend taking it. Pick one on the rail to see that stage.",
+      "stepsLabel": "Steps to get started"
+    },
+    "stage": {
+      "domain": "yourbusiness.com",
+      "email": "hello@yourbusiness.com"
+    },
+    "index": {
+      "title": "In this guide",
+      "label": "Parts of the guide"
+    },
+    "part": "Part {number}",
+    "faq": {
+      "eyebrow": "Frequently asked questions",
+      "title": "What people ask when they are starting.",
+      "lead": "The full answers are on the page, even while the questions are closed."
     }
   },
   "Portfolio": {

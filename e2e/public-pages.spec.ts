@@ -7,6 +7,7 @@ const pages = [
   { es: "/servicios/sitios-web", en: "/en/services/websites" },
   { es: "/portafolio", en: "/en/portfolio" },
   { es: "/contacto", en: "/en/contact" },
+  { es: "/empezar-mi-negocio-en-linea", en: "/en/start-my-business-online" },
   { es: "/politica-de-privacidad", en: "/en/privacy-policy" },
   { es: "/terminos-y-condiciones", en: "/en/terms-and-conditions" },
 ];
@@ -70,11 +71,46 @@ test("service pages publish Service and BreadcrumbList structured data", async (
   expect(types).toEqual(expect.arrayContaining(["ProfessionalService", "Service", "BreadcrumbList"]));
 });
 
+test("the footer keeps its site links and adds the founder guide", async ({ page }) => {
+  for (const [path, label, links] of [
+    [
+      "/",
+      "Sitio",
+      [
+        ["Servicios", "/servicios"],
+        ["Portafolio", "/portafolio"],
+        ["Blog", "/blog"],
+        ["Empezar tu negocio en línea", "/empezar-mi-negocio-en-linea"],
+        ["Contacto", "/contacto"],
+      ],
+    ],
+    [
+      "/en",
+      "Site",
+      [
+        ["Services", "/en/services"],
+        ["Portfolio", "/en/portfolio"],
+        ["Blog", "/en/blog"],
+        ["Start your business online", "/en/start-my-business-online"],
+        ["Contact", "/en/contact"],
+      ],
+    ],
+  ] as const) {
+    await page.goto(path);
+    const nav = page.locator("footer").getByRole("navigation", { name: label, exact: true }).getByRole("link");
+    await expect(nav).toHaveText(links.map(([name]) => name));
+    for (const [index, [, href]] of links.entries()) await expect(nav.nth(index)).toHaveAttribute("href", href);
+  }
+});
+
 test("sitemap lists every page with both languages, robots points to it", async ({ request }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
   expect(sitemap).toContain("/servicios/prestashop");
   expect(sitemap).toContain("/en/services/prestashop");
   expect(sitemap).toContain("/en/privacy-policy");
+  // The founder guide, in both languages.
+  expect(sitemap).toContain("/empezar-mi-negocio-en-linea</loc>");
+  expect(sitemap).toMatch(/hreflang="en" href="[^"]*\/en\/start-my-business-online"/);
 
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).toContain("Disallow: /admin");

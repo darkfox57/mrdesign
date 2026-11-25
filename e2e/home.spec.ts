@@ -296,6 +296,25 @@ test("a focused rail step shows its whole focus ring", async ({ page }) => {
   expect(offset + width).toBeLessThanOrEqual(0);
 });
 
+test("the founders' path links to the guide in both languages, and only that path", async ({ page }) => {
+  for (const [path, name, href] of [
+    ["/", /Empezar tu negocio en línea: qué necesitas/, "/empezar-mi-negocio-en-linea"],
+    ["/en", /Starting your business online: what you need/, "/en/start-my-business-online"],
+  ] as const) {
+    await page.goto(path);
+    const guide = page.locator("#problemas").getByRole("link", { name });
+    await expect(guide).toHaveAttribute("href", href);
+    await expect(guide).toContainText(path === "/" ? "Guía · /empezar-mi-negocio-en-linea" : "Guide · /en/start-my-business-online");
+  }
+
+  await page.goto("/");
+  await page.getByRole("group", { name: "¿En qué punto estás?" }).getByRole("button", { name: "Ya tengo un negocio funcionando" }).click();
+  await expect(page.locator("[data-x=StarterGuideLink]")).toHaveCount(0);
+  await page.getByRole("group", { name: "¿En qué punto estás?" }).getByRole("button", { name: "Estoy empezando" }).click();
+  await page.locator("[data-x=StarterGuideLink]").click();
+  await expect(page).toHaveURL(/\/empezar-mi-negocio-en-linea$/);
+});
+
 test("no leftover magnetic hooks remain on the page", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("[data-magnetic]")).toHaveCount(0);

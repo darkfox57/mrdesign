@@ -27,7 +27,8 @@
     "legal": "Legal",
     "privacy": "Política de privacidad",
     "terms": "Términos y condiciones",
-    "legalNamePending": "[Razón social / NIT]"
+    "legalNamePending": "[Razón social / NIT]",
+    "guide": "Empezar tu negocio en línea"
   },
   "NotFound": {
     "title": "Esta página no existe",
@@ -77,7 +78,11 @@
       "solution": "Cómo lo abordo",
       "result": "Resultado posible",
       "line": "Línea: {line} →",
-      "replay": "Ver el arreglo otra vez"
+      "replay": "Ver el arreglo otra vez",
+      "guide": {
+        "label": "Guía · /empezar-mi-negocio-en-linea",
+        "text": "Empezar tu negocio en línea: qué necesitas, en qué orden y qué puede esperar"
+      }
     },
     "pieces": {
       "eyebrow": "{number} — Las piezas",
@@ -240,6 +245,31 @@
     "related": {
       "eyebrow": "Líneas relacionadas",
       "title": "Otras líneas que suelen ir con esta."
+    }
+  },
+  "FounderGuide": {
+    "breadcrumb": "Empezar tu negocio en línea",
+    "eyebrow": "Guía para quien está empezando",
+    "ctaSections": "Ver la guía por partes",
+    "build": {
+      "eyebrow": "El camino, paso a paso",
+      "title": "Así se arma un negocio en línea.",
+      "lead": "Cada paso, en el orden en que te recomiendo darlo. Elige uno en la barra para ver esa etapa.",
+      "stepsLabel": "Pasos para empezar"
+    },
+    "stage": {
+      "domain": "tunegocio.com",
+      "email": "hola@tunegocio.com"
+    },
+    "index": {
+      "title": "En esta guía",
+      "label": "Partes de la guía"
+    },
+    "part": "Parte {number}",
+    "faq": {
+      "eyebrow": "Preguntas frecuentes",
+      "title": "Lo que preguntan quienes están empezando.",
+      "lead": "Las respuestas están completas en la página, aunque las preguntas estén cerradas."
     }
   },
   "Portfolio": {

@@ -107,6 +107,23 @@ export function ProblemExplorer({ paths }: { paths: Record<AudienceId, ExplorerP
             );
           })}
         </div>
+
+        {/* The founders' path leads on to the guide for starting a business online (S8). */}
+        {starting ? (
+          <Link
+            href="/empezar-mi-negocio-en-linea"
+            data-x="StarterGuideLink"
+            className="group flex flex-col gap-1.5 rounded-[0.875rem] bg-brand-950 p-4.5 text-brand-100 no-underline transition-colors hover:bg-ink-high"
+          >
+            <span className="font-mono text-2xs text-brand-400">{t("guide.label")}</span>
+            <span className="text-md leading-snug font-semibold">
+              {t("guide.text")}{" "}
+              <span aria-hidden="true" className="inline-block transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </span>
+          </Link>
+        ) : null}
       </div>
 
       <div

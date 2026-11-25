@@ -56,6 +56,24 @@ export function blogPostingJsonLd({ title, description, url, locale, publishedAt
   };
 }
 
+type ArticleJsonLd = { headline: string; description: string; url: string; locale: string };
+
+// An evergreen guide written and published by the business (the founder guide). It carries no dates:
+// the copy is code-owned, and a made-up publication date would be invented data.
+export function articleJsonLd({ headline, description, url, locale }: ArticleJsonLd) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline,
+    description,
+    url: `${siteUrl}${url}`,
+    mainEntityOfPage: `${siteUrl}${url}`,
+    inLanguage: locale,
+    author: { "@id": organizationJsonLd["@id"] },
+    publisher: { "@id": organizationJsonLd["@id"] },
+  };
+}
+
 type CaseStudyJsonLd = {
   title: string;
   summary: string;
