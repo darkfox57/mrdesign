@@ -103,16 +103,62 @@ test("the footer keeps its site links and adds the founder guide", async ({ page
   }
 });
 
-test("sitemap lists every page with both languages, robots points to it", async ({ request }) => {
+test("sitemap lists every page with both languages, robots points to it", async ({ request, baseURL }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
-  expect(sitemap).toContain("/servicios/prestashop");
-  expect(sitemap).toContain("/en/services/prestashop");
-  expect(sitemap).toContain("/en/privacy-policy");
-  // The founder guide, in both languages.
+  // Each language version of a code-owned page is its own <loc>, and every entry lists both languages.
+  for (const paths of pages) {
+    for (const locale of ["es", "en"] as const) {
+      expect(sitemap).toContain(`<loc>${baseURL}${paths[locale]}</loc>`);
+      expect(sitemap).toContain(`hreflang="${locale}" href="${baseURL}${paths[locale]}"`);
+    }
+  }
+  expect(sitemap).toContain(`<loc>${baseURL}/en/blog</loc>`);
+  expect(sitemap).toContain(`<loc>${baseURL}/servicios/prestashop</loc>`);
+  expect(sitemap).toContain(`<loc>${baseURL}/en/services/prestashop</loc>`);
+  // The founder guide, in both languages, each version with the other as an alternate.
   expect(sitemap).toContain("/empezar-mi-negocio-en-linea</loc>");
+  expect(sitemap).toContain("/en/start-my-business-online</loc>");
   expect(sitemap).toMatch(/hreflang="en" href="[^"]*\/en\/start-my-business-online"/);
 
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).toContain("Disallow: /admin");
   expect(robots).toMatch(/Sitemap: .*\/sitemap\.xml/);
+});
+
+// Social previews: the line pages, the guide and the main pages share their own title, description and
+// canonical; every other page keeps the site defaults, with the title and description of its own metadata.
+const social = [
+  { path: "/servicios/shopify", locale: "es", ogLocale: "es_CO", alternate: "en_US" },
+  { path: "/en/start-my-business-online", locale: "en", ogLocale: "en_US", alternate: "es_CO" },
+  { path: "/en/services", locale: "en", ogLocale: "en_US", alternate: "es_CO" },
+  { path: "/", locale: "es", ogLocale: "es_CO", alternate: "en_US" },
+] as const;
+
+for (const { path, ogLocale, alternate } of social) {
+  test(`${path} has Open Graph matching its own metadata`, async ({ page, baseURL }) => {
+    await page.goto(path);
+    const meta = (selector: string) => page.locator(selector).getAttribute("content");
+    const title = (await page.title()).replace(/ \| Mr\. Design$/, "");
+    expect(await meta('meta[property="og:title"]')).toBe(title);
+    expect(await meta('meta[property="og:description"]')).toBe(await meta('meta[name="description"]'));
+    expect(await meta('meta[property="og:url"]')).toBe(await page.locator('link[rel="canonical"]').getAttribute("href"));
+    const ogUrl = new URL((await meta('meta[property="og:url"]'))!);
+    expect(ogUrl.origin).toBe(baseURL);
+    expect(ogUrl.pathname).toBe(path);
+    expect(await meta('meta[property="og:type"]')).toBe("website");
+    expect(await meta('meta[property="og:site_name"]')).toBe("Mr. Design");
+    expect(await meta('meta[property="og:locale"]')).toBe(ogLocale);
+    expect(await meta('meta[property="og:locale:alternate"]')).toBe(alternate);
+    expect(await meta('meta[name="twitter:card"]')).toBe("summary");
+  });
+}
+
+test("a page without its own Open Graph keeps the site defaults and its own title", async ({ page }) => {
+  await page.goto("/en/privacy-policy");
+  const meta = (selector: string) => page.locator(selector).getAttribute("content");
+  expect(await meta('meta[property="og:site_name"]')).toBe("Mr. Design");
+  expect(await meta('meta[property="og:locale"]')).toBe("en_US");
+  expect(await meta('meta[property="og:title"]')).toBe(await page.title());
+  expect(await meta('meta[property="og:description"]')).toBe(await meta('meta[name="description"]'));
+  expect(await meta('meta[name="twitter:card"]')).toBe("summary");
 });

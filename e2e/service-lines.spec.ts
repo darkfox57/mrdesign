@@ -150,11 +150,12 @@ test("the services index links the eight lines in order", async ({ page }) => {
   }
 });
 
-// Like every code-owned page, a line has one sitemap entry that lists both languages as alternates.
+// Like every code-owned page, each language version of a line is its own sitemap entry, and every
+// entry lists both languages as alternates.
 test("the sitemap lists the eight lines in both languages", async ({ request }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
   for (const service of services) {
-    expect(sitemap).toContain(`${pathOf(service, "es")}</loc>`);
+    for (const locale of locales) expect(sitemap).toContain(`<loc>http://localhost:3100${pathOf(service, locale)}</loc>`);
     for (const locale of locales) expect(sitemap).toContain(`hreflang="${locale}" href="http://localhost:3100${pathOf(service, locale)}"`);
   }
 });

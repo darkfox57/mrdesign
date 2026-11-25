@@ -9,17 +9,18 @@ import { getPathname } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { sameRouteAlternates } from "@/lib/seo/alternates";
 import { articleJsonLd, breadcrumbJsonLd, faqPageJsonLd } from "@/lib/seo/json-ld";
+import { pageMetadata } from "@/lib/seo/open-graph";
 
 // The founder guide (odd/tasks/site-build-experience.md, T6, S6, S8): code-owned copy, no database,
 // so the page is static.
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocale()) as Locale;
-  return {
+  return pageMetadata(locale, {
     title: founderGuide.metaTitle[locale],
     description: founderGuide.metaDescription[locale],
     alternates: sameRouteAlternates(locale, "/empezar-mi-negocio-en-linea"),
-  };
+  });
 }
 
 export default async function FounderGuidePage() {

@@ -387,5 +387,10 @@
   },
   "Landing": {
     "breadcrumbHome": "Home"
+  },
+  "Llms": {
+    "lines": "Lines of work",
+    "guide": "Guide",
+    "pages": "Pages"
   }
 }

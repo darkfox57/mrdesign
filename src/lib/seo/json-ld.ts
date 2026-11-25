@@ -1,16 +1,31 @@
 import { contact } from "@/content/contact";
+import { serviceEntries } from "@/content/service-catalog";
+import { getPathname } from "@/i18n/navigation";
+import es from "../../../messages/es.json";
 import { siteUrl } from "./site";
 
+// The business, once per page (the locale layout). Described in Spanish, the default language, with
+// the site's own description, its lines of work as topics and one offer per line (no prices).
 export const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
   "@id": `${siteUrl}/#business`,
   name: "Mr. Design",
   url: siteUrl,
+  description: es.Metadata.description,
   email: contact.email,
   telephone: contact.phone,
   logo: `${siteUrl}/brand/icon.png`,
   address: { "@type": "PostalAddress", addressLocality: contact.city, addressCountry: contact.country },
+  knowsAbout: serviceEntries.map((entry) => entry.name.es),
+  makesOffer: serviceEntries.map((entry) => ({
+    "@type": "Offer",
+    itemOffered: {
+      "@type": "Service",
+      name: entry.name.es,
+      url: `${siteUrl}${getPathname({ locale: "es", href: { pathname: "/servicios/[service]", params: { service: entry.slug.es } } })}`,
+    },
+  })),
 };
 
 type ServiceJsonLd = { name: string; description: string; url: string };

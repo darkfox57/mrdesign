@@ -5,14 +5,15 @@ import { ServicesList } from "@/components/organisms/ServicesList";
 import { services } from "@/content/services";
 import type { Locale } from "@/i18n/routing";
 import { sameRouteAlternates } from "@/lib/seo/alternates";
+import { pageMetadata } from "@/lib/seo/open-graph";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([getTranslations("Services"), getLocale()]);
-  return {
+  return pageMetadata(locale as Locale, {
     title: t("metaTitle"),
     description: t("metaDescription"),
     alternates: sameRouteAlternates(locale as Locale, "/servicios"),
-  };
+  });
 }
 
 export default async function ServicesPage() {

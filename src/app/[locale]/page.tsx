@@ -9,6 +9,7 @@ import { listPublicCases } from "@/lib/cases/public";
 import { casesOrEmpty } from "@/lib/cases/view";
 import { sectionNumbers } from "@/lib/home/pending";
 import { sameRouteAlternates } from "@/lib/seo/alternates";
+import { pageMetadata } from "@/lib/seo/open-graph";
 
 // The home shows published cases, which live in the database the Docker build cannot reach: render
 // on request (publishing a case also revalidates "/", see src/lib/cases/paths.ts).
@@ -19,11 +20,11 @@ const HOME_CASES = 3;
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, meta, locale] = await Promise.all([getTranslations("Home"), getTranslations("Metadata"), getLocale()]);
-  return {
+  return pageMetadata(locale as Locale, {
     title: { absolute: `Mr. Design: ${t("metaTitle")}` },
     description: meta("description"),
     alternates: sameRouteAlternates(locale as Locale, "/"),
-  };
+  });
 }
 
 // The homepage of the approved prototype (odd/tasks/site-build-experience.md, T4): the site builds

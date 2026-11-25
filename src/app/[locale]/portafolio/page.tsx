@@ -9,17 +9,18 @@ import type { CaseLine } from "@/lib/cases/lines";
 import { listPublicCases } from "@/lib/cases/public";
 import { casesOrEmpty, portfolioView } from "@/lib/cases/view";
 import { sameRouteAlternates } from "@/lib/seo/alternates";
+import { pageMetadata } from "@/lib/seo/open-graph";
 
 // Published cases live in the database, which the Docker build cannot reach: render on request.
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([getTranslations("Portfolio"), getLocale()]);
-  return {
+  return pageMetadata(locale as Locale, {
     title: t("metaTitle"),
     description: t("metaDescription"),
     alternates: sameRouteAlternates(locale as Locale, "/portafolio"),
-  };
+  });
 }
 
 export default async function PortfolioPage() {

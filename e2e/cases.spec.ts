@@ -91,6 +91,12 @@ for (const locale of ["es", "en"] as const) {
   });
 }
 
+test("a case with a cover image is shared as a large image card", async ({ page }) => {
+  await page.goto(fixture.path("es"));
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image");
+  await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", /lecoq-sportif\.jpg$/);
+});
+
 test("a draft case answers 404", async ({ page }) => {
   expect((await page.goto(`/portafolio/${fixture.draft}`))?.status()).toBe(404);
 });

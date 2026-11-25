@@ -150,8 +150,9 @@ test("the sitemap lists published posts and categories in both languages, never 
     expect(sitemap).toContain(`${fixtures.category[locale]}</loc>`);
     expect(sitemap).not.toContain(fixtures.draft[locale]);
   }
-  // The blog index is one entry with the Spanish URL and both languages as alternates.
+  // The blog index has one entry per language, each listing both languages as alternates.
   expect(sitemap).toContain("/blog</loc>");
+  expect(sitemap).toContain("/en/blog</loc>");
   expect(sitemap).toContain('/en/blog"');
   // The existing pages are still listed.
   expect(sitemap).toContain("/servicios/prestashop");

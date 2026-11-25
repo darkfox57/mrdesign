@@ -5,8 +5,9 @@ import { JsonLd } from "@/components/atoms/JsonLd";
 import { XrayGrid } from "@/components/motion/XrayGrid";
 import { SiteFooter } from "@/components/organisms/SiteFooter";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
-import { routing } from "@/i18n/routing";
+import { routing, type Locale } from "@/i18n/routing";
 import { organizationJsonLd } from "@/lib/seo/json-ld";
+import { siteOpenGraph } from "@/lib/seo/open-graph";
 import { siteUrl } from "@/lib/seo/site";
 import { fontVariables } from "@/lib/fonts";
 import { xrayBootScript } from "@/lib/motion/xray";
@@ -17,13 +18,17 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Metadata");
+  const [t, locale] = await Promise.all([getTranslations("Metadata"), getLocale() as Promise<Locale>]);
 
   return {
     metadataBase: new URL(siteUrl),
     title: { default: t("title"), template: "%s | Mr. Design" },
     description: t("description"),
     icons: { icon: "/brand/icon.png", apple: "/brand/icon.png" },
+    // Social defaults for every page. Next fills og:title and og:description from each page's own
+    // metadata; pages with a canonical add og:url through pageMetadata (src/lib/seo/open-graph.ts).
+    // No twitter default: Next derives the card from Open Graph, large when the page has an image.
+    openGraph: siteOpenGraph(locale),
   };
 }
 

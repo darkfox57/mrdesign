@@ -14,6 +14,7 @@ import { listPublicCases } from "@/lib/cases/public";
 import { casesOrEmpty } from "@/lib/cases/view";
 import { localizedAlternates, mapValues } from "@/lib/seo/alternates";
 import { breadcrumbJsonLd, faqPageJsonLd, serviceJsonLd } from "@/lib/seo/json-ld";
+import { pageMetadata } from "@/lib/seo/open-graph";
 import { casesForLine } from "@/lib/service-lines/cases";
 
 type Props = PageProps<"/[locale]/servicios/[service]">;
@@ -41,14 +42,14 @@ async function resolve(props: Props) {
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { locale, service } = await resolve(props);
-  return {
+  return pageMetadata(locale, {
     title: service.content.metaTitle[locale],
     description: service.content.metaDescription[locale],
     alternates: localizedAlternates(
       locale,
       mapValues(service.slug, (slug) => ({ pathname: "/servicios/[service]" as const, params: { service: slug } })),
     ),
-  };
+  });
 }
 
 // One page per line of work (odd/tasks/site-build-experience.md, T5): the answer-first hero, the

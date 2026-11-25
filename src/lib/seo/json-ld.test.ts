@@ -1,9 +1,15 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { JsonLd } from "@/components/atoms/JsonLd";
+import { contact } from "@/content/contact";
+import { serviceEntries } from "@/content/service-catalog";
+import es from "../../../messages/es.json";
 import { articleJsonLd, caseStudyJsonLd, faqPageJsonLd, organizationJsonLd } from "./json-ld";
 import { siteUrl } from "./site";
+
+// next-intl's navigation does not load under vitest; the stand-in reads the real routing table.
+vi.mock("@/i18n/navigation", () => import("@/lib/seo/test-navigation"));
 
 describe("faqPageJsonLd", () => {
   const faqs = [
@@ -121,5 +127,39 @@ describe("articleJsonLd", () => {
     expect(html.match(/<\/script>/g)).toHaveLength(1);
     const json = html.replace(/^<script[^>]*>/, "").replace(/<\/script>$/, "");
     expect(JSON.parse(json)).toMatchObject({ headline: hostile.headline, description: hostile.description });
+  });
+});
+
+describe("organizationJsonLd", () => {
+  it("keeps the business identity and contact data", () => {
+    expect(organizationJsonLd).toMatchObject({
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      "@id": `${siteUrl}/#business`,
+      name: "Mr. Design",
+      url: siteUrl,
+      email: contact.email,
+      telephone: contact.phone,
+      logo: `${siteUrl}/brand/icon.png`,
+      address: { "@type": "PostalAddress", addressLocality: contact.city, addressCountry: contact.country },
+    });
+  });
+
+  it("describes the business with the site's default description", () => {
+    expect(organizationJsonLd.description).toBe(es.Metadata.description);
+  });
+
+  it("knows about the eight lines of work, by their Spanish names, in the approved order", () => {
+    expect(organizationJsonLd.knowsAbout).toEqual(serviceEntries.map((entry) => entry.name.es));
+  });
+
+  it("offers one service per line, each with its absolute URL and no price", () => {
+    expect(organizationJsonLd.makesOffer).toEqual(
+      serviceEntries.map((entry) => ({
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name: entry.name.es, url: `${siteUrl}/servicios/${entry.slug.es}` },
+      })),
+    );
+    expect(JSON.stringify(organizationJsonLd)).not.toMatch(/price/i);
   });
 });

@@ -5,6 +5,7 @@ import { contact } from "@/content/contact";
 import { services } from "@/content/services";
 import { routing, type Locale } from "@/i18n/routing";
 import { sameRouteAlternates } from "@/lib/seo/alternates";
+import { pageMetadata } from "@/lib/seo/open-graph";
 import { ContactForm } from "./ContactForm";
 
 export function generateStaticParams() {
@@ -13,11 +14,11 @@ export function generateStaticParams() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([getTranslations("Contact"), getLocale()]);
-  return {
+  return pageMetadata(locale as Locale, {
     title: t("metaTitle"),
     description: t("metaDescription"),
     alternates: sameRouteAlternates(locale as Locale, "/contacto"),
-  };
+  });
 }
 
 const directLink = "flex min-h-11 items-center gap-3 font-medium hover:text-brand-600";
